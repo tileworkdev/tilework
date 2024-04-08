@@ -1,0 +1,36 @@
+@inject LoadBalancerListViewModel ViewModel
+@inject NavigationManager NavigationManager
+@using Tilework.LoadBalancing.Models
+@page "/lb/loadbalancers"
+
+<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
+
+<MudTable Items="ViewModel.Balancers" Hover="true">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Port</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Port">@context.Port</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers/", disabled: true, icon: Icons.Material.Filled.AltRoute),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+    private string DetailLink(Guid Id)
+    {
+        return $"/lb/loadbalancers/{Id.ToString()}";
+    }
+}    

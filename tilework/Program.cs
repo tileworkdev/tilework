@@ -1,5 +1,6 @@
 using tilework.Components;
 using Tilework.LoadBalancing.Services;
+using Tilework.ViewModels;
 using MudBlazor.Services;
 
 
@@ -12,6 +13,10 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddLoadBalancer();
+
+
+builder.Services.AddViewModels();
+
 
 var app = builder.Build();
 

@@ -4,6 +4,7 @@ namespace Tilework.LoadBalancing.Models;
 
 public class LoadBalancer
 {
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public LoadBalancerType Type { get; set; }
     public int Port { get; set; }

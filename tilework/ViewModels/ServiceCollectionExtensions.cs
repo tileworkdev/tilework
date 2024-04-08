@@ -1,12 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Tilework.LoadBalancing.Services;
+namespace Tilework.ViewModels;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddViewmodels(this IServiceCollection services)
+    public static IServiceCollection AddViewModels(this IServiceCollection services)
     {
-        services.AddScoped<LoadBalancerService>();
+
+        services.AddScoped<LoadBalancerListViewModel>();
+        services.AddScoped<LoadBalancerDetailViewModel>();
 
         return services;
     }
