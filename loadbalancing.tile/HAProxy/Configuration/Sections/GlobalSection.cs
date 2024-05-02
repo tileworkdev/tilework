@@ -1,9 +1,8 @@
-namespace Haproxy.Configuration;
+namespace Tilework.LoadBalancing.Haproxy;
 
-public class GlobalSection
+public class GlobalSection : ConfigSection
 {
-    public GlobalSection(ConfigSection section)
+    public GlobalSection() : base("global")
     {
-
     }
 }

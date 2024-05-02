@@ -1,8 +1,8 @@
-namespace Haproxy.Configuration;
+namespace Tilework.LoadBalancing.Haproxy;
 
-public class DefaultsSection
+public class DefaultsSection : ConfigSection
 {
-    public DefaultsSection(ConfigSection section)
+    public DefaultsSection() : base("defaults")
     {
         
     }

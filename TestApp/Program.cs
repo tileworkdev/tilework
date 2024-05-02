@@ -1,6 +1,9 @@
 ﻿using System;
-using Haproxy.Configuration; // Import the namespace of your library
+using Tilework.LoadBalancing.Haproxy;
+using Tilework.LoadBalancing.Services;
 
-// Console.WriteLine("Hello, World!");
 
-var cfg = new Configuration("/etc/haproxy/haproxy.cfg");
+var cfg = new HAProxyConfigurator();
+
+var lb = new LoadBalancerService(cfg);
+lb.ApplyConfiguration();

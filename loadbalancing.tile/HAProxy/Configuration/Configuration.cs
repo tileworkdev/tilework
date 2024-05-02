@@ -1,23 +1,41 @@
 using System.IO;
 
-namespace Haproxy.Configuration;
+namespace Tilework.LoadBalancing.Haproxy;
 
 public class Configuration
 {
-    private GlobalSection Global { get; set; }
-    private DefaultsSection Defaults { get; set; }
-    private List<BackendSection> Backends { get; set; } = new List<BackendSection>();
-    private List<FrontendSection> Frontends { get; set; } = new List<FrontendSection>();
+    public ConfigSection Global { get; set; }
+    public ConfigSection Defaults { get; set; }
+    public List<ConfigSection> Backends { get; set; } = new List<ConfigSection>();
+    public List<ConfigSection> Frontends { get; set; } = new List<ConfigSection>();
 
     private readonly string _filename;
+
     public Configuration(string filename)
     {
         _filename = filename;
-
-        LoadConfiguration();
     }
 
-    private void LoadConfiguration()
+    private void LoadSection(string section, string? name, List<string[]> statements)
+    {
+        switch(section)
+        {
+            case "global":
+                Global = new GlobalSection() { Statements = statements, Name = name };
+                break;
+            case "defaults":
+                Defaults = new DefaultsSection() { Statements = statements, Name = name };
+                break;
+            case "frontend":
+                Frontends.Add(new FrontendSection() { Statements = statements, Name = name });
+                break;
+            case "backend":
+                Backends.Add(new BackendSection() { Statements = statements, Name = name });
+                break;
+        }
+    }
+
+    public void Load()
     {
         // Read the lines
         var lines = File.ReadAllLines(_filename);
@@ -30,48 +48,55 @@ public class Configuration
             .Select(line => line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries))
             .ToArray();
 
-
-        var sections = new List<ConfigSection>();
-        ConfigSection CurrentSection = null;
+        string[] curName = null;
+        List<string[]> curStatements = null;
         foreach(var line in cleanedLines)
         {
-            if(ConfigSection.IsSection(line))
+            if(ConfigSectionUtils.IsSection(line))
             {
-                if(CurrentSection != null)
-                    sections.Add(CurrentSection);
-                CurrentSection = new ConfigSection(line);
+                if(curName != null)
+                    LoadSection(curName[0], curName.Length > 1 ? curName[1] : null, curStatements);
+                curName = line;
+                curStatements = new List<string []>();
             }
             else
             {
-                CurrentSection.AddStatement(line);
+                curStatements.Add(line);
             }
         }
 
-        if(CurrentSection != null)
-            sections.Add(CurrentSection);
-
-        foreach(var section in sections)
-        {
-            switch(section.SectionName)
-            {
-                case "global":
-                    Global = new GlobalSection(section);
-                    break;
-                case "defaults":
-                    Defaults = new DefaultsSection(section);
-                    break;
-                case "frontend":
-                    Frontends.Add(new FrontendSection(section));
-                    break;
-                case "backend":
-                    Backends.Add(new BackendSection(section));
-                    break;
-            }
-        }
+        if(curName != null)
+            LoadSection(curName[0], curName.Length > 1 ? curName[1] : null, curStatements);
     }
 
-    private void SaveConfiguration()
+    public void Save()
     {
+        var configLines = new List<string>();
 
+        configLines.AddRange(generateSectionLines(Global));
+        configLines.AddRange(generateSectionLines(Defaults));
+
+        foreach(var fe in Frontends)
+            configLines.AddRange(generateSectionLines(fe));
+        foreach(var be in Backends)
+            configLines.AddRange(generateSectionLines(be));
+
+        File.WriteAllLines(_filename, configLines);
+    }
+
+    private List<string> generateSectionLines(ConfigSection section)
+    {
+        var sectionLines = new List<string>();
+        if(section.Name != null)
+            sectionLines.Add($"{section.Section} {section.Name}");
+        else
+            sectionLines.Add(section.Section);
+
+        foreach(var statement in section.Statements)
+        {
+            sectionLines.Add($"\t{String.Join(" ", statement)}");
+        }
+
+        return sectionLines;
     }
 }
