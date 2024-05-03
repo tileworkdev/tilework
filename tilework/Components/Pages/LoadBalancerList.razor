@@ -10,11 +10,22 @@
         <MudTh>Name</MudTh>
         <MudTh>Type</MudTh>
         <MudTh>Port</MudTh>
+        <MudTh>Status</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Type">@context.Type</MudTd>
         <MudTd DataLabel="Port">@context.Port</MudTd>
+        <MudTd DataLabel="Status">
+            @if (context.Enabled)
+            {
+                <MudChip Size="Size.Small" Color="Color.Success" Text="Enabled" />
+            }
+            else
+            {
+                <MudChip Size="Size.Small" Color="Color.Error" Text="Disabled" />
+            }
+        </MudTd>
     </RowTemplate>
 </MudTable>
 
