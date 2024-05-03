@@ -44,21 +44,24 @@ public class LoadBalancerService
     {
         new LoadBalancer {
             Id = Guid.Parse("e8d5f029-4996-4bc1-86ec-5a92f0194b49"),
-            Name = "LB1",
+            Name = "FirstLoadBalancer",
+            Enabled = true,
             Type = LoadBalancerType.NETWORK,
             Port = 6507,
             Group = targetGroups[0],
         },
         new LoadBalancer {
             Id = Guid.Parse("a550a4bd-2330-45b6-800f-345c1ffb5ff7"),
-            Name = "LB2",
+            Name = "SecondLoadBalancer",
+            Enabled = true,
             Type = LoadBalancerType.APPLICATION,
             Port = 6508,
             Group = targetGroups[1],
         },
         new LoadBalancer {
             Id = Guid.Parse("a98a013d-31de-4a43-b990-c49658d3ed38"),
-            Name = "LB3",
+            Name = "ThirdLoadBalancer",
+            Enabled = false,
             Type = LoadBalancerType.NETWORK,
             Port = 6509,
             Group = targetGroups[2]
