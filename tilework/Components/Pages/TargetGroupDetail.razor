@@ -1,0 +1,21 @@
+@inject TargetGroupDetailViewModel ViewModel
+@page "/lb/targetgroups/{Id}"
+
+<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize(Guid.Parse(Id));
+        _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+    }
+}

@@ -1,0 +1,34 @@
+@inject TargetGroupListViewModel ViewModel
+@inject NavigationManager NavigationManager
+@using Tilework.LoadBalancing.Models
+@page "/lb/targetgroups"
+
+<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
+
+<MudTable Items="ViewModel.TargetGroups" Hover="true">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Targets</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Targets">@context.Targets.Count()</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups/", disabled: true, icon: Icons.Material.Filled.AltRoute),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+    private string DetailLink(Guid Id)
+    {
+        return $"/lb/targetgroups/{Id.ToString()}";
+    }
+}    

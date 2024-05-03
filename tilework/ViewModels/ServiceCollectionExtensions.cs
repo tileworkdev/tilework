@@ -10,6 +10,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<LoadBalancerListViewModel>();
         services.AddScoped<LoadBalancerDetailViewModel>();
 
+        services.AddScoped<TargetGroupListViewModel>();
+        services.AddScoped<TargetGroupDetailViewModel>();
+
         return services;
     }
 }
