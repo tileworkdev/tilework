@@ -1,4 +1,6 @@
 @inject LoadBalancerDetailViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
 @page "/lb/loadbalancers/{Id}"
 
 <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
@@ -11,7 +13,15 @@
         <CardHeaderActions>
             <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                 <MudMenuItem>Edit</MudMenuItem>
-                <MudMenuItem>Delete</MudMenuItem>
+                <MudMenuItem OnClick="ConfirmDelete">Delete</MudMenuItem>
+                @if (ViewModel.Object.Enabled == true)
+                {
+                    <MudMenuItem OnClick="ViewModel.Disable">Disable</MudMenuItem>
+                }
+                else
+                {
+                    <MudMenuItem OnClick="ViewModel.Enable">Enable</MudMenuItem>
+                }
             </MudMenu>
         </CardHeaderActions>
     </MudCardHeader>
@@ -54,7 +64,31 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await ViewModel.Initialize(Guid.Parse(Id));
+        try {
+            await ViewModel.Initialize(Guid.Parse(Id));
+        }
+        catch {
+            NavigationManager.NavigateTo("/lb/loadbalancers");
+        }
+        
         _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+    }
+
+    private async Task ConfirmDelete()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to delete the load balancer? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Delete");
+        parameters.Add(x => x.Color, Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await ViewModel.Delete();
+            NavigationManager.NavigateTo("/lb/loadbalancers");
+        }
     }
 }

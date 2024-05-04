@@ -1,0 +1,90 @@
+@using Tilework.LoadBalancing.Enums
+@inject LoadBalancerNewViewModel ViewModel
+@inject NavigationManager NavigationManager
+@page "/lb/loadbalancers/new"
+
+<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
+
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">New load balancer</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudForm @ref="form">
+            <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
+                          Label="Name" Variant="Variant.Outlined" Required="true" />
+
+            <MudNumericField Class="mb-5" HideSpinButtons="true" @bind-Value="ViewModel.Object.Port"
+                             Label="Port" Variant="Variant.Outlined" Required="true" Min="1" Max="65535" />
+
+            <MudSelect Class="mb-5" T="LoadBalancerType" @bind-Value="ViewModel.Object.Type"
+                       Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                <MudSelectItem Value="LoadBalancerType.APPLICATION" />
+                <MudSelectItem Value="LoadBalancerType.NETWORK" />
+            </MudSelect>
+            
+            @if (ViewModel.Object.Type == LoadBalancerType.APPLICATION)
+            {
+                <MudSelect Class="mb-5" T="AlbProtocol?" @bind-Value="ViewModel.Object.AlbProtocol"
+                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                    <MudSelectItem T="AlbProtocol?" Value="AlbProtocol.HTTP" />
+                    <MudSelectItem T="AlbProtocol?" Value="AlbProtocol.HTTPS" />
+                </MudSelect>
+            }
+            else if(ViewModel.Object.Type == LoadBalancerType.NETWORK)
+            {
+                <MudSelect Class="mb-5" T="NlbProtocol?" @bind-Value="ViewModel.Object.NlbProtocol"
+                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.TCP" />
+                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.UDP" />
+                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.TCP_UDP" />
+                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.TLS" />
+                </MudSelect>
+            }
+        </MudForm>
+        
+    </MudCardContent>
+    <MudCardActions>
+        <MudGrid Justify="Justify.FlexEnd">
+            <MudItem>
+                <MudButton Variant="Variant.Filled" DisableElevation="true" Href="/lb/loadbalancers">Cancel</MudButton>
+            </MudItem>
+            <MudItem>
+                <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" OnClick="Submit">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+        
+        
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers", icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+    };
+
+    private MudForm form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+
+        if(form.IsValid)
+        {
+            await ViewModel.Save();
+            NavigationManager.NavigateTo("/lb/loadbalancers");
+        }
+    }
+}

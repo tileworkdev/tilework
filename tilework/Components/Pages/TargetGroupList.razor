@@ -6,6 +6,11 @@
 <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
 
 <MudTable Items="ViewModel.TargetGroups" Hover="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Target groups</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary">Create new</MudButton>
+    </ToolBarContent>
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Targets</MudTh>
