@@ -10,6 +10,11 @@ public class Server
 
     public Server(string [] parameters)
     {
+        Name = parameters[1];
+
+        string[] parts = parameters[2].Split(':');
+        Address = parts[0];
+        Port = Int32.Parse(parts[1]);
 
     }
 

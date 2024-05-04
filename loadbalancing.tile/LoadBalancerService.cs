@@ -83,6 +83,22 @@ public class LoadBalancerService
         return balancers.First(b => b.Id == Id);
     }
 
+    public void AddLoadBalancer(LoadBalancer balancer)
+    {
+        balancers.Add(balancer);
+    }
+
+    public void UpdateLoadBalancer(LoadBalancer balancer)
+    {
+        var index = balancers.FindIndex(x => x.Id == balancer.Id);
+        balancers[index] = balancer;
+    }
+
+    public void DeleteLoadBalancer(Guid Id)
+    {
+        balancers.RemoveAll(x => x.Id == Id);
+    }
+
     public List<TargetGroup> GetTargetGroups()
     {
         return targetGroups;
@@ -95,6 +111,7 @@ public class LoadBalancerService
 
     public void ApplyConfiguration()
     {
-        _configurator.ApplyConfiguration(balancers);
+        var enabledBalancers = balancers.Where(b => b.Enabled == true).ToList();
+        _configurator.ApplyConfiguration(enabledBalancers);
     }
 }

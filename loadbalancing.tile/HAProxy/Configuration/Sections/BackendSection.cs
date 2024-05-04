@@ -9,7 +9,7 @@ public class BackendSection : ConfigSection
     public BalanceMode Balance { get; set; }
 
     [Statement("server")]
-    public List<Server> Servers { get; set; }
+    public List<Server> Servers { get; set; } = new List<Server>();
 
     public BackendSection() : base("backend")
     {

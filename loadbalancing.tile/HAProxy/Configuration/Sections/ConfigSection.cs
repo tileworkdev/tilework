@@ -61,6 +61,33 @@ public abstract class ConfigSection
         return statements;
     }
 
+    private void SetStatement(string[] statement)
+    {
+        PropertyInfo[] properties = this.GetType().GetProperties();
+        foreach (var property in properties)
+        {
+            var attribute = property.GetCustomAttribute(typeof(StatementAttribute)) as StatementAttribute;
+            if (attribute != null && attribute.Name == statement[0])
+            {
+                if(typeof(IList).IsAssignableFrom(property.PropertyType) == true)
+                {
+                    var currentValue = (IList) property.GetValue(this);
+                    var elementType = property.PropertyType.GetGenericArguments()[0];
+                    currentValue.Add(StringToProp(elementType, statement));
+                    property.SetValue(this, currentValue);
+                }
+                else
+                {
+                    property.SetValue(this, StringToProp(property.PropertyType, statement));
+                }
+
+                return;
+            }
+        }
+
+        _statements.Add(statement);
+    }
+
     private string PropToString(object value)
     {
         if (value.GetType().IsEnum)
@@ -73,34 +100,23 @@ public abstract class ConfigSection
         }
     }
 
-    private void SetStatement(string[] statement)
+    private object StringToProp(Type type, string[] value)
     {
-        PropertyInfo[] properties = this.GetType().GetProperties();
-        foreach (var property in properties)
+
+        var constructor = type.GetConstructor(new Type[] { typeof(string[]) });
+        if (constructor != null)
         {
-            var attribute = property.GetCustomAttribute(typeof(StatementAttribute)) as StatementAttribute;
-            if (attribute != null && attribute.Name == statement[0])
-            {
-                var constructor = property.PropertyType.GetConstructor(new Type[] { typeof(string[]) });
-                if (constructor != null)
-                {
-                    object propertyValue = constructor.Invoke(new object[] { statement });
-                    property.SetValue(this, propertyValue);
-                }
-                else if (property.PropertyType.IsEnum)
-                {
-                    object enumValue = Enum.Parse(property.PropertyType, statement[1], ignoreCase: true);
-                    property.SetValue(this, enumValue);
-                }
-                else
-                {
-                    property.SetValue(this, statement[1]);
-                }
-
-                return;
-            }
+            object propertyValue = constructor.Invoke(new object[] { value });
+            return propertyValue;
         }
-
-        _statements.Add(statement);
+        else if (type.IsEnum)
+        {
+            object enumValue = Enum.Parse(type, value[1], ignoreCase: true);
+            return enumValue;
+        }
+        else
+        {
+            return value[1];
+        }
     }
 }
