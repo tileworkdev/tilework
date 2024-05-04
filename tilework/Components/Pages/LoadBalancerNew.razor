@@ -26,25 +26,6 @@
                 <MudSelectItem Value="LoadBalancerType.APPLICATION" />
                 <MudSelectItem Value="LoadBalancerType.NETWORK" />
             </MudSelect>
-            
-            @if (ViewModel.Object.Type == LoadBalancerType.APPLICATION)
-            {
-                <MudSelect Class="mb-5" T="AlbProtocol?" @bind-Value="ViewModel.Object.AlbProtocol"
-                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                    <MudSelectItem T="AlbProtocol?" Value="AlbProtocol.HTTP" />
-                    <MudSelectItem T="AlbProtocol?" Value="AlbProtocol.HTTPS" />
-                </MudSelect>
-            }
-            else if(ViewModel.Object.Type == LoadBalancerType.NETWORK)
-            {
-                <MudSelect Class="mb-5" T="NlbProtocol?" @bind-Value="ViewModel.Object.NlbProtocol"
-                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.TCP" />
-                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.UDP" />
-                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.TCP_UDP" />
-                    <MudSelectItem T="NlbProtocol?" Value="NlbProtocol.TLS" />
-                </MudSelect>
-            }
         </MudForm>
         
     </MudCardContent>
