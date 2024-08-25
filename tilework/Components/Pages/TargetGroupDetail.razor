@@ -3,7 +3,7 @@
 
 <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
 
-<MudCard Outlined="true">
+<MudCard Outlined="true" Class="mb-4">
     <MudCardHeader>
         <CardHeaderContent>
             <MudText Typo="Typo.h6">@ViewModel.Object.Name</MudText>
@@ -16,23 +16,26 @@
         </CardHeaderActions>
     </MudCardHeader>
     <MudCardContent>
-        <MudGrid Spacing="5">
-            <MudItem>
-                @* <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@ViewModel.Object.Type</MudText> *@
-            </MudItem>
-            <MudItem>
-                @* <MudText Typo="Typo.subtitle2">Status</MudText> *@
-            </MudItem>
-            <MudItem>
-                @* <MudText Typo="Typo.subtitle2">Port</MudText>
-                <MudText Typo="Typo.body2">@ViewModel.Object.Port</MudText> *@
-            </MudItem>
-        </MudGrid>
     </MudCardContent>
     <MudCardActions>
     </MudCardActions>
 </MudCard>
+
+<MudTable Outlined="true" Items="ViewModel.Object.Targets" Hover="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Targets</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary">Add target</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Address</MudTh>
+        <MudTh>Port</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Address</MudTd>
+        <MudTd DataLabel="Targets">@context.Port</MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
     [Parameter]
