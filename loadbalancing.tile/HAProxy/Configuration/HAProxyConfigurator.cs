@@ -1,11 +1,20 @@
 using Tilework.LoadBalancing.Models;
 using Tilework.LoadBalancing.Interfaces;
 
+using Tilework.Core.Interfaces;
+
 namespace Tilework.LoadBalancing.Haproxy;
 
 public class HAProxyConfigurator : ILoadBalancingConfigurator
 {
     public string ServiceName => "HAProxy";
+
+    private readonly IServiceManager _serviceManager;
+
+    public HAProxyConfigurator(IServiceManager serviceManager)
+    {
+        _serviceManager = serviceManager;
+    }
 
     public List<LoadBalancer> LoadConfiguration()
     {
@@ -30,5 +39,10 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         }
 
         haproxyConfig.Save();
+
+        if(config.Count() == 0)
+            _serviceManager.StopService("haproxy");
+        else
+            _serviceManager.RestartService("haproxy");
     }
 }
