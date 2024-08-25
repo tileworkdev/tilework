@@ -15,6 +15,33 @@ public class SystemdServiceManager : IServiceManager
         _logger = logger;
     }
 
+    private string ExecuteCommand(string command, string arguments)
+    {
+        using (Process process = new Process())
+        {
+            process.StartInfo.FileName = command;
+            process.StartInfo.Arguments = arguments;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            if(process.ExitCode != 0)
+            {
+                throw new Exception($"Command execution [{command} {arguments}] failed with code {process.ExitCode}: {error}");
+            }
+
+            return output;
+        }
+    }
+
     private void ManageService(ServiceManagerAction action, string serviceName)
     {
         string actionCommand;
@@ -30,38 +57,21 @@ public class SystemdServiceManager : IServiceManager
             case ServiceManagerAction.Restart:
                 actionCommand = "restart";
                 break;
+            case ServiceManagerAction.Reload:
+                actionCommand = "reload";
+                break;
             default:
                 throw new ArgumentException("Unkown service manager action received");
         }
 
-        using (Process process = new Process())
-        {
-            process.StartInfo.FileName = "systemctl";
-            process.StartInfo.Arguments = $"{actionCommand} {serviceName}"; // The systemctl command and its arguments
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
+        ExecuteCommand("systemctl", $"{actionCommand} {serviceName}");
+    }
 
-            process.Start();
+    public bool IsServiceActive(string serviceName)
+    {
+        var output = ExecuteCommand("systemctl", $"is-active {serviceName}");
 
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            if (process.ExitCode == 0)
-            {
-                _logger.LogInformation($"Service {serviceName} {actionCommand}ed successfully.");
-                _logger.LogInformation(output);
-            }
-            else
-            {
-                var result = $"Error {action}ing service {serviceName}: {error}";
-                _logger.LogCritical(result);
-                throw new Exception(result);
-            }
-        }
+        return output.Trim() == "active";
     }
 
     public void StartService(string serviceName) => ManageService(ServiceManagerAction.Start, serviceName);
@@ -69,4 +79,6 @@ public class SystemdServiceManager : IServiceManager
     public void StopService(string serviceName) => ManageService(ServiceManagerAction.Stop, serviceName);
 
     public void RestartService(string serviceName) => ManageService(ServiceManagerAction.Restart, serviceName);
+
+    public void ReloadService(string serviceName) => ManageService(ServiceManagerAction.Reload, serviceName);
 }

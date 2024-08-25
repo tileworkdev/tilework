@@ -4,5 +4,6 @@ public enum ServiceManagerAction
 {
     Start,
     Stop,
-    Restart
+    Restart,
+    Reload
 }

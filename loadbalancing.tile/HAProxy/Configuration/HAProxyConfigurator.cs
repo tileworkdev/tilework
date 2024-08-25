@@ -53,9 +53,14 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
         haproxyConfig.Save();
 
+        var serviceName = "haproxy";
+
         if(config.Count() == 0)
-            _serviceManager.StopService("haproxy");
+            _serviceManager.StopService(serviceName);
+        else if(_serviceManager.IsServiceActive(serviceName))
+            _serviceManager.ReloadService(serviceName);
         else
-            _serviceManager.RestartService("haproxy");
+            _serviceManager.RestartService(serviceName);
+            
     }
 }
