@@ -1,8 +1,11 @@
 ﻿using System.Net;
+using Microsoft.Extensions.Options;
+
 
 using Tilework.LoadBalancing.Models;
 using Tilework.LoadBalancing.Enums;
 using Tilework.LoadBalancing.Interfaces;
+using Tilework.LoadBalancing.Settings;
 
 
 namespace Tilework.LoadBalancing.Services;
@@ -10,7 +13,9 @@ namespace Tilework.LoadBalancing.Services;
 
 public class LoadBalancerService
 {
+    private readonly LoadBalancerSettings _settings;
     private readonly ILoadBalancingConfigurator _configurator;
+    
     
     private static List<TargetGroup> targetGroups = new List<TargetGroup>
     {
@@ -26,7 +31,7 @@ public class LoadBalancerService
             Id = Guid.Parse("1fa12cdc-72af-44ec-a780-e02157c30b01"),
             Name = "HttpGroup",
             Targets = new List<Target> {
-                new Target { Id = Guid.Parse("01eb8280-f554-480e-87b6-99f0ca8db2d6"), Address = IPAddress.Parse("172.16.0.12"), Port=8443 }
+                new Target { Id = Guid.Parse("01eb8280-f554-480e-87b6-99f0ca8db2d6"), Address = IPAddress.Parse("172.16.0.16"), Port=10080 }
             }
         },
         new TargetGroup {
@@ -68,9 +73,14 @@ public class LoadBalancerService
         }
     };
 
-    public LoadBalancerService(ILoadBalancingConfigurator configurator)
+    public LoadBalancerService(ILoadBalancingConfigurator configurator,
+                               IOptions<LoadBalancerSettings> settings
+                               )
     {
         _configurator = configurator;
+        _settings = settings.Value;
+        
+        ApplyConfiguration();
     }
 
     public List<LoadBalancer> GetLoadBalancers()

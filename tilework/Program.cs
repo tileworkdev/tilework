@@ -18,7 +18,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddCoreServices();
-
+builder.Services.AddLoadBalancer(builder.Configuration.GetSection("LoadBalancing"));
 
 builder.Services.AddViewModels();
 
