@@ -1,17 +1,20 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemingProvider @rendermode="InteractiveServer" />
-<MudPopoverProvider @rendermode="InteractiveServer" />
-<MudDialogProvider @rendermode="InteractiveServer" FullWidth="true" MaxWidth="MaxWidth.ExtraSmall" CloseButton="true"
-                   DisableBackdropClick="true" NoHeader="true" Position="DialogPosition.Center" CloseOnEscapeKey="true"/>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <MudLayout>
     <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Tilework</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Edge="Edge.End" OnClick="@((e) => Logout())" />
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
-    <MudMainContent Class="mt-16 pa-4">
+    <MudMainContent Class="mt-16 pa-4 MainBackground">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -22,5 +25,11 @@
     private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private void Logout()
+    {
+        @* AuthProvider.Logout();
+        Navigation.NavigateTo("/login"); *@
     }
 }

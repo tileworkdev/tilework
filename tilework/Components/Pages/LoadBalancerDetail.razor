@@ -35,11 +35,11 @@
                 <MudText Typo="Typo.subtitle2">Status</MudText>
                 @if (ViewModel.Object.Enabled)
                 {
-                    <MudChip Size="Size.Small" Color="Color.Success" Text="Enabled" />
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Enabled</MudChip>
                 }
                 else
                 {
-                    <MudChip Size="Size.Small" Color="Color.Error" Text="Disabled" />
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
                 }
             </MudItem>
             <MudItem>
@@ -85,7 +85,7 @@
 
         var dialog = DialogService.Show<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await ViewModel.Delete();
             NavigationManager.NavigateTo("/lb/loadbalancers");
