@@ -17,12 +17,13 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         var haproxyConfig = new Configuration("/etc/haproxy/haproxy.cfg");
         haproxyConfig.Load();
 
+        haproxyConfig.Frontends = new List<ConfigSection>();
+        haproxyConfig.Backends = new List<ConfigSection>();
+
         foreach(var lb in config)
         {
             var be = TargetGroupToBackend.Map(lb.Group);
             var fe = LoadBalancerToFrontend.Map(lb);
-
-            
 
             haproxyConfig.Frontends.Add(fe);
             haproxyConfig.Backends.Add(be);
