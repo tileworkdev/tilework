@@ -1,7 +1,10 @@
 @using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Models
+
 @inject LoadBalancerNewViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+
 @page "/lb/loadbalancers/new"
 
 <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
@@ -26,6 +29,13 @@
                        Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 <MudSelectItem Value="LoadBalancerType.APPLICATION" />
                 <MudSelectItem Value="LoadBalancerType.NETWORK" />
+            </MudSelect>
+            <MudSelect Class="mb-5" T="TargetGroup" @bind-Value="ViewModel.Object.Group"
+                       Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                @foreach (var group in targetGroups)
+                {
+                    <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
+                }
             </MudSelect>
         </MudForm>
         
@@ -53,10 +63,13 @@
     };
 
     private MudForm form;
+    private List<TargetGroup> targetGroups;
 
     protected override async Task OnInitializedAsync()
     {
         await ViewModel.Initialize();
+
+        targetGroups = await ViewModel.GetTargetGroups();
     }
 
     private async Task Submit()

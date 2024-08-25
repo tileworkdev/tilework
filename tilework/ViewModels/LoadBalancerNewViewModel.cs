@@ -29,4 +29,9 @@ public class LoadBalancerNewViewModel
         _loadBalancerService.AddLoadBalancer(Object);
         _loadBalancerService.ApplyConfiguration();
     }
+
+    public async Task<List<TargetGroup>> GetTargetGroups()
+    {
+        return _loadBalancerService.GetTargetGroups();
+    }
 }

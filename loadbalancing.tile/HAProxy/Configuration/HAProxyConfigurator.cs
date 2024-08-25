@@ -26,15 +26,28 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         var haproxyConfig = new Configuration("/etc/haproxy/haproxy.cfg");
         haproxyConfig.Load();
 
-        haproxyConfig.Frontends = new List<ConfigSection>();
-        haproxyConfig.Backends = new List<ConfigSection>();
+        List<LoadBalancer> loadBalancers = new List<LoadBalancer>();
+        List<TargetGroup> targetGroups = new List<TargetGroup>();
 
         foreach(var lb in config)
         {
-            var be = TargetGroupToBackend.Map(lb.Group);
-            var fe = LoadBalancerToFrontend.Map(lb);
+            loadBalancers.Add(lb);
+            if(!targetGroups.Any(tg => tg.Id == lb.Group.Id))
+                targetGroups.Add(lb.Group);
+        }
 
+        haproxyConfig.Frontends = new List<ConfigSection>();
+        haproxyConfig.Backends = new List<ConfigSection>();
+
+        foreach(var lb in loadBalancers)
+        {
+            var fe = LoadBalancerToFrontend.Map(lb);
             haproxyConfig.Frontends.Add(fe);
+        }
+
+        foreach(var tg in targetGroups)
+        {
+            var be = TargetGroupToBackend.Map(tg);
             haproxyConfig.Backends.Add(be);
         }
 
