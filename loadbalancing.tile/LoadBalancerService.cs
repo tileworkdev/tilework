@@ -119,6 +119,11 @@ public class LoadBalancerService
         return targetGroups.First(t => t.Id == Id);
     }
 
+    public void DeleteTargetGroup(Guid Id)
+    {
+        targetGroups.RemoveAll(x => x.Id == Id);
+    }
+
     public void ApplyConfiguration()
     {
         var enabledBalancers = balancers.Where(b => b.Enabled == true).ToList();

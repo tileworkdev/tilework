@@ -19,4 +19,10 @@ public class TargetGroupDetailViewModel
     {
         Object = _loadBalancerService.GetTargetGroup(Id);
     }
+
+    public async Task Delete()
+    {
+        _loadBalancerService.DeleteTargetGroup(Object.Id);
+        _loadBalancerService.ApplyConfiguration();
+    }
 }
