@@ -12,7 +12,7 @@
         </CardHeaderContent>
         <CardHeaderActions>
             <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                <MudMenuItem>Edit</MudMenuItem>
+                <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo($"/lb/loadbalancers/{Id}/edit"))">Edit</MudMenuItem>
                 <MudMenuItem OnClick="ConfirmDelete">Delete</MudMenuItem>
                 @if (ViewModel.Object.Enabled == true)
                 {
