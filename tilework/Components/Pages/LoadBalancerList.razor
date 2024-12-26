@@ -1,6 +1,6 @@
 @inject LoadBalancerListViewModel ViewModel
 @inject NavigationManager NavigationManager
-@using Tilework.LoadBalancing.Models
+@using Tilework.LoadBalancing.Persistence.Models
 @page "/lb/loadbalancers"
 
 <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
@@ -16,13 +16,11 @@
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Type</MudTh>
-        <MudTh>Port</MudTh>
         <MudTh>Status</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Type">@context.Type</MudTd>
-        <MudTd DataLabel="Port">@context.Port</MudTd>
         <MudTd DataLabel="Status">
             @if (context.Enabled)
             {

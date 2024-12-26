@@ -1,5 +1,5 @@
 @using Tilework.LoadBalancing.Enums
-@using Tilework.LoadBalancing.Models
+@using Tilework.LoadBalancing.Persistence.Models
 
 @inject LoadBalancerNewViewModel ViewModel
 @inject NavigationManager NavigationManager
@@ -22,21 +22,18 @@
             <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                           Label="Name" Variant="Variant.Outlined" Required="true" />
 
-            <MudNumericField Class="mb-5" HideSpinButtons="true" @bind-Value="ViewModel.Object.Port"
-                             Label="Port" Variant="Variant.Outlined" Required="true" Min="1" Max="65535" />
-
             <MudSelect Class="mb-5" T="LoadBalancerType" @bind-Value="ViewModel.Object.Type"
                        Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 <MudSelectItem Value="LoadBalancerType.APPLICATION" />
                 <MudSelectItem Value="LoadBalancerType.NETWORK" />
             </MudSelect>
-            <MudSelect Class="mb-5" T="TargetGroup" @bind-Value="ViewModel.Object.Group"
+            @* <MudSelect Class="mb-5" T="TargetGroup" @bind-Value="ViewModel.Object.Group"
                        Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 @foreach (var group in targetGroups)
                 {
                     <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
                 }
-            </MudSelect>
+            </MudSelect> *@
         </MudForm>
         
     </MudCardContent>

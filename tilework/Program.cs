@@ -52,20 +52,7 @@ app.MapRazorComponents<App>()
 
 
 
-using(var scope = app.Services.CreateScope())
-{
-    var serviceProvider = scope.ServiceProvider;
-
-    var dbContextTypes = builder.Services
-        .Where(service => service.ServiceType.IsSubclassOf(typeof(DbContext)))
-        .Select(service => service.ServiceType);
-
-    foreach (var dbContextType in dbContextTypes)
-    {
-        var dbContext = (DbContext)serviceProvider.GetRequiredService(dbContextType);
-        dbContext.Database.Migrate();
-    }
-}
+app.RunDbMigrations(builder.Services);
 
 
 app.Run();

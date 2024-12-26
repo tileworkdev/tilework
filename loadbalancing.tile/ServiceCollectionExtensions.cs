@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
         services.Configure<LoadBalancerSettings>(configuration);
 
         services.AddScoped<LoadBalancerService>();
-        services.AddScoped<ILoadBalancingConfigurator, HAProxyConfigurator>();
+        services.AddScoped<HAProxyConfigurator>();
 
         services.AddDbContext<LoadBalancerContext>(dbContextOptions);
 
