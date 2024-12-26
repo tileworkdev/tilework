@@ -26,7 +26,15 @@
             "type": "dotnet",
             "request": "launch",
             "projectPath": "${workspaceFolder}/TestApp/TestApp.csproj"
+        },
+        {
+            "name": "Docker .NET Launch",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "netCore": {
+                "appProject": "${workspaceFolder}/tilework/tilework.csproj"
+            }
         }
-
     ]
 }
