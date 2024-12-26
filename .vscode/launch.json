@@ -22,12 +22,6 @@
             }
         },
         {
-            "name": "C#: TestApp Debug",
-            "type": "dotnet",
-            "request": "launch",
-            "projectPath": "${workspaceFolder}/TestApp/TestApp.csproj"
-        },
-        {
             "name": "Docker .NET Launch",
             "type": "docker",
             "request": "launch",
