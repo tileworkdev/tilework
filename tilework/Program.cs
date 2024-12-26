@@ -10,7 +10,6 @@ using Tilework.LoadBalancing.Services;
 
 
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -21,6 +20,8 @@ builder.Services.AddMudServices();
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if(string.IsNullOrEmpty(connectionString))
+    throw new InvalidOperationException("Database connection string not defined");
 var dbContextOptions = DbContextOptionsHelper.Configure(connectionString);
 
 
@@ -32,6 +33,7 @@ builder.Services.AddViewModels();
 
 var app = builder.Build();
 
+var yoko = app.Environment;
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -50,7 +52,6 @@ app.MapRazorComponents<App>()
 
 
 
-
 using(var scope = app.Services.CreateScope())
 {
     var serviceProvider = scope.ServiceProvider;
@@ -62,14 +63,9 @@ using(var scope = app.Services.CreateScope())
     foreach (var dbContextType in dbContextTypes)
     {
         var dbContext = (DbContext)serviceProvider.GetRequiredService(dbContextType);
-
-        // Apply migrations
-        Console.WriteLine($"Migrating {dbContextType.Name}...");
         dbContext.Database.Migrate();
     }
 }
-
-
 
 
 app.Run();

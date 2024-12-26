@@ -1,4 +1,4 @@
-using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 
 namespace Tilework.ViewModels;
@@ -18,25 +18,25 @@ public class LoadBalancerDetailViewModel
     public async Task Enable()
     {
         Object.Enabled = true;
-        _loadBalancerService.UpdateLoadBalancer(Object);
-        _loadBalancerService.ApplyConfiguration();
+        await _loadBalancerService.UpdateLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
     }
     
     public async Task Disable()
     {
         Object.Enabled = false;
-        _loadBalancerService.UpdateLoadBalancer(Object);
-        _loadBalancerService.ApplyConfiguration();
+        await _loadBalancerService.UpdateLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task Delete()
     {
-        _loadBalancerService.DeleteLoadBalancer(Object.Id);
-        _loadBalancerService.ApplyConfiguration();
+        await _loadBalancerService.DeleteLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task Initialize(Guid Id)
     {
-        Object = _loadBalancerService.GetLoadBalancer(Id);
+        Object = await _loadBalancerService.GetLoadBalancer(Id);
     }
 }

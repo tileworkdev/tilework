@@ -1,5 +1,5 @@
 using AutoMapper;
-using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Persistence.Models;
 
 namespace Tilework.LoadBalancing.Haproxy;
 

@@ -1,4 +1,4 @@
-using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Persistence.Models;
 
 namespace Tilework.LoadBalancing.Interfaces;
 
@@ -7,5 +7,5 @@ public interface ILoadBalancingConfigurator
     string ServiceName { get; }
 
     List<LoadBalancer> LoadConfiguration();
-    void ApplyConfiguration(List<LoadBalancer> config);
+    Task ApplyConfiguration(List<LoadBalancer> config);
 }

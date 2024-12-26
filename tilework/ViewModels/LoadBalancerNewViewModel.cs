@@ -1,4 +1,4 @@
-using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 
 namespace Tilework.ViewModels;
@@ -26,12 +26,12 @@ public class LoadBalancerNewViewModel
 
     public async Task Save()
     {
-        _loadBalancerService.AddLoadBalancer(Object);
-        _loadBalancerService.ApplyConfiguration();
+        await _loadBalancerService.AddLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task<List<TargetGroup>> GetTargetGroups()
     {
-        return _loadBalancerService.GetTargetGroups();
+        return await _loadBalancerService.GetTargetGroups();
     }
 }

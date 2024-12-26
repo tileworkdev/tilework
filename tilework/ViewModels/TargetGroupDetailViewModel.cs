@@ -1,4 +1,4 @@
-using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 
 namespace Tilework.ViewModels;
@@ -17,12 +17,12 @@ public class TargetGroupDetailViewModel
 
     public async Task Initialize(Guid Id)
     {
-        Object = _loadBalancerService.GetTargetGroup(Id);
+        Object = await _loadBalancerService.GetTargetGroup(Id);
     }
 
     public async Task Delete()
     {
-        _loadBalancerService.DeleteTargetGroup(Object.Id);
-        _loadBalancerService.ApplyConfiguration();
+        await _loadBalancerService.DeleteTargetGroup(Object);
+        await _loadBalancerService.ApplyConfiguration();
     }
 }

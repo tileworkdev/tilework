@@ -1,4 +1,4 @@
-using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 
 namespace Tilework.ViewModels;
@@ -17,6 +17,6 @@ public class LoadBalancerListViewModel
 
     public async Task Initialize()
     {
-        Balancers = _loadBalancerService.GetLoadBalancers();
+        Balancers = await _loadBalancerService.GetLoadBalancers();
     }
 }
