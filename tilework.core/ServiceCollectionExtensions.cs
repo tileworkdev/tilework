@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
         services.AddSingleton<IServiceManager, SystemdServiceManager>();
+        services.AddSingleton<IContainerManager, DockerServiceManager>();
         return services;
     }
 }

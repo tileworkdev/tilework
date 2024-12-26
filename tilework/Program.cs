@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 using MudBlazor.Services;
 
 using tilework.Components;
@@ -17,8 +19,13 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dbContextOptions = DbContextOptionsHelper.Configure(connectionString);
+
+
 builder.Services.AddCoreServices();
-builder.Services.AddLoadBalancer(builder.Configuration.GetSection("LoadBalancing"));
+builder.Services.AddLoadBalancer(builder.Configuration.GetSection("LoadBalancing"), dbContextOptions);
 
 builder.Services.AddViewModels();
 
@@ -40,5 +47,29 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+
+
+
+using(var scope = app.Services.CreateScope())
+{
+    var serviceProvider = scope.ServiceProvider;
+
+    var dbContextTypes = builder.Services
+        .Where(service => service.ServiceType.IsSubclassOf(typeof(DbContext)))
+        .Select(service => service.ServiceType);
+
+    foreach (var dbContextType in dbContextTypes)
+    {
+        var dbContext = (DbContext)serviceProvider.GetRequiredService(dbContextType);
+
+        // Apply migrations
+        Console.WriteLine($"Migrating {dbContextType.Name}...");
+        dbContext.Database.Migrate();
+    }
+}
+
+
+
 
 app.Run();
