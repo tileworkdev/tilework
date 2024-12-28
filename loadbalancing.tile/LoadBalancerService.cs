@@ -189,7 +189,7 @@ public class LoadBalancerService
 
     public async Task ApplyConfiguration()
     {
-        var enabledBalancers = await _dbContext.LoadBalancers.Where(b => b.Enabled == true).ToListAsync();
-        await _configurator.ApplyConfiguration(enabledBalancers);
+        var balancers = await _dbContext.LoadBalancers.ToListAsync();
+        await _configurator.ApplyConfiguration(balancers);
     }
 }
