@@ -8,6 +8,7 @@ using Tilework.LoadBalancing.Settings;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Enums;
 using Tilework.Core.Models;
+using SharpCompress;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
@@ -131,6 +132,8 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         foreach(var cnt in containersToDelete)
         {
             _logger.LogInformation($"Deleting defunct load balancer {cnt.Name}");
+            if(cnt.State == ContainerState.Running)
+                await _containerManager.StopContainer(cnt.Id);
             await _containerManager.DeleteContainer(cnt.Id);
         }
     }
