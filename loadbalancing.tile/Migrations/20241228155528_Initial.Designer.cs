@@ -11,7 +11,7 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    [Migration("20241228145444_Initial")]
+    [Migration("20241228155528_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
