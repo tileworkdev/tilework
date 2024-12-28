@@ -173,12 +173,12 @@ public class LoadBalancerService
 
     public async Task<List<TargetGroup>> GetTargetGroups()
     {
-        return await _dbContext.TargetGroups.Include(tg => tg.Targets).ToListAsync();
+        return await _dbContext.TargetGroups.ToListAsync();
     }
 
     public async Task<TargetGroup?> GetTargetGroup(Guid Id)
     {
-        return await _dbContext.TargetGroups.Include(tg => tg.Targets).FirstOrDefaultAsync(tg => tg.Id == Id);
+        return await _dbContext.TargetGroups.FindAsync(Id);
     }
 
     public async Task AddTargetGroup(TargetGroup group)
