@@ -28,10 +28,10 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">Targets</MudText>
         <MudSpacer />
-        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary">Add target</MudButton>
+        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="t => t.Address" Title="Address" Editable="false" />
+        <PropertyColumn Property="t => t.Address.ToString()" Title="Address" Editable="false" />
         <PropertyColumn Property="t => t.Port" Title="Port" />
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
@@ -72,6 +72,22 @@
         {
             await ViewModel.Delete();
             NavigationManager.NavigateTo("/lb/targetgroups");
+        }
+    }
+
+    private async Task AddTarget()
+    {
+        var target = new Target();
+        var parameters = new DialogParameters<AddTargetDialog>();
+        parameters.Add(x => x.Target, target);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = DialogService.Show<AddTargetDialog>("Add target", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            ViewModel.AddTarget(target);
         }
     }
 }

@@ -173,12 +173,12 @@ public class LoadBalancerService
 
     public async Task<List<TargetGroup>> GetTargetGroups()
     {
-        return await _dbContext.TargetGroups.ToListAsync();
+        return await _dbContext.TargetGroups.Include(tg => tg.Targets).ToListAsync();
     }
 
     public async Task<TargetGroup?> GetTargetGroup(Guid Id)
     {
-        return await _dbContext.TargetGroups.FindAsync(Id);
+        return await _dbContext.TargetGroups.Include(tg => tg.Targets).FirstOrDefaultAsync(tg => tg.Id == Id);
     }
 
     public async Task AddTargetGroup(TargetGroup group)
@@ -187,11 +187,29 @@ public class LoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task UpdateTargetGroup(TargetGroup group)
+    {
+        _dbContext.TargetGroups.Update(group);
+        await _dbContext.SaveChangesAsync();
+    }
+
     public async Task DeleteTargetGroup(TargetGroup group)
     {
         _dbContext.TargetGroups.Remove(group);
         await _dbContext.SaveChangesAsync();
     }
+
+    // public async Task AddTarget(Target target)
+    // {
+    //     await _dbContext.Targets.AddAsync(target);
+    //     await _dbContext.SaveChangesAsync();
+    // }
+
+    // public async Task DeleteTarget(Target target)
+    // {
+    //     _dbContext.Targets.Remove(target);
+    //     await _dbContext.SaveChangesAsync();
+    // }
 
     public async Task ApplyConfiguration()
     {

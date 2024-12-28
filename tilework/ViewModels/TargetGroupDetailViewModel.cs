@@ -25,4 +25,10 @@ public class TargetGroupDetailViewModel
         await _loadBalancerService.DeleteTargetGroup(Object);
         await _loadBalancerService.ApplyConfiguration();
     }
+
+    public async Task AddTarget(Target target)
+    {
+        Object.Targets.Add(target);
+        await _loadBalancerService.UpdateTargetGroup(Object);
+    }
 }
