@@ -15,7 +15,11 @@ namespace loadbalancing.tile.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("Proxies:ChangeTracking", false)
+                .HasAnnotation("Proxies:CheckEquality", false)
+                .HasAnnotation("Proxies:LazyLoading", true);
 
             modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.Listener", b =>
                 {
@@ -23,11 +27,17 @@ namespace loadbalancing.tile.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("AlbProtocol")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid>("LoadBalancerId")
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("NlbProtocol")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Port")
                         .HasColumnType("INTEGER");

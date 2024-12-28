@@ -31,6 +31,8 @@ namespace loadbalancing.tile.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Port = table.Column<int>(type: "INTEGER", nullable: false),
+                    AlbProtocol = table.Column<int>(type: "INTEGER", nullable: true),
+                    NlbProtocol = table.Column<int>(type: "INTEGER", nullable: true),
                     Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
                     LoadBalancerId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },

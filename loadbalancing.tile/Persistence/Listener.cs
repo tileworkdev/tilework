@@ -6,6 +6,11 @@ public class Listener
 {
     public Guid Id { get; set; }
     public int Port { get; set; }
+
+    public AlbProtocol? AlbProtocol { get; set; }
+
+    public NlbProtocol? NlbProtocol { get; set; }
+
     public virtual List<Rule> Rules { get; set; }
     public bool Enabled { get; set; }
 

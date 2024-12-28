@@ -1,11 +1,15 @@
+@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.LoadBalancing.Enums
+
 @inject LoadBalancerDetailViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+
 @page "/lb/loadbalancers/{Id}"
 
 <MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
 
-<MudCard Outlined="true">
+<MudCard Outlined="true" Class="mb-4">
     <MudCardHeader>
         <CardHeaderContent>
             <MudText Typo="Typo.h6">@ViewModel.Object.Name</MudText>
@@ -42,15 +46,38 @@
                     <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
                 }
             </MudItem>
-            @* <MudItem>
-                <MudText Typo="Typo.subtitle2">Port</MudText>
-                <MudText Typo="Typo.body2">@ViewModel.Object.Port</MudText>
-            </MudItem> *@
         </MudGrid>
     </MudCardContent>
     <MudCardActions>
     </MudCardActions>
 </MudCard>
+
+
+<MudDataGrid T="Listener" Outlined="true" Items="ViewModel.Object.Listeners" Hover="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Listeners</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
+        @if (ViewModel.Object.Type == LoadBalancerType.APPLICATION)
+        {
+            <PropertyColumn Property="t => t.AlbProtocol" Title="Protocol" Editable="false" />
+        }
+        else
+        {
+            <PropertyColumn Property="t => t.NlbProtocol" Title="Protocol" Editable="false" />
+        }
+        
+        <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
 
 @code {
     [Parameter]
@@ -90,5 +117,9 @@
             await ViewModel.Delete();
             NavigationManager.NavigateTo("/lb/loadbalancers");
         }
+    }
+
+    private async Task AddListener()
+    {
     }
 }
