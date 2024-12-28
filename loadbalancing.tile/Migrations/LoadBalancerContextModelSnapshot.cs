@@ -113,7 +113,7 @@ namespace loadbalancing.tile.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("RuleId")
+                    b.Property<Guid?>("RuleId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -161,9 +161,7 @@ namespace loadbalancing.tile.Migrations
                 {
                     b.HasOne("Tilework.LoadBalancing.Persistence.Models.Rule", "Rule")
                         .WithOne("Group")
-                        .HasForeignKey("Tilework.LoadBalancing.Persistence.Models.TargetGroup", "RuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Tilework.LoadBalancing.Persistence.Models.TargetGroup", "RuleId");
 
                     b.Navigation("Rule");
                 });

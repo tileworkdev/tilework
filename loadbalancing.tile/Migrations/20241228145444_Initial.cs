@@ -70,7 +70,7 @@ namespace loadbalancing.tile.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
-                    RuleId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    RuleId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -79,8 +79,7 @@ namespace loadbalancing.tile.Migrations
                         name: "FK_TargetGroups_Rules_RuleId",
                         column: x => x.RuleId,
                         principalTable: "Rules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
