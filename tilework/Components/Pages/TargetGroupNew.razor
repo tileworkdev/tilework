@@ -1,0 +1,74 @@
+@using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Persistence.Models
+
+@inject TargetGroupNewViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+@page "/lb/targetgroups/new"
+
+<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
+
+<MudCard Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">New target group</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudForm @ref="form">
+            <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
+                          Label="Name" Variant="Variant.Outlined" Required="true" />
+        </MudForm>
+        
+    </MudCardContent>
+    <MudCardActions>
+        <MudGrid Justify="Justify.FlexEnd">
+            <MudItem>
+                <MudButton Variant="Variant.Filled" DropShadow="false" Href="/lb/targetgroups">Cancel</MudButton>
+            </MudItem>
+            <MudItem>
+                <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="Submit">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+        
+        
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+    };
+
+    private MudForm form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+
+        if(form.IsValid)
+        {
+            try
+            {
+                await ViewModel.Save();
+                NavigationManager.NavigateTo("/lb/targetgroups");
+                Snackbar.Add("target group added successfully!", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                Snackbar.Add($"Failed to add load balancer: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

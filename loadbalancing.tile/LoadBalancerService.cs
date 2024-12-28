@@ -181,6 +181,12 @@ public class LoadBalancerService
         return await _dbContext.TargetGroups.FindAsync(Id);
     }
 
+    public async Task AddTargetGroup(TargetGroup group)
+    {
+        await _dbContext.TargetGroups.AddAsync(group);
+        await _dbContext.SaveChangesAsync();
+    }
+
     public async Task DeleteTargetGroup(TargetGroup group)
     {
         _dbContext.TargetGroups.Remove(group);
