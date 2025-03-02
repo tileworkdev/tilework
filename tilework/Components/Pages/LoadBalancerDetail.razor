@@ -48,36 +48,48 @@
             </MudItem>
         </MudGrid>
     </MudCardContent>
-    <MudCardActions>
-    </MudCardActions>
 </MudCard>
 
+@if(ViewModel.Object.Type == LoadBalancerType.APPLICATION)
+{
+    <MudDataGrid T="ApplicationListener" Outlined="true" Items="ViewModel.Object.ApplicationListeners" Hover="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Listeners</MudText>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
+            <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
+            <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+}
+else
+{
+    <MudDataGrid T="NetworkListener" Outlined="true" Items="ViewModel.Object.NetworkListeners" Hover="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Listeners</MudText>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
+            <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+}
 
-<MudDataGrid T="Listener" Outlined="true" Items="ViewModel.Object.Listeners" Hover="true">
-    <ToolBarContent>
-        <MudText Typo="Typo.h6">Listeners</MudText>
-        <MudSpacer />
-        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
-    </ToolBarContent>
-    <Columns>
-        <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
-        @if (ViewModel.Object.Type == LoadBalancerType.APPLICATION)
-        {
-            <PropertyColumn Property="t => t.AlbProtocol" Title="Protocol" Editable="false" />
-        }
-        else
-        {
-            <PropertyColumn Property="t => t.NlbProtocol" Title="Protocol" Editable="false" />
-        }
-        
-        <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-            </CellTemplate>
-        </TemplateColumn>
-    </Columns>
-</MudDataGrid>
 
 @code {
     [Parameter]

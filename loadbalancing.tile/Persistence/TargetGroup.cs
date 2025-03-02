@@ -5,7 +5,4 @@ public class TargetGroup
     public Guid Id { get; set; }
     public string Name { get; set; }
     public virtual List<Target> Targets { get; set; } = new List<Target>();
-
-    public Guid? RuleId { get; set; }
-    public virtual Rule? Rule { get; set; }
 }

@@ -14,7 +14,8 @@ public class LoadBalancerContext : DbContext
     }
 
     public DbSet<LoadBalancer> LoadBalancers { get; set; }
-    public DbSet<Listener> Listeners { get; set; }
+    public DbSet<ApplicationListener> ApplicationListeners { get; set; }
+    public DbSet<NetworkListener> NetworkListeners { get; set; }
     public DbSet<Rule> Rules { get; set; }
     public DbSet<TargetGroup> TargetGroups { get; set; }
     public DbSet<Target> Targets { get; set; }
