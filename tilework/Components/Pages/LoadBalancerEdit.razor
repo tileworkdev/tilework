@@ -6,17 +6,8 @@
 @inject ISnackbar Snackbar
 @page "/lb/loadbalancers/{Id}/edit"
 
-<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
-
-<MudCard Outlined="true">
-    <MudCardHeader>
-        <CardHeaderContent>
-            <MudText Typo="Typo.h6">@ViewModel.Object.Name</MudText>
-        </CardHeaderContent>
-        <CardHeaderActions>
-        </CardHeaderActions>
-    </MudCardHeader>
-    <MudCardContent>
+<GenericEditview Title="@ViewModel.Object.Name" OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))" OnSubmit="Submit">
+    <FormContent>
         <MudForm @ref="form">
             <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                           Label="Name" Variant="Variant.Outlined" Required="true" />
@@ -26,29 +17,9 @@
                 <MudSelectItem Value="LoadBalancerType.APPLICATION" />
                 <MudSelectItem Value="LoadBalancerType.NETWORK" />
             </MudSelect>
-            @* <MudSelect Class="mb-5" T="TargetGroup" @bind-Value="ViewModel.Object.Group"
-                       Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                @foreach (var group in targetGroups)
-                {
-                    <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
-                }
-            </MudSelect> *@
         </MudForm>
-        
-    </MudCardContent>
-    <MudCardActions>
-        <MudGrid Justify="Justify.FlexEnd">
-            <MudItem>
-                <MudButton Variant="Variant.Filled" DropShadow="false" Href="/lb/loadbalancers">Cancel</MudButton>
-            </MudItem>
-            <MudItem>
-                <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="Submit">Save</MudButton>
-            </MudItem>
-        </MudGrid>
-        
-        
-    </MudCardActions>
-</MudCard>
+    </FormContent>
+</GenericEditview>
 
 @code {
     [Parameter]
