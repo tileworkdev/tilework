@@ -35,8 +35,27 @@ public class LoadBalancerDetailViewModel
         await _loadBalancerService.ApplyConfiguration();
     }
 
+    public async Task AddListener(ApplicationListener listener)
+    {
+        Object.ApplicationListeners.Add(listener);
+        await _loadBalancerService.UpdateLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
+    }
+
+    public async Task AddListener(NetworkListener listener)
+    {
+        Object.NetworkListeners.Add(listener);
+        await _loadBalancerService.UpdateLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
+    }
+
     public async Task Initialize(Guid Id)
     {
         Object = await _loadBalancerService.GetLoadBalancer(Id);
+    }
+
+    public async Task<List<TargetGroup>> GetTargetGroups()
+    {
+        return await _loadBalancerService.GetTargetGroups();
     }
 }

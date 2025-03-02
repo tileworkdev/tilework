@@ -133,5 +133,12 @@ else
 
     private async Task AddListener()
     {
+        var parameters = new DialogParameters<ListenerDialog>();
+        parameters.Add(x => x.ViewModel, ViewModel);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium };
+
+        var dialog = DialogService.Show<ListenerDialog>("Add listener", parameters, options);
+        var result = await dialog.Result;
     }
 }

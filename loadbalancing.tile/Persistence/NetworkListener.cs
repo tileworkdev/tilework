@@ -10,7 +10,7 @@ public class NetworkListener
     public NlbProtocol Protocol { get; set; }
 
     public Guid TargetGroupId { get; set; }
-    public virtual TargetGroup Group { get; set; }
+    public virtual TargetGroup TargetGroup { get; set; }
 
     public Guid LoadBalancerId { get; set; }
     public virtual LoadBalancer LoadBalancer { get; set; }

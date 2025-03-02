@@ -199,18 +199,6 @@ public class LoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
-    // public async Task AddTarget(Target target)
-    // {
-    //     await _dbContext.Targets.AddAsync(target);
-    //     await _dbContext.SaveChangesAsync();
-    // }
-
-    // public async Task DeleteTarget(Target target)
-    // {
-    //     _dbContext.Targets.Remove(target);
-    //     await _dbContext.SaveChangesAsync();
-    // }
-
     public async Task ApplyConfiguration()
     {
         var balancers = await _dbContext.LoadBalancers.ToListAsync();
