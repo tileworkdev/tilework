@@ -9,7 +9,9 @@
         </CardHeaderActions>
     </MudCardHeader>
     <MudCardContent>
-        @FormContent
+        <MudForm @ref="form">
+            @FormContent
+        </MudForm>
     </MudCardContent>
     <MudCardActions>
         <MudGrid Justify="Justify.FlexEnd">
@@ -30,4 +32,17 @@
     [Parameter] public RenderFragment? FormContent { get; set; }
     [Parameter] public Func<Task>? OnSubmit { get; set; }
     [Parameter] public Func<Task>? OnCancel { get; set; }
+
+    private MudForm form;
+
+    private async Task Submit()
+    {
+        await form.Validate();
+
+        if(form.IsValid)
+        {
+            if(OnSubmit != null)
+                await OnSubmit();
+        }
+    }
 }

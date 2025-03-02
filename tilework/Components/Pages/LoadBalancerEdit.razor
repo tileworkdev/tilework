@@ -8,24 +8,20 @@
 
 <GenericEditview Title="@ViewModel.Object.Name" OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))" OnSubmit="Submit">
     <FormContent>
-        <MudForm @ref="form">
-            <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
-                          Label="Name" Variant="Variant.Outlined" Required="true" />
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
+                        Label="Name" Variant="Variant.Outlined" Required="true" />
 
-            <MudSelect Class="mb-5" T="LoadBalancerType" @bind-Value="ViewModel.Object.Type"
-                       Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                <MudSelectItem Value="LoadBalancerType.APPLICATION" />
-                <MudSelectItem Value="LoadBalancerType.NETWORK" />
-            </MudSelect>
-        </MudForm>
+        <MudSelect Class="mb-5" T="LoadBalancerType" @bind-Value="ViewModel.Object.Type"
+                    Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelectItem Value="LoadBalancerType.APPLICATION" />
+            <MudSelectItem Value="LoadBalancerType.NETWORK" />
+        </MudSelect>
     </FormContent>
 </GenericEditview>
 
 @code {
     [Parameter]
     public string Id { get; set; }
-
-    private MudForm form;
 
     private List<TargetGroup> targetGroups;
 
@@ -52,20 +48,15 @@
 
     private async Task Submit()
     {
-        await form.Validate();
-
-        if(form.IsValid)
+        try
         {
-            try
-            {
-                await ViewModel.Save();
-                NavigationManager.NavigateTo($"/lb/loadbalancers/{Id}");
-                Snackbar.Add("Load balancer saved successfully!", Severity.Success);
-            }
-            catch(Exception ex)
-            {
-                Snackbar.Add($"Failed to save load balancer: {ex.Message}", Severity.Error);
-            }
+            await ViewModel.Save();
+            NavigationManager.NavigateTo($"/lb/loadbalancers/{Id}");
+            Snackbar.Add("Load balancer saved successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"Failed to save load balancer: {ex.Message}", Severity.Error);
         }
     }
 }
