@@ -4,42 +4,32 @@
 @inject IDialogService DialogService
 @page "/lb/targetgroups/{Id}"
 
-<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
 
-<MudCard Outlined="true" Class="mb-4">
-    <MudCardHeader>
-        <CardHeaderContent>
-            <MudText Typo="Typo.h6">@ViewModel.Object.Name</MudText>
-        </CardHeaderContent>
-        <CardHeaderActions>
-            <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                <MudMenuItem>Edit</MudMenuItem>
-                <MudMenuItem OnClick="ConfirmDelete">Delete</MudMenuItem>
-            </MudMenu>
-        </CardHeaderActions>
-    </MudCardHeader>
-    <MudCardContent>
-    </MudCardContent>
-    <MudCardActions>
-    </MudCardActions>
-</MudCard>
+<GenericDetailview Title="@ViewModel.Object.Name" Breadcrumbs="@_items" Actions="@_actions">
+    <DetailContent>
+    </DetailContent>
+    <TabContent>
+        <MudTabPanel Text="Targets">
+            <MudDataGrid T="Target" Outlined="true" Items="ViewModel.Object.Targets" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Targets</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="t => t.Address.ToString()" Title="Address" Editable="false" />
+                    <PropertyColumn Property="t => t.Port" Title="Port" />
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudTabPanel>
+    </TabContent>
+</GenericDetailview>
 
-<MudDataGrid T="Target" Outlined="true" Items="ViewModel.Object.Targets" Hover="true">
-    <ToolBarContent>
-        <MudText Typo="Typo.h6">Targets</MudText>
-        <MudSpacer />
-        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
-    </ToolBarContent>
-    <Columns>
-        <PropertyColumn Property="t => t.Address.ToString()" Title="Address" Editable="false" />
-        <PropertyColumn Property="t => t.Port" Title="Port" />
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-            </CellTemplate>
-        </TemplateColumn>
-    </Columns>
-</MudDataGrid>
 
 @code {
     [Parameter]
@@ -51,10 +41,18 @@
         new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
     };
 
+    private List<ActionItem> _actions = new List<ActionItem> {};
+
     protected override async Task OnInitializedAsync()
     {
         await ViewModel.Initialize(Guid.Parse(Id));
         _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+
+        _actions = new List<ActionItem>
+        {
+            new ActionItem() { Name="Edit", Href=$"/lb/targetgroups/{Id}/edit" },
+            new ActionItem() { Name="Delete", OnClick=ConfirmDelete }
+        };
     }
 
     private async Task ConfirmDelete()
@@ -75,15 +73,19 @@
         }
     }
 
+    private async Task EditTarget()
+    {
+    }
+
     private async Task AddTarget()
     {
         var target = new Target();
-        var parameters = new DialogParameters<AddTargetDialog>();
+        var parameters = new DialogParameters<TargetDialog>();
         parameters.Add(x => x.Target, target);
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var dialog = DialogService.Show<AddTargetDialog>("Add target", parameters, options);
+        var dialog = DialogService.Show<TargetDialog>("Add target", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {

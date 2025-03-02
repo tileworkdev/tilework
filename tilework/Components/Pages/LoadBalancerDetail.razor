@@ -2,34 +2,13 @@
 @using Tilework.LoadBalancing.Enums
 
 @inject LoadBalancerDetailViewModel ViewModel
-@inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject NavigationManager NavigationManager
 
 @page "/lb/loadbalancers/{Id}"
 
-<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
-
-<MudCard Outlined="true" Class="mb-4">
-    <MudCardHeader>
-        <CardHeaderContent>
-            <MudText Typo="Typo.h6">@ViewModel.Object.Name</MudText>
-        </CardHeaderContent>
-        <CardHeaderActions>
-            <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo($"/lb/loadbalancers/{Id}/edit"))">Edit</MudMenuItem>
-                <MudMenuItem OnClick="ConfirmDelete">Delete</MudMenuItem>
-                @if (ViewModel.Object.Enabled == true)
-                {
-                    <MudMenuItem OnClick="ViewModel.Disable">Disable</MudMenuItem>
-                }
-                else
-                {
-                    <MudMenuItem OnClick="ViewModel.Enable">Enable</MudMenuItem>
-                }
-            </MudMenu>
-        </CardHeaderActions>
-    </MudCardHeader>
-    <MudCardContent>
+<GenericDetailview Title="@ViewModel.Object.Name" Breadcrumbs="@_items" Actions="@_actions">
+    <DetailContent>
         <MudGrid Spacing="5">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
@@ -47,48 +26,52 @@
                 }
             </MudItem>
         </MudGrid>
-    </MudCardContent>
-</MudCard>
+    </DetailContent>
+    <TabContent>
+        <MudTabPanel Text="Listeners">
+            @if(ViewModel.Object.Type == LoadBalancerType.APPLICATION)
+            {
+                <MudDataGrid T="ApplicationListener" Outlined="true" Items="ViewModel.Object.ApplicationListeners" Hover="true">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Listeners</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
+                    </ToolBarContent>
+                    <Columns>
+                        <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
+                        <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
+                        <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            }
+            else
+            {
+                <MudDataGrid T="NetworkListener" Outlined="true" Items="ViewModel.Object.NetworkListeners" Hover="true">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Listeners</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
+                    </ToolBarContent>
+                    <Columns>
+                        <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
+                        <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            }
+        </MudTabPanel>
+    </TabContent>
+</GenericDetailview>
 
-@if(ViewModel.Object.Type == LoadBalancerType.APPLICATION)
-{
-    <MudDataGrid T="ApplicationListener" Outlined="true" Items="ViewModel.Object.ApplicationListeners" Hover="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Listeners</MudText>
-            <MudSpacer />
-            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
-        </ToolBarContent>
-        <Columns>
-            <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
-            <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
-            <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
-            <TemplateColumn CellClass="d-flex justify-end">
-                <CellTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-    </MudDataGrid>
-}
-else
-{
-    <MudDataGrid T="NetworkListener" Outlined="true" Items="ViewModel.Object.NetworkListeners" Hover="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Listeners</MudText>
-            <MudSpacer />
-            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
-        </ToolBarContent>
-        <Columns>
-            <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
-            <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
-            <TemplateColumn CellClass="d-flex justify-end">
-                <CellTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-    </MudDataGrid>
-}
 
 
 @code {
@@ -101,6 +84,8 @@ else
         new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers", icon: Icons.Material.Filled.AltRoute)
     };
 
+    private List<ActionItem> _actions = new List<ActionItem> {};
+
     protected override async Task OnInitializedAsync()
     {
         try {
@@ -111,6 +96,15 @@ else
         }
         
         _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+
+        _actions = new List<ActionItem>
+        {
+            new ActionItem() { Name="Edit", Href=$"/lb/loadbalancers/{Id}/edit" },
+            new ActionItem() { Name="Delete", OnClick=ConfirmDelete },
+            new ActionItem() {
+                Name= ViewModel.Object.Enabled ? "Disable" : "Enable",
+                OnClick= ViewModel.Object.Enabled ? ViewModel.Disable : ViewModel.Enable }
+        };
     }
 
     private async Task ConfirmDelete()

@@ -4,15 +4,15 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-3 mb-n1"/>
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1"/>
             Add target
         </MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
-            <MudTextField @bind-Value="@IpAddressString" Label="Address" 
+            <MudTextField @bind-Value="@IpAddressString" Label="Address" Variant="Variant.Outlined"
                           Validation="@(new Func<string, string>(ValidateIPAddress))" Required="true"/>
-            <MudTextField @bind-Value="@Target.Port" Label="Port"/>
+            <MudTextField @bind-Value="@Target.Port" Variant="Variant.Outlined" Label="Port"/>
         </MudForm>
     </DialogContent>
     <DialogActions>
