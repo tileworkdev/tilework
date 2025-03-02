@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<TargetGroupListViewModel>();
         services.AddScoped<TargetGroupDetailViewModel>();
         services.AddScoped<TargetGroupNewViewModel>();
+        services.AddScoped<TargetGroupEditViewModel>();
 
         return services;
     }

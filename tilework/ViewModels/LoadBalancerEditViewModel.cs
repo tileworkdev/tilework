@@ -35,7 +35,10 @@ public class LoadBalancerEditViewModel
 
     public async Task Initialize(Guid Id)
     {
-        Object = await _loadBalancerService.GetLoadBalancer(Id);
+        var obj = await _loadBalancerService.GetLoadBalancer(Id);
+        if(obj == null)
+            throw new KeyNotFoundException();
+        Object = obj;
     }
 
     public async Task<List<TargetGroup>> GetTargetGroups()

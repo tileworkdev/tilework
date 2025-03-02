@@ -91,7 +91,7 @@
         try {
             await ViewModel.Initialize(Guid.Parse(Id));
         }
-        catch {
+        catch (KeyNotFoundException) {
             NavigationManager.NavigateTo("/lb/loadbalancers");
         }
         

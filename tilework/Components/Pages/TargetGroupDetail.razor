@@ -1,7 +1,10 @@
 @using Tilework.LoadBalancing.Persistence.Models
+
 @inject TargetGroupDetailViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
 @page "/lb/targetgroups/{Id}"
 
 
@@ -45,7 +48,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await ViewModel.Initialize(Guid.Parse(Id));
+        try {
+            await ViewModel.Initialize(Guid.Parse(Id));
+        }
+        catch (KeyNotFoundException) {
+            NavigationManager.NavigateTo("/lb/targetgroups");
+            Snackbar.Add($"Target group {Id} not found", Severity.Error);
+        }
+
         _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
 
         _actions = new List<ActionItem>

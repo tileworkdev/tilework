@@ -3,16 +3,22 @@ using Tilework.LoadBalancing.Services;
 
 namespace Tilework.ViewModels;
 
-public class TargetGroupDetailViewModel
+public class TargetGroupEditViewModel
 {
 
     private readonly LoadBalancerService _loadBalancerService;
 
     public TargetGroup Object;
 
-    public TargetGroupDetailViewModel(LoadBalancerService loadBalancerService)
+    public TargetGroupEditViewModel(LoadBalancerService loadBalancerService)
     {
         _loadBalancerService = loadBalancerService;
+    }
+
+    public async Task Save()
+    {
+        await _loadBalancerService.UpdateTargetGroup(Object);
+        await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task Initialize(Guid Id)
@@ -21,17 +27,5 @@ public class TargetGroupDetailViewModel
         if(obj == null)
             throw new KeyNotFoundException();
         Object = obj;
-    }
-
-    public async Task Delete()
-    {
-        await _loadBalancerService.DeleteTargetGroup(Object);
-        await _loadBalancerService.ApplyConfiguration();
-    }
-
-    public async Task AddTarget(Target target)
-    {
-        Object.Targets.Add(target);
-        await _loadBalancerService.UpdateTargetGroup(Object);
     }
 }

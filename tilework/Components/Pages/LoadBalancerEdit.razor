@@ -6,7 +6,9 @@
 @inject ISnackbar Snackbar
 @page "/lb/loadbalancers/{Id}/edit"
 
-<GenericEditview Title="@ViewModel.Object.Name" OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))" OnSubmit="Submit">
+<GenericEditview Title="@ViewModel.Object.Name"
+                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
+                 OnSubmit="Submit">
     <FormContent>
         <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                         Label="Name" Variant="Variant.Outlined" Required="true" />
@@ -34,7 +36,7 @@
         try {
             await ViewModel.Initialize(Guid.Parse(Id));
         }
-        catch {
+        catch (KeyNotFoundException) {
             NavigationManager.NavigateTo("/lb/loadbalancers");
         }
         
