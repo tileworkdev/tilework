@@ -23,8 +23,6 @@
     [Parameter]
     public string Id { get; set; }
 
-    private List<TargetGroup> targetGroups;
-
     private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -39,8 +37,6 @@
         catch {
             NavigationManager.NavigateTo("/lb/loadbalancers");
         }
-
-        targetGroups = await ViewModel.GetTargetGroups();
         
         _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: $"/lb/loadbalancers/{Id}"));
         _items.Add(new BreadcrumbItem("edit", href: null, disabled: true));
