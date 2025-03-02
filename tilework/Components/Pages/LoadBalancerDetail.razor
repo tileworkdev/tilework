@@ -43,7 +43,8 @@
                         <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="() => DeleteListener(context.Item)" />
                             </CellTemplate>
                         </TemplateColumn>
                     </Columns>
@@ -60,9 +61,11 @@
                     <Columns>
                         <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
                         <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
+                        <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" Editable="false" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="() => DeleteListener(context.Item)" />
                             </CellTemplate>
                         </TemplateColumn>
                     </Columns>
@@ -134,5 +137,15 @@
 
         var dialog = DialogService.Show<ListenerDialog>("Add listener", parameters, options);
         var result = await dialog.Result;
+    }
+
+    private async Task DeleteListener(ApplicationListener listener)
+    {
+        await ViewModel.DeleteListener(listener);
+    }
+
+    private async Task DeleteListener(NetworkListener listener)
+    {
+        await ViewModel.DeleteListener(listener);
     }
 }

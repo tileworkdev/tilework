@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tilework.LoadBalancing.Persistence;
 
@@ -10,9 +11,11 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    partial class LoadBalancerContextModelSnapshot : ModelSnapshot
+    [Migration("20250302192427_CascadeListenerDelete")]
+    partial class CascadeListenerDelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

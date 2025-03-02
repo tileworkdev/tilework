@@ -49,6 +49,20 @@ public class LoadBalancerDetailViewModel
         await _loadBalancerService.ApplyConfiguration();
     }
 
+    public async Task DeleteListener(ApplicationListener listener)
+    {
+        Object.ApplicationListeners.Remove(listener);
+        await _loadBalancerService.UpdateLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
+    }
+
+    public async Task DeleteListener(NetworkListener listener)
+    {
+        Object.NetworkListeners.Remove(listener);
+        await _loadBalancerService.UpdateLoadBalancer(Object);
+        await _loadBalancerService.ApplyConfiguration();
+    }
+
     public async Task Initialize(Guid Id)
     {
         var obj = await _loadBalancerService.GetLoadBalancer(Id);
