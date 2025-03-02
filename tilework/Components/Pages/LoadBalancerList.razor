@@ -3,22 +3,13 @@
 @using Tilework.LoadBalancing.Persistence.Models
 @page "/lb/loadbalancers"
 
-<MudBreadcrumbs Items="_items" Separator=">"></MudBreadcrumbs>
-
-<MudTable Outlined="true" Items="ViewModel.Balancers" Hover="true">
-    <ToolBarContent>
-        <MudText Typo="Typo.h6">Load balancers</MudText>
-        <MudSpacer />
-        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" Href="/lb/loadbalancers/new">
-            Create new
-        </MudButton>
-    </ToolBarContent>
+<GenericListview Title="Load balancers" Items="@ViewModel.Balancers" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Type</MudTh>
         <MudTh>Status</MudTh>
     </HeaderContent>
-    <RowTemplate>
+    <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Type">@context.Type</MudTd>
         <MudTd DataLabel="Status">
@@ -31,14 +22,19 @@
                 <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
             }
         </MudTd>
-    </RowTemplate>
-</MudTable>
+    </RowContent>
+</GenericListview>
 
 @code {
-    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
         new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers/", disabled: true, icon: Icons.Material.Filled.AltRoute),
+    };
+
+    private List<ActionItem> _actions = new List<ActionItem>
+    {
+        new ActionItem { Name = "Create new", Href = "/lb/loadbalancers/new" }
     };
 
     protected override async Task OnInitializedAsync()
