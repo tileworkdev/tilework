@@ -12,5 +12,5 @@ public class Rule
     public virtual TargetGroup Group { get; set; }
 
     public Guid ListenerId { get; set; }
-    public virtual ApplicationListener Listener { get; set; }
+    public virtual ApplicationLoadBalancer Listener { get; set; }
 }

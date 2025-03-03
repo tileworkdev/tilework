@@ -29,7 +29,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         _containerManager = containerManager;
     }
 
-    public List<LoadBalancer> LoadConfiguration()
+    public List<BaseLoadBalancer> LoadConfiguration()
     {
         return null;
     }
@@ -39,43 +39,35 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         return await _containerManager.ListContainers("loadbalancing.tile");
     }
 
-    private void UpdateConfigFile(string path, LoadBalancer config)
+    private void UpdateConfigFile(string path, BaseLoadBalancer balancer)
     {
         var haproxyConfig = new Configuration(path);
         haproxyConfig.Load();
 
-        List<Listener> listeners = new List<Listener>();
-        List<TargetGroup> targetGroups = new List<TargetGroup>();
-
-        foreach(var listener in config.Listeners)
-        {
-            listeners.Add(listener);
-            foreach(var rule in listener.Rules)
-            {
-                if(!targetGroups.Any(tg => tg.Id == rule.Group.Id))
-                    targetGroups.Add(rule.Group);
-            }
-        }
-
         haproxyConfig.Frontends = new List<ConfigSection>();
         haproxyConfig.Backends = new List<ConfigSection>();
 
-        foreach(var listener in listeners)
-        {
-            var fe = ListenerToFrontend.Map(listener);
-            haproxyConfig.Frontends.Add(fe);
-        }
+        var fe = LoadBalancerToFrontend.Map(balancer);
+        haproxyConfig.Frontends.Add(fe);
 
-        foreach(var tg in targetGroups)
+        if (balancer is ApplicationLoadBalancer appLoadBalancer)
         {
-            var be = TargetGroupToBackend.Map(tg);
+
+        }
+        else if(balancer is NetworkLoadBalancer netLoadBalancer)
+        {
+
+
+            var be = TargetGroupToBackend.Map(netLoadBalancer.TargetGroup);
             haproxyConfig.Backends.Add(be);
         }
+        else
+            throw new ArgumentException("Invalid load balancer type");
 
         haproxyConfig.Save();
     }
 
-    public async Task ApplyConfiguration(List<LoadBalancer> config)
+    public async Task ApplyConfiguration(List<BaseLoadBalancer> config)
     {
         if(string.IsNullOrEmpty(_settings.BackendImage))
             throw new ArgumentException("No image setting supplied for load balancing tile");
@@ -138,7 +130,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         }
     }
 
-    public async Task<bool> CheckLoadBalancerStatus(LoadBalancer balancer)
+    public async Task<bool> CheckLoadBalancerStatus(BaseLoadBalancer balancer)
     {
         var containers = await GetLoadBalancerContainers();
         var container = containers.First(cnt => cnt.Name == balancer.Id.ToString());

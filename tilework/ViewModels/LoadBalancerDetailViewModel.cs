@@ -8,7 +8,7 @@ public class LoadBalancerDetailViewModel
 
     private readonly LoadBalancerService _loadBalancerService;
 
-    public LoadBalancer Object;
+    public BaseLoadBalancer Object;
 
     public LoadBalancerDetailViewModel(LoadBalancerService loadBalancerService)
     {
@@ -32,34 +32,6 @@ public class LoadBalancerDetailViewModel
     public async Task Delete()
     {
         await _loadBalancerService.DeleteLoadBalancer(Object);
-        await _loadBalancerService.ApplyConfiguration();
-    }
-
-    public async Task AddListener(ApplicationListener listener)
-    {
-        Object.ApplicationListeners.Add(listener);
-        await _loadBalancerService.UpdateLoadBalancer(Object);
-        await _loadBalancerService.ApplyConfiguration();
-    }
-
-    public async Task AddListener(NetworkListener listener)
-    {
-        Object.NetworkListeners.Add(listener);
-        await _loadBalancerService.UpdateLoadBalancer(Object);
-        await _loadBalancerService.ApplyConfiguration();
-    }
-
-    public async Task DeleteListener(ApplicationListener listener)
-    {
-        Object.ApplicationListeners.Remove(listener);
-        await _loadBalancerService.UpdateLoadBalancer(Object);
-        await _loadBalancerService.ApplyConfiguration();
-    }
-
-    public async Task DeleteListener(NetworkListener listener)
-    {
-        Object.NetworkListeners.Remove(listener);
-        await _loadBalancerService.UpdateLoadBalancer(Object);
         await _loadBalancerService.ApplyConfiguration();
     }
 

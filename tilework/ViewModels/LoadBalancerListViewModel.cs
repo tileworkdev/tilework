@@ -8,7 +8,7 @@ public class LoadBalancerListViewModel
 
     private readonly LoadBalancerService _loadBalancerService;
 
-    public List<LoadBalancer> Balancers { get; set; } = new List<LoadBalancer>();
+    public List<BaseLoadBalancer> Balancers { get; set; } = new List<BaseLoadBalancer>();
 
     public LoadBalancerListViewModel(LoadBalancerService loadBalancerService)
     {

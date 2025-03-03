@@ -8,7 +8,7 @@ public class LoadBalancerEditViewModel
 
     private readonly LoadBalancerService _loadBalancerService;
 
-    public LoadBalancer Object;
+    public BaseLoadBalancer Object;
 
     public LoadBalancerEditViewModel(LoadBalancerService loadBalancerService)
     {

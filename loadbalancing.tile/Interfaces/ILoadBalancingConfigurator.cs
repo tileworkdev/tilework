@@ -6,6 +6,6 @@ public interface ILoadBalancingConfigurator
 {
     string ServiceName { get; }
 
-    List<LoadBalancer> LoadConfiguration();
-    Task ApplyConfiguration(List<LoadBalancer> config);
+    List<BaseLoadBalancer> LoadConfiguration();
+    Task ApplyConfiguration(List<BaseLoadBalancer> config);
 }

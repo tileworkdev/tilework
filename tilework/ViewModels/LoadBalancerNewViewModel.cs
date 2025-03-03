@@ -1,5 +1,6 @@
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
+using Tilework.LoadBalancing.Enums;
 
 namespace Tilework.ViewModels;
 
@@ -8,7 +9,38 @@ public class LoadBalancerNewViewModel
 
     private readonly LoadBalancerService _loadBalancerService;
 
-    public LoadBalancer Object;
+    public BaseLoadBalancer Object;
+
+    private LoadBalancerType _loadBalancerType;
+    public LoadBalancerType LoadBalancerType
+    {
+        get { return _loadBalancerType; }
+        set
+        {
+            if(_loadBalancerType == LoadBalancerType.APPLICATION && value == LoadBalancerType.NETWORK)
+            {
+                Object = new NetworkLoadBalancer()
+                {
+                    Id=Object.Id,
+                    Name=Object.Name,
+                    Port=Object.Port,
+                    Enabled=Object.Enabled
+                };
+            }
+            else if(_loadBalancerType == LoadBalancerType.NETWORK && value == LoadBalancerType.APPLICATION)
+            {
+                Object = new ApplicationLoadBalancer()
+                {
+                    Id=Object.Id,
+                    Name=Object.Name,
+                    Port=Object.Port,
+                    Enabled=Object.Enabled
+                };
+            }
+
+            _loadBalancerType = value;
+        }
+    }
 
     public LoadBalancerNewViewModel(LoadBalancerService loadBalancerService)
     {
@@ -17,7 +49,7 @@ public class LoadBalancerNewViewModel
 
     public async Task Initialize()
     {
-        Object = new LoadBalancer()
+        Object = new ApplicationLoadBalancer()
         {
             Id=Guid.NewGuid(),
             Enabled=true

@@ -12,7 +12,7 @@
         <MudGrid Spacing="5">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@ViewModel.Object.Type</MudText>
+                <MudText Typo="Typo.body2">@(ViewModel.Object is ApplicationLoadBalancer ? "Application" : "Network")</MudText>
             </MudItem>
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Status</MudText>
@@ -28,50 +28,6 @@
         </MudGrid>
     </DetailContent>
     <TabContent>
-        <MudTabPanel Text="Listeners">
-            @if(ViewModel.Object.Type == LoadBalancerType.APPLICATION)
-            {
-                <MudDataGrid T="ApplicationListener" Outlined="true" Items="ViewModel.Object.ApplicationListeners" Hover="true">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Listeners</MudText>
-                        <MudSpacer />
-                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
-                    </ToolBarContent>
-                    <Columns>
-                        <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
-                        <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
-                        <PropertyColumn Property="t => t.Rules.Count()" Title="Rules" />
-                        <TemplateColumn CellClass="d-flex justify-end">
-                            <CellTemplate>
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" />
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="() => DeleteListener(context.Item)" />
-                            </CellTemplate>
-                        </TemplateColumn>
-                    </Columns>
-                </MudDataGrid>
-            }
-            else
-            {
-                <MudDataGrid T="NetworkListener" Outlined="true" Items="ViewModel.Object.NetworkListeners" Hover="true">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Listeners</MudText>
-                        <MudSpacer />
-                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddListener">Add Listener</MudButton>
-                    </ToolBarContent>
-                    <Columns>
-                        <PropertyColumn Property="t => t.Port" Title="Port" Editable="false" />
-                        <PropertyColumn Property="t => t.Protocol" Title="Protocol" Editable="false" />
-                        <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" Editable="false" />
-                        <TemplateColumn CellClass="d-flex justify-end">
-                            <CellTemplate>
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" />
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="() => DeleteListener(context.Item)" />
-                            </CellTemplate>
-                        </TemplateColumn>
-                    </Columns>
-                </MudDataGrid>
-            }
-        </MudTabPanel>
     </TabContent>
 </GenericDetailview>
 
@@ -126,26 +82,5 @@
             await ViewModel.Delete();
             NavigationManager.NavigateTo("/lb/loadbalancers");
         }
-    }
-
-    private async Task AddListener()
-    {
-        var parameters = new DialogParameters<ListenerDialog>();
-        parameters.Add(x => x.ViewModel, ViewModel);
-
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium };
-
-        var dialog = DialogService.Show<ListenerDialog>("Add listener", parameters, options);
-        var result = await dialog.Result;
-    }
-
-    private async Task DeleteListener(ApplicationListener listener)
-    {
-        await ViewModel.DeleteListener(listener);
-    }
-
-    private async Task DeleteListener(NetworkListener listener)
-    {
-        await ViewModel.DeleteListener(listener);
     }
 }

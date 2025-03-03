@@ -10,7 +10,10 @@
     </MudCardHeader>
     <MudCardContent>
         <MudForm @ref="form">
-            @FormContent
+            @if(FormContent != null)
+            {
+                @FormContent
+            }
         </MudForm>
     </MudCardContent>
     <MudCardActions>
