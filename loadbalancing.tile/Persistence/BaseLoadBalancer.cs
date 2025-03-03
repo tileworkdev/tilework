@@ -6,6 +6,8 @@ public abstract class BaseLoadBalancer
 
     [Required]
     public string Name { get; set; } = string.Empty;
+
+    [Required]
     public int Port { get; set; }
 
     public bool Enabled { get; set; }

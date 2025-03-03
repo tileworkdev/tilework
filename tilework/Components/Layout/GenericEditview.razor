@@ -22,7 +22,7 @@
                 <MudButton Variant="Variant.Filled" DropShadow="false" OnClick="OnCancel">Cancel</MudButton>
             </MudItem>
             <MudItem>
-                <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="OnSubmit">Save</MudButton>
+                <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="@(async () => await OnSubmit())">Save</MudButton>
             </MudItem>
         </MudGrid>
     </MudCardActions>
@@ -33,19 +33,19 @@
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public List<BreadcrumbItem> Breadcrumbs { get; set; } = new List<BreadcrumbItem>();
     [Parameter] public RenderFragment? FormContent { get; set; }
-    [Parameter] public Func<Task>? OnSubmit { get; set; }
+    [Parameter] public Func<Task>? OnValidSubmit { get; set; }
     [Parameter] public Func<Task>? OnCancel { get; set; }
 
     private MudForm form;
 
-    private async Task Submit()
+    private async Task OnSubmit()
     {
         await form.Validate();
 
         if(form.IsValid)
         {
-            if(OnSubmit != null)
-                await OnSubmit();
+            if(OnValidSubmit != null)
+                await OnValidSubmit();
         }
     }
 }

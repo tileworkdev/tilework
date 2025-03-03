@@ -8,10 +8,14 @@
 
 <GenericEditview Title="@ViewModel.Object.Name"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                 OnSubmit="Submit">
+                 OnValidSubmit="Submit">
     <FormContent>
         <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                         Label="Name" Variant="Variant.Outlined" Required="true" />
+
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Port"
+                        Validation="@(new Func<int?, string>(Validators.ValidatePort))"
+                        Label="Port" Variant="Variant.Outlined" Required="true" />
 
         <MudSelect Class="mb-5" T="LoadBalancerType" Disabled="true"
                     Value="@(ViewModel.Object is ApplicationLoadBalancer ? LoadBalancerType.APPLICATION : LoadBalancerType.NETWORK)"
