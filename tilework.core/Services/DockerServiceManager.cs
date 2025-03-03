@@ -100,7 +100,8 @@ public class DockerServiceManager : IContainerManager
     {
         await _client.Containers.RemoveContainerAsync(id, new ContainerRemoveParameters()
         {
-            RemoveVolumes = true
+            RemoveVolumes = true,
+            Force = true
         });
     }
 
