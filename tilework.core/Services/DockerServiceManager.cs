@@ -60,18 +60,31 @@ public class DockerServiceManager : IContainerManager
         }).ToList();
     }
 
+    private async Task<bool> ImageExists(string image)
+    {
+        var images = await _client.Images.ListImagesAsync(new ImagesListParameters { All = true });
+        return images.Any(img => img.RepoTags?.Contains(image) == true);
+    }
+
     public async Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort> ports)
     {
         string[] imageParts = image.Split(':');
 
-        await _client.Images.CreateImageAsync(
-            new ImagesCreateParameters
-            {
-                FromImage = imageParts[0],
-                Tag = imageParts[1],
-            },
-            null,
-            new Progress<JSONMessage>());
+        if((await ImageExists(image)) == false)
+        {
+            _logger.LogInformation($"Cannot find image {image} locally. Pulling it");
+
+            await _client.Images.CreateImageAsync(
+                new ImagesCreateParameters
+                {
+                    FromImage = imageParts[0],
+                    Tag = imageParts[1],
+                },
+                null,
+                new Progress<JSONMessage>()
+            );
+        }
+
 
 
         var tags = new Dictionary<string, string> {
