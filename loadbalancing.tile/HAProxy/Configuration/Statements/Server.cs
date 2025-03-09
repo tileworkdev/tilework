@@ -5,6 +5,7 @@ public class Server
     public string Name { get; set; }
     public string Address { get; set; }
     public int Port { get; set; }
+    public bool Check { get; set; }
 
     public Server() {}
 
@@ -20,6 +21,7 @@ public class Server
 
     public override string ToString()
     {
-        return $"{Name} {Address}:{Port}";
+        var checkStr = Check == true ? "check" : "";
+        return $"{Name} {Address}:{Port} {checkStr}";
     }
 }

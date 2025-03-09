@@ -18,7 +18,8 @@ public static class TargetGroupToBackend
                     new Server() {
                         Name = target.Id.ToString(),
                         Address = target.Address.ToString(),
-                        Port = target.Port
+                        Port = target.Port,
+                        Check = true
                     }
                 ).ToList();
 

@@ -13,12 +13,19 @@ public static class LoadBalancerToFrontend
         {
             cfg.CreateMap<BaseLoadBalancer, FrontendSection>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Id.ToString()))
-                // .ForMember(dest => dest.DefaultBackend, opt => opt.MapFrom(src => src.Rules[0].Id.ToString()))
                 .ForPath(dest => dest.Bind.Address, opt => opt.MapFrom(src => "*"))
                 .ForPath(dest => dest.Bind.Port, opt => opt.MapFrom(src => src.Port))
                 .AfterMap((src, dest) =>
                 {
-                    dest.Mode = src is ApplicationLoadBalancer ? Mode.HTTP : Mode.TCP;
+                    if(src is ApplicationLoadBalancer alb)
+                    {
+                        dest.Mode = Mode.HTTP;
+                    }
+                    else if(src is NetworkLoadBalancer nlb)
+                    {
+                        dest.Mode = Mode.TCP;
+                        dest.DefaultBackend = nlb.TargetGroup.Id.ToString();
+                    }
                 });
         });
 
