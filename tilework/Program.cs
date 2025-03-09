@@ -7,6 +7,7 @@ using Tilework.ViewModels;
 
 using Tilework.Core.Services;
 using Tilework.LoadBalancing.Services;
+using Tilework.CertificateManagement.Services;
 
 
 
@@ -27,6 +28,8 @@ var dbContextOptions = DbContextOptionsHelper.Configure(connectionString);
 
 builder.Services.AddCoreServices();
 builder.Services.AddLoadBalancer(builder.Configuration.GetSection("LoadBalancing"), dbContextOptions);
+builder.Services.AddCertificateManagement(builder.Configuration.GetSection("CertificateManagement"), dbContextOptions);
+
 
 builder.Services.AddViewModels();
 
