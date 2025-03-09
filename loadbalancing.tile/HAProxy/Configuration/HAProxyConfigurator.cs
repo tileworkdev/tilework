@@ -81,7 +81,18 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             if(container == null)
             {
                 _logger.LogInformation($"Creating new container for load balancer {lb.Name}");
-                container = await _containerManager.CreateContainer(name, _settings.BackendImage, "loadbalancing.tile");
+                var port = new ContainerPort()
+                {
+                    Port=lb.Port,
+                    HostPort=lb.Port,
+                    Type= LoadBalancerToPortType.Map(lb)
+                };
+                container = await _containerManager.CreateContainer(
+                    name,
+                    _settings.BackendImage,
+                    "loadbalancing.tile",
+                    new List<ContainerPort>() { port }
+                );
             }
 
             var localConfigPath = Path.GetTempFileName();

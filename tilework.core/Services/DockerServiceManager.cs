@@ -60,7 +60,7 @@ public class DockerServiceManager : IContainerManager
         }).ToList();
     }
 
-    public async Task<Container> CreateContainer(string name, string image, string module)
+    public async Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort> ports)
     {
         string[] imageParts = image.Split(':');
 
@@ -79,18 +79,37 @@ public class DockerServiceManager : IContainerManager
             {"Module", module}
         };
 
+        var exposedPorts = new Dictionary<string, EmptyStruct>();
+        var portBindings = new Dictionary<string, IList<PortBinding>>();
+
+        foreach (var port in ports)
+        {
+            string portKey = $"{port.Port}/{port.Type.ToString().ToLower()}";
+            exposedPorts[portKey] = default;
+
+            if (port.HostPort.HasValue)
+            {
+                portBindings[portKey] = new List<PortBinding>
+                {
+                    new PortBinding { HostPort = port.HostPort.Value.ToString() }
+                };
+            }
+        }
+
         var response = await _client.Containers.CreateContainerAsync(new CreateContainerParameters()
         {
             Image = image,
             Name = name,
             Labels = tags,
+            ExposedPorts = exposedPorts,
             HostConfig = new HostConfig
             {
                 RestartPolicy = new RestartPolicy
                 {
-                    Name = RestartPolicyKind.UnlessStopped
-                }
-            }
+                    Name = RestartPolicyKind.UnlessStopped,
+                },
+                PortBindings = portBindings
+            },
         });
 
         return (await ListContainers()).First(cnt => cnt.Id == response.ID);
