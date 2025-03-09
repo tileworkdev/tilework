@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 using Tilework.CertificateManagement.Settings;
 using Tilework.CertificateManagement.Persistence;
-using Tilework.CertificateManagement.ViewModels;
 
 namespace Tilework.CertificateManagement.Services;
 
@@ -19,8 +18,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CertificateManagementService>();
 
         services.AddDbContext<CertificateManagementContext>(dbContextOptions);
-
-        services.AddScoped<CertificateListViewModel>();
 
         return services;
     }

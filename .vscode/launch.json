@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/tilework/bin/Debug/net8.0/tilework.dll",
+            "program": "${workspaceFolder}/tilework.ui/bin/Debug/net8.0/tilework.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/tilework/bin/Debug/net8.0",
+            "cwd": "${workspaceFolder}/tilework.ui/bin/Debug/net8.0",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
@@ -27,7 +27,7 @@
             "request": "launch",
             "preLaunchTask": "docker-run: debug",
             "netCore": {
-                "appProject": "${workspaceFolder}/tilework/tilework.csproj"
+                "appProject": "${workspaceFolder}/tilework.ui/tilework.ui.csproj"
             }
         }
     ]

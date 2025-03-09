@@ -1,0 +1,107 @@
+@using Tilework.LoadBalancing.Persistence.Models
+
+@namespace Tilework.Ui.Components.Pages
+
+@inject TargetGroupDetailViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@page "/lb/targetgroups/{Id}"
+
+
+<GenericDetailview Title="@ViewModel.Object.Name" Breadcrumbs="@_items" Actions="@_actions">
+    <DetailContent>
+    </DetailContent>
+    <TabContent>
+        <MudTabPanel Text="Targets">
+            <MudDataGrid T="Target" Outlined="true" Items="ViewModel.Object.Targets" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Targets</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="t => t.Address.ToString()" Title="Address" Editable="false" />
+                    <PropertyColumn Property="t => t.Port" Title="Port" />
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudTabPanel>
+    </TabContent>
+</GenericDetailview>
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
+    };
+
+    private List<ActionItem> _actions = new List<ActionItem> {};
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            await ViewModel.Initialize(Guid.Parse(Id));
+        }
+        catch (KeyNotFoundException) {
+            NavigationManager.NavigateTo("/lb/targetgroups");
+            Snackbar.Add($"Target group {Id} not found", Severity.Error);
+        }
+
+        _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+
+        _actions = new List<ActionItem>
+        {
+            new ActionItem() { Name="Edit", Href=$"/lb/targetgroups/{Id}/edit" },
+            new ActionItem() { Name="Delete", OnClick=ConfirmDelete }
+        };
+    }
+
+    private async Task ConfirmDelete()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to delete the target group? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Delete");
+        parameters.Add(x => x.Color, Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await ViewModel.Delete();
+            NavigationManager.NavigateTo("/lb/targetgroups");
+        }
+    }
+
+    private async Task EditTarget()
+    {
+    }
+
+    private async Task AddTarget()
+    {
+        var target = new Target();
+        var parameters = new DialogParameters<TargetDialog>();
+        parameters.Add(x => x.Target, target);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = DialogService.Show<TargetDialog>("Add target", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await ViewModel.AddTarget(target);
+        }
+    }
+}

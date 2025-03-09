@@ -1,0 +1,56 @@
+@using Tilework.LoadBalancing.Persistence.Models
+@using System.Net
+
+@namespace Tilework.Ui.Components.Dialogs
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1"/>
+            Add target
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="@IpAddressString" Label="Address" Variant="Variant.Outlined"
+                          Validation="@(new Func<string, string>(ValidateIPAddress))" Required="true"/>
+            <MudTextField @bind-Value="@Target.Port" Variant="Variant.Outlined" Label="Port"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Target Target { get; set; } = new Target();
+
+    private MudForm form;
+
+    private string IpAddressString;
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        IpAddressString = Target.Address?.ToString();
+    }
+
+    async Task Submit()
+    {
+        await form.Validate();
+
+        if(form.IsValid)
+        {
+            Target.Address = IPAddress.Parse(IpAddressString);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+    void Cancel() => MudDialog.Cancel();
+
+    private string ValidateIPAddress(string value)
+    {
+        return IPAddress.TryParse(value, out _) ? null : "Invalid IP Address";
+    }
+}

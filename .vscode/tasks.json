@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/tilework/tilework.csproj",
+                "${workspaceFolder}/tilework.ui/tilework.ui.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/tilework/tilework.csproj",
+                "${workspaceFolder}/tilework.ui/tilework.ui.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -34,12 +34,12 @@
             "dockerBuild": {
                 "tag": "tilework:dev",
                 "target": "base",
-                "dockerfile": "${workspaceFolder}/tilework/Dockerfile",
+                "dockerfile": "${workspaceFolder}/tilework.ui/Dockerfile",
                 "context": "${workspaceFolder}",
                 "pull": true
             },
             "netCore": {
-                "appProject": "${workspaceFolder}/tilework/tilework.csproj"
+                "appProject": "${workspaceFolder}/tilework.ui/tilework.ui.csproj"
             }
         },
         {
@@ -50,7 +50,7 @@
             ],
             "dockerBuild": {
                 "tag": "tilework:latest",
-                "dockerfile": "${workspaceFolder}/tilework/Dockerfile",
+                "dockerfile": "${workspaceFolder}/tilework.ui/Dockerfile",
                 "context": "${workspaceFolder}",
                 "platform": {
                     "os": "linux",
@@ -59,7 +59,7 @@
                 "pull": true
             },
             "netCore": {
-                "appProject": "${workspaceFolder}/tilework/tilework.csproj"
+                "appProject": "${workspaceFolder}/tilework.ui/tilework.ui.csproj"
             }
         },
         {
@@ -70,7 +70,7 @@
             ],
             "dockerRun": {},
             "netCore": {
-                "appProject": "${workspaceFolder}/tilework/tilework.csproj",
+                "appProject": "${workspaceFolder}/tilework.ui/tilework.ui.csproj",
                 "enableDebugging": true
             }
         },
@@ -82,7 +82,7 @@
             ],
             "dockerRun": {},
             "netCore": {
-                "appProject": "${workspaceFolder}/tilework/tilework.csproj"
+                "appProject": "${workspaceFolder}/tilework.ui/tilework.ui.csproj"
             }
         }
     ]

@@ -5,11 +5,11 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "loadbalancing.tile", "loadbalancing.tile\loadbalancing.tile.csproj", "{4AED32E7-3A21-4CD2-98F3-941116842A44}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tilework", "tilework\tilework.csproj", "{6D8BF5DF-4F81-4175-9EF0-C437C186640E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tilework.core", "tilework.core\tilework.core.csproj", "{15A467CD-CBB3-4AAE-8E5D-0C27F4047967}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "certificatemanagement.tile", "certificatemanagement.tile\certificatemanagement.tile.csproj", "{E4F27811-A65D-43D9-9AE7-B5ABA5CC87D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tilework.ui", "tilework.ui\tilework.ui.csproj", "{12EC9022-13CE-4356-AC57-566F4EEE072C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +21,6 @@ Global
 		{4AED32E7-3A21-4CD2-98F3-941116842A44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AED32E7-3A21-4CD2-98F3-941116842A44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AED32E7-3A21-4CD2-98F3-941116842A44}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6D8BF5DF-4F81-4175-9EF0-C437C186640E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6D8BF5DF-4F81-4175-9EF0-C437C186640E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6D8BF5DF-4F81-4175-9EF0-C437C186640E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6D8BF5DF-4F81-4175-9EF0-C437C186640E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{15A467CD-CBB3-4AAE-8E5D-0C27F4047967}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{15A467CD-CBB3-4AAE-8E5D-0C27F4047967}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15A467CD-CBB3-4AAE-8E5D-0C27F4047967}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +29,10 @@ Global
 		{E4F27811-A65D-43D9-9AE7-B5ABA5CC87D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4F27811-A65D-43D9-9AE7-B5ABA5CC87D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4F27811-A65D-43D9-9AE7-B5ABA5CC87D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12EC9022-13CE-4356-AC57-566F4EEE072C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12EC9022-13CE-4356-AC57-566F4EEE072C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12EC9022-13CE-4356-AC57-566F4EEE072C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12EC9022-13CE-4356-AC57-566F4EEE072C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

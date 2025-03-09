@@ -1,0 +1,53 @@
+@namespace Tilework.Ui.Components.Layout
+
+<MudBreadcrumbs Items="Breadcrumbs" Separator=">"></MudBreadcrumbs>
+
+<MudCard Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudForm @ref="form">
+            @if(FormContent != null)
+            {
+                @FormContent
+            }
+        </MudForm>
+    </MudCardContent>
+    <MudCardActions>
+        <MudGrid Justify="Justify.FlexEnd">
+            <MudItem>
+                <MudButton Variant="Variant.Filled" DropShadow="false" OnClick="OnCancel">Cancel</MudButton>
+            </MudItem>
+            <MudItem>
+                <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="@(async () => await OnSubmit())">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudCardActions>
+</MudCard>
+
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public List<BreadcrumbItem> Breadcrumbs { get; set; } = new List<BreadcrumbItem>();
+    [Parameter] public RenderFragment? FormContent { get; set; }
+    [Parameter] public Func<Task>? OnValidSubmit { get; set; }
+    [Parameter] public Func<Task>? OnCancel { get; set; }
+
+    private MudForm form;
+
+    private async Task OnSubmit()
+    {
+        await form.Validate();
+
+        if(form.IsValid)
+        {
+            if(OnValidSubmit != null)
+                await OnValidSubmit();
+        }
+    }
+}

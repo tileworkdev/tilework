@@ -1,0 +1,98 @@
+@using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Persistence.Models
+
+@namespace Tilework.Ui.Components.Pages
+
+@inject LoadBalancerEditViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@page "/lb/loadbalancers/{Id}/edit"
+
+<GenericEditview Title="@ViewModel.Object.Name"
+                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
+                 OnValidSubmit="Submit">
+    <FormContent>
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
+                        Label="Name" Variant="Variant.Outlined" Required="true" />
+
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Port"
+                        Validation="@(new Func<int?, string>(Validators.ValidatePort))"
+                        Label="Port" Variant="Variant.Outlined" Required="true" />
+
+        <MudSelect Class="mb-5" T="LoadBalancerType" Disabled="true"
+                    Value="@(ViewModel.IsAlb() ? LoadBalancerType.APPLICATION : LoadBalancerType.NETWORK)"
+                    Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelectItem Value="LoadBalancerType.APPLICATION" />
+            <MudSelectItem Value="LoadBalancerType.NETWORK" />
+        </MudSelect>
+
+        @if(ViewModel.Object is ApplicationLoadBalancer appBalancer)
+        {
+            <MudSelect T="AlbProtocol" @bind-Value="@appBalancer.Protocol"
+                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                <MudSelectItem Value="AlbProtocol.HTTP" />
+                <MudSelectItem Value="AlbProtocol.HTTPS" />
+            </MudSelect>
+        }
+        else if(ViewModel.Object is NetworkLoadBalancer netBalancer)
+        {
+            <MudSelect T="NlbProtocol" @bind-Value="@netBalancer.Protocol"
+                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                <MudSelectItem Value="NlbProtocol.TCP" />
+                <MudSelectItem Value="NlbProtocol.UDP" />
+                <MudSelectItem Value="NlbProtocol.TCP_UDP" />
+                <MudSelectItem Value="NlbProtocol.TLS" />
+            </MudSelect>
+
+            <MudSelect T="TargetGroup" @bind-Value="netBalancer.TargetGroup"
+                    Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                @foreach (var group in targetGroups)
+                {
+                    <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </FormContent>
+</GenericEditview>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private List<TargetGroup> targetGroups = new List<TargetGroup>();
+
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers", icon: Icons.Material.Filled.AltRoute)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            await ViewModel.Initialize(Guid.Parse(Id));
+        }
+        catch (KeyNotFoundException) {
+            NavigationManager.NavigateTo("/lb/loadbalancers");
+        }
+        
+        _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: $"/lb/loadbalancers/{Id}"));
+        _items.Add(new BreadcrumbItem("edit", href: null, disabled: true));
+
+        targetGroups = await ViewModel.GetTargetGroups();
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            await ViewModel.Save();
+            NavigationManager.NavigateTo($"/lb/loadbalancers/{Id}");
+            Snackbar.Add("Load balancer saved successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"Failed to save load balancer: {ex.Message}", Severity.Error);
+        }
+    }
+}

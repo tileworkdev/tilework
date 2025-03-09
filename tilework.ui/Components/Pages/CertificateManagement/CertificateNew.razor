@@ -1,0 +1,54 @@
+@* @using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Persistence.Models
+
+@inject CertificateNewViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+@page "/cm/certificates/new"
+
+<GenericEditview Title="New certificate" Breadcrumbs="@_items"
+                 OnCancel="@(async () => NavigationManager.NavigateTo("/cm/certificates"))"
+                 OnValidSubmit="Submit">
+    <FormContent>
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
+                      Label="Name" Variant="Variant.Outlined" Required="true" />
+        <MudSelect T="TargetGroupProtocol" @bind-Value="@ViewModel.Object.Protocol"
+                    Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelectItem Value="TargetGroupProtocol.HTTP" />
+            <MudSelectItem Value="TargetGroupProtocol.HTTPS" />
+            <MudSelectItem Value="TargetGroupProtocol.TCP" />
+            <MudSelectItem Value="TargetGroupProtocol.UDP" />
+            <MudSelectItem Value="TargetGroupProtocol.TCP_UDP" />
+            <MudSelectItem Value="TargetGroupProtocol.TLS" />
+        </MudSelect>
+    </FormContent>
+</GenericEditview>
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            await ViewModel.Save();
+            NavigationManager.NavigateTo("/lb/targetgroups");
+            Snackbar.Add("target group added successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"Failed to add target group: {ex.Message}", Severity.Error);
+        }
+    }
+} *@

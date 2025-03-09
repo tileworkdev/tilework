@@ -1,0 +1,56 @@
+@using Tilework.LoadBalancing.Persistence.Models
+
+@namespace Tilework.Ui.Components.Pages
+
+@inject LoadBalancerListViewModel ViewModel
+@inject NavigationManager NavigationManager
+
+
+@page "/lb/loadbalancers"
+
+<GenericListview Title="Load balancers" Items="@ViewModel.Balancers" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Port</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderContent>
+    <RowContent>
+        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Port">@context.Port</MudTd>
+        <MudTd DataLabel="Type">@(context is ApplicationLoadBalancer ? "Application" : "Network")</MudTd>
+        <MudTd DataLabel="Status">
+            @if (context.Enabled)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Success">Enabled</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
+            }
+        </MudTd>
+    </RowContent>
+</GenericListview>
+
+@code {
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers/", disabled: true, icon: Icons.Material.Filled.AltRoute),
+    };
+
+    private List<ActionItem> _actions = new List<ActionItem>
+    {
+        new ActionItem { Name = "Create new", Href = "/lb/loadbalancers/new" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+
+    private string DetailLink(Guid Id)
+    {
+        return $"/lb/loadbalancers/{Id.ToString()}";
+    }
+}    
