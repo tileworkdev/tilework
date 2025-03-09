@@ -1,18 +1,16 @@
-﻿using System.Net;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 
 using Tilework.LoadBalancing.Persistence;
 using Tilework.LoadBalancing.Persistence.Models;
-using Tilework.LoadBalancing.Enums;
 using Tilework.LoadBalancing.Interfaces;
 using Tilework.LoadBalancing.Settings;
 
 using Tilework.LoadBalancing.Haproxy;
-using Microsoft.Extensions.DependencyInjection;
+
 
 namespace Tilework.LoadBalancing.Services;
 

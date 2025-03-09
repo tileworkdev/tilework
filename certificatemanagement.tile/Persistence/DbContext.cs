@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-// using Tilework.CertificateManagement.Persistence.Models;
+using Tilework.CertificateManagement.Persistence.Models;
 
 namespace Tilework.CertificateManagement.Persistence;
 
@@ -12,4 +12,7 @@ public class CertificateManagementContext : DbContext
     {
         optionsBuilder.UseLazyLoadingProxies();
     }
+
+    public DbSet<Certificate> Certificates { get; set; }
+    public DbSet<PrivateKey> PrivateKeys { get; set; }
 }

@@ -1,7 +1,7 @@
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 
-namespace Tilework.ViewModels;
+namespace Tilework.LoadBalancing.ViewModels;
 
 public class TargetGroupListViewModel
 {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 using Tilework.LoadBalancing.Haproxy;
-using Tilework.LoadBalancing.Interfaces;
+using Tilework.LoadBalancing.ViewModels;
 using Tilework.LoadBalancing.Settings;
 using Tilework.LoadBalancing.Persistence;
 
@@ -11,9 +11,9 @@ namespace Tilework.LoadBalancing.Services;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddLoadBalancer(this IServiceCollection services,
-                                                     IConfiguration configuration,
-                                                     Action<DbContextOptionsBuilder> dbContextOptions)
+    public static IServiceCollection AddLoadBalancing(this IServiceCollection services,
+                                                      IConfiguration configuration,
+                                                      Action<DbContextOptionsBuilder> dbContextOptions)
     {
         services.Configure<LoadBalancerSettings>(configuration);
 
@@ -21,6 +21,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<HAProxyConfigurator>();
 
         services.AddDbContext<LoadBalancerContext>(dbContextOptions);
+
+        services.AddScoped<LoadBalancerListViewModel>();
+        services.AddScoped<LoadBalancerDetailViewModel>();
+        services.AddScoped<LoadBalancerNewViewModel>();
+        services.AddScoped<LoadBalancerEditViewModel>();
+
+        services.AddScoped<TargetGroupListViewModel>();
+        services.AddScoped<TargetGroupDetailViewModel>();
+        services.AddScoped<TargetGroupNewViewModel>();
+        services.AddScoped<TargetGroupEditViewModel>();
 
         return services;
     }

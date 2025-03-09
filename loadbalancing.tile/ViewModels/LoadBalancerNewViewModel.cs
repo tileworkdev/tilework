@@ -2,7 +2,7 @@ using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 using Tilework.LoadBalancing.Enums;
 
-namespace Tilework.ViewModels;
+namespace Tilework.LoadBalancing.ViewModels;
 
 public class LoadBalancerNewViewModel
 {

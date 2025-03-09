@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 using tilework.Components;
-using Tilework.ViewModels;
 
 using Tilework.Core.Services;
 using Tilework.LoadBalancing.Services;
@@ -27,11 +26,9 @@ var dbContextOptions = DbContextOptionsHelper.Configure(connectionString);
 
 
 builder.Services.AddCoreServices();
-builder.Services.AddLoadBalancer(builder.Configuration.GetSection("LoadBalancing"), dbContextOptions);
+builder.Services.AddLoadBalancing(builder.Configuration.GetSection("LoadBalancing"), dbContextOptions);
 builder.Services.AddCertificateManagement(builder.Configuration.GetSection("CertificateManagement"), dbContextOptions);
 
-
-builder.Services.AddViewModels();
 
 
 var app = builder.Build();
