@@ -24,5 +24,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          file: ./tilework/Dockerfile
           push: true
           tags: registry.tilework.dev/tilework:latest
