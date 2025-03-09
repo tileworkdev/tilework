@@ -8,3 +8,7 @@ services:
       dockerfile: tilework/Dockerfile
     ports:
       - 5180:5180
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
