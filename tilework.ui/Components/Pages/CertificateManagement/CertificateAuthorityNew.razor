@@ -1,0 +1,49 @@
+@using Tilework.CertificateManagement.Enums
+@using Tilework.CertificateManagement.Persistence.Models
+
+@inject CertificateAuthorityNewViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+@page "/cm/authorities/new"
+
+<GenericEditview Title="New ACME CA" Breadcrumbs="@_items"
+                 OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
+                 OnValidSubmit="Submit">
+    <FormContent>
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
+                      Label="Name" Variant="Variant.Outlined" Required="true" />
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.DirectoryUrl"
+                      Label="Directory URL" Variant="Variant.Outlined" Required="true" />
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Email"
+                      Label="Email" Variant="Variant.Outlined" Required="true" />
+    </FormContent>
+</GenericEditview>
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("ACME CAs", href: "/cm/authorities", icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            await ViewModel.Save();
+            NavigationManager.NavigateTo("/cm/authorities");
+            Snackbar.Add("ACME CA added successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"Failed to add ACME CA: {ex.Message}", Severity.Error);
+        }
+    }
+}

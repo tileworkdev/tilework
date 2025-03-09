@@ -3,20 +3,20 @@ using Tilework.CertificateManagement.Persistence.Models;
 
 namespace Tilework.Ui.ViewModels;
 
-public class CertificateListViewModel
+public class CertificateAuthorityListViewModel
 {
 
     private readonly CertificateManagementService _certificateManagementService;
 
-    public List<Certificate> Objects { get; set; } = new List<Certificate>();
+    public List<CertificateAuthority> Objects { get; set; } = new List<CertificateAuthority>();
 
-    public CertificateListViewModel(CertificateManagementService certificateManagementService)
+    public CertificateAuthorityListViewModel(CertificateManagementService certificateManagementService)
     {
         _certificateManagementService = certificateManagementService;
     }
 
     public async Task Initialize()
     {
-        Objects = await _certificateManagementService.GetCertificates();
+        Objects = await _certificateManagementService.GetCertificateAuthorities();
     }
 }

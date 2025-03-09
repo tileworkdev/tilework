@@ -4,6 +4,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddUserInterface(this IServiceCollection services)
     {
+        // Load balancer
         services.AddScoped<LoadBalancerListViewModel>();
         services.AddScoped<LoadBalancerDetailViewModel>();
         services.AddScoped<LoadBalancerNewViewModel>();
@@ -14,8 +15,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<TargetGroupNewViewModel>();
         services.AddScoped<TargetGroupEditViewModel>();
 
+        // Certificate management
+        services.AddScoped<CertificateAuthorityListViewModel>();
+        services.AddScoped<CertificateAuthorityNewViewModel>();
         services.AddScoped<CertificateListViewModel>();
         services.AddScoped<CertificateNewViewModel>();
+
 
         return services;
     }

@@ -6,15 +6,17 @@
 
 @page "/cm/certificates"
 
-<GenericListview Title="Certificates" Items="@ViewModel.Certificates" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Certificates" Items="@ViewModel.Objects" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
+        <MudTh>Name</MudTh>
         <MudTh>FQDN</MudTh>
         <MudTh>Status</MudTh>
         <MudTh>Expiration</MudTh>
         <MudTh>Key algorithm</MudTh>
     </HeaderContent>
     <RowContent>
-        <MudTd DataLabel="FQDN"><MudLink Href="@DetailLink(context.Id)">@context.Fqdn</MudLink></MudTd>
+        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="FQDN">@context.Fqdn</MudTd>
         @* <MudTd DataLabel="Port">@context.Port</MudTd>
         <MudTd DataLabel="Type">@(context is ApplicationLoadBalancer ? "Application" : "Network")</MudTd>
         <MudTd DataLabel="Status">

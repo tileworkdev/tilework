@@ -15,4 +15,5 @@ public class CertificateManagementContext : DbContext
 
     public DbSet<Certificate> Certificates { get; set; }
     public DbSet<PrivateKey> PrivateKeys { get; set; }
+    public DbSet<CertificateAuthority> CertificateAuthorities { get; set; }
 }

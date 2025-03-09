@@ -1,5 +1,5 @@
-@* @using Tilework.LoadBalancing.Enums
-@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.CertificateManagement.Enums
+@using Tilework.CertificateManagement.Persistence.Models
 
 @inject CertificateNewViewModel ViewModel
 @inject NavigationManager NavigationManager
@@ -13,15 +13,23 @@
     <FormContent>
         <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                       Label="Name" Variant="Variant.Outlined" Required="true" />
-        <MudSelect T="TargetGroupProtocol" @bind-Value="@ViewModel.Object.Protocol"
-                    Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-            <MudSelectItem Value="TargetGroupProtocol.HTTP" />
-            <MudSelectItem Value="TargetGroupProtocol.HTTPS" />
-            <MudSelectItem Value="TargetGroupProtocol.TCP" />
-            <MudSelectItem Value="TargetGroupProtocol.UDP" />
-            <MudSelectItem Value="TargetGroupProtocol.TCP_UDP" />
-            <MudSelectItem Value="TargetGroupProtocol.TLS" />
+        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Fqdn"
+                      Label="FQDN" Variant="Variant.Outlined" Required="true" />
+        <MudSelect T="KeyAlgorithm" @bind-Value="@ViewModel.Object.Algorithm"
+                    Label="Key algorithm" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelectItem Value="KeyAlgorithm.RSA_2048" />
+            <MudSelectItem Value="KeyAlgorithm.RSA_3072" />
+            <MudSelectItem Value="KeyAlgorithm.RSA_4096" />
+            <MudSelectItem Value="KeyAlgorithm.ECDSA_P256" />
+            <MudSelectItem Value="KeyAlgorithm.ECDSA_P384" />
         </MudSelect>
+            <MudSelect T="CertificateAuthority" @bind-Value="ViewModel.Object.Authority"
+                    Label="Certificate authority" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                @foreach (var ca in ViewModel.Authorities)
+                {
+                    <MudSelectItem T="CertificateAuthority" Value="@ca">@ca.Name</MudSelectItem>
+                }
+            </MudSelect>
     </FormContent>
 </GenericEditview>
 
@@ -29,7 +37,7 @@
     private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Certificates", href: "/cm/certificates", icon: Icons.Material.Filled.AltRoute),
         new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
     };
 
@@ -43,12 +51,12 @@
         try
         {
             await ViewModel.Save();
-            NavigationManager.NavigateTo("/lb/targetgroups");
-            Snackbar.Add("target group added successfully!", Severity.Success);
+            NavigationManager.NavigateTo("/cm/certificates");
+            Snackbar.Add("Certificate added successfully!", Severity.Success);
         }
         catch(Exception ex)
         {
-            Snackbar.Add($"Failed to add target group: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Failed to add certificate: {ex.Message}", Severity.Error);
         }
     }
-} *@
+}
