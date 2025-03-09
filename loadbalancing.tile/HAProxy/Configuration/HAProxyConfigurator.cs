@@ -8,7 +8,6 @@ using Tilework.LoadBalancing.Settings;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Enums;
 using Tilework.Core.Models;
-using SharpCompress;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
@@ -56,9 +55,8 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         }
         else if(balancer is NetworkLoadBalancer netLoadBalancer)
         {
-
-
             var be = TargetGroupToBackend.Map(netLoadBalancer.TargetGroup);
+            be.Mode = Mode.TCP;
             haproxyConfig.Backends.Add(be);
         }
         else
