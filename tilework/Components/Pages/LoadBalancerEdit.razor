@@ -18,7 +18,7 @@
                         Label="Port" Variant="Variant.Outlined" Required="true" />
 
         <MudSelect Class="mb-5" T="LoadBalancerType" Disabled="true"
-                    Value="@(ViewModel.Object is ApplicationLoadBalancer ? LoadBalancerType.APPLICATION : LoadBalancerType.NETWORK)"
+                    Value="@(ViewModel.IsAlb() ? LoadBalancerType.APPLICATION : LoadBalancerType.NETWORK)"
                     Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
             <MudSelectItem Value="LoadBalancerType.APPLICATION" />
             <MudSelectItem Value="LoadBalancerType.NETWORK" />

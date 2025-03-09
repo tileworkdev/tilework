@@ -13,6 +13,15 @@
     <FormContent>
         <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                       Label="Name" Variant="Variant.Outlined" Required="true" />
+        <MudSelect T="TargetGroupProtocol" @bind-Value="@ViewModel.Object.Protocol"
+                    Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelectItem Value="TargetGroupProtocol.HTTP" />
+            <MudSelectItem Value="TargetGroupProtocol.HTTPS" />
+            <MudSelectItem Value="TargetGroupProtocol.TCP" />
+            <MudSelectItem Value="TargetGroupProtocol.UDP" />
+            <MudSelectItem Value="TargetGroupProtocol.TCP_UDP" />
+            <MudSelectItem Value="TargetGroupProtocol.TLS" />
+        </MudSelect>
     </FormContent>
 </GenericEditview>
 

@@ -49,18 +49,22 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         var fe = LoadBalancerToFrontend.Map(balancer);
         haproxyConfig.Frontends.Add(fe);
 
+
+        List<TargetGroup> targetGroups;
+
         if (balancer is ApplicationLoadBalancer appLoadBalancer)
         {
-
+            targetGroups = appLoadBalancer.Rules.Select(r => r.TargetGroup).ToList();
         }
         else if(balancer is NetworkLoadBalancer netLoadBalancer)
         {
-            var be = TargetGroupToBackend.Map(netLoadBalancer.TargetGroup);
-            be.Mode = Mode.TCP;
-            haproxyConfig.Backends.Add(be);
+            targetGroups = new List<TargetGroup>() { netLoadBalancer.TargetGroup };
         }
         else
             throw new ArgumentException("Invalid load balancer type");
+
+
+        haproxyConfig.Backends = targetGroups.Select(tg => (ConfigSection) TargetGroupToBackend.Map(tg)).ToList();
 
         haproxyConfig.Save();
     }

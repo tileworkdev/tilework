@@ -9,7 +9,7 @@ public class Rule
     public string Hostname { get; set; }
 
     public Guid TargetGroupId { get; set; }
-    public virtual TargetGroup Group { get; set; }
+    public virtual TargetGroup TargetGroup { get; set; }
 
     public Guid ListenerId { get; set; }
     public virtual ApplicationLoadBalancer Listener { get; set; }

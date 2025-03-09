@@ -99,7 +99,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            ViewModel.AddTarget(target);
+            await ViewModel.AddTarget(target);
         }
     }
 }

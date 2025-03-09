@@ -11,7 +11,7 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    [Migration("20250303103135_Initial")]
+    [Migration("20250309100459_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -112,6 +112,9 @@ namespace loadbalancing.tile.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Protocol")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("TargetGroups");
@@ -156,15 +159,15 @@ namespace loadbalancing.tile.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tilework.LoadBalancing.Persistence.Models.TargetGroup", "Group")
+                    b.HasOne("Tilework.LoadBalancing.Persistence.Models.TargetGroup", "TargetGroup")
                         .WithMany()
                         .HasForeignKey("TargetGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Group");
-
                     b.Navigation("Listener");
+
+                    b.Navigation("TargetGroup");
                 });
 
             modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.Target", b =>

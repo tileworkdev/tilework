@@ -62,8 +62,14 @@ public class LoadBalancerNewViewModel
         await _loadBalancerService.ApplyConfiguration();
     }
 
-    public async Task<List<TargetGroup>> GetTargetGroups()
+    public async Task<List<TargetGroup>> GetNlbTargetGroups()
     {
-        return await _loadBalancerService.GetTargetGroups();
+        var protocols = new List<TargetGroupProtocol> {
+            TargetGroupProtocol.TCP,
+            TargetGroupProtocol.UDP,
+            TargetGroupProtocol.TCP_UDP,
+            TargetGroupProtocol.TLS
+        };
+        return (await _loadBalancerService.GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
     }
 }

@@ -12,7 +12,7 @@
         <MudGrid Spacing="5">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@(ViewModel.Object is ApplicationLoadBalancer ? "Application" : "Network")</MudText>
+                <MudText Typo="Typo.body2">@(ViewModel.IsAlb() ? "Application" : "Network")</MudText>
             </MudItem>
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Status</MudText>
@@ -28,6 +28,34 @@
         </MudGrid>
     </DetailContent>
     <TabContent>
+        @if(ViewModel.Object is ApplicationLoadBalancer appBalancer)
+        {
+            <MudTabPanel Text="Rules">
+                <MudDataGrid T="Rule" Outlined="true" Items="appBalancer.Rules" Hover="true">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Rules</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddRule">Add rule</MudButton>
+                    </ToolBarContent>
+                    <Columns>
+                        <PropertyColumn Property="t => t.Hostname" Title="Hostname" Editable="false" />
+                        <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" />
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudTabPanel>
+        }
+        <MudTabPanel Text="Certificates">
+            <MudText>TODO</MudText>
+        </MudTabPanel>
+        <MudTabPanel Text="Monitoring">
+            <MudText>TODO</MudText>
+        </MudTabPanel>
+
     </TabContent>
 </GenericDetailview>
 
@@ -81,6 +109,23 @@
         {
             await ViewModel.Delete();
             NavigationManager.NavigateTo("/lb/loadbalancers");
+        }
+    }
+
+    private async Task AddRule()
+    {
+        var rule = new Rule();
+        var parameters = new DialogParameters<RuleDialog>();
+        parameters.Add(x => x.Rule, rule);
+        parameters.Add(x => x.TargetGroups, await ViewModel.GetAlbTargetGroups());
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = DialogService.Show<RuleDialog>("Add rule", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await ViewModel.AddRule(rule);
         }
     }
 }

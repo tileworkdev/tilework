@@ -109,6 +109,9 @@ namespace loadbalancing.tile.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Protocol")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("TargetGroups");
@@ -153,15 +156,15 @@ namespace loadbalancing.tile.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tilework.LoadBalancing.Persistence.Models.TargetGroup", "Group")
+                    b.HasOne("Tilework.LoadBalancing.Persistence.Models.TargetGroup", "TargetGroup")
                         .WithMany()
                         .HasForeignKey("TargetGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Group");
-
                     b.Navigation("Listener");
+
+                    b.Navigation("TargetGroup");
                 });
 
             modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.Target", b =>

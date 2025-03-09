@@ -8,6 +8,9 @@ public class FrontendSection : ConfigSection
     [Statement("mode")]
     public Mode Mode { get; set; }
 
+    [Statement("use_backend")]
+    public List<UseBackend> UseBackends { get; set; } = new List<UseBackend>();
+
     [Statement("default_backend")]
     public string DefaultBackend { get; set; }
 

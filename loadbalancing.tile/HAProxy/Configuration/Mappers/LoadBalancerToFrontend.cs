@@ -20,6 +20,15 @@ public static class LoadBalancerToFrontend
                     if(src is ApplicationLoadBalancer alb)
                     {
                         dest.Mode = Mode.HTTP;
+                        foreach(var rule in alb.Rules)
+                        {
+                            var usebe = new UseBackend()
+                            {
+                                Hostname = rule.Hostname,
+                                Target = rule.TargetGroup.Id.ToString()
+                            };
+                            dest.UseBackends.Add(usebe);
+                        }
                     }
                     else if(src is NetworkLoadBalancer nlb)
                     {

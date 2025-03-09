@@ -1,32 +1,13 @@
+using Tilework.LoadBalancing.Enums;
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
 
 namespace Tilework.ViewModels;
 
-public class LoadBalancerDetailViewModel
+public class LoadBalancerDetailViewModel : BaseLoadBalancerViewModel
 {
-
-    private readonly LoadBalancerService _loadBalancerService;
-
-    public BaseLoadBalancer Object;
-
-    public LoadBalancerDetailViewModel(LoadBalancerService loadBalancerService)
+    public LoadBalancerDetailViewModel(LoadBalancerService loadBalancerService) : base(loadBalancerService)
     {
-        _loadBalancerService = loadBalancerService;
-    }
-
-    public async Task Enable()
-    {
-        Object.Enabled = true;
-        await _loadBalancerService.UpdateLoadBalancer(Object);
-        await _loadBalancerService.ApplyConfiguration();
-    }
-    
-    public async Task Disable()
-    {
-        Object.Enabled = false;
-        await _loadBalancerService.UpdateLoadBalancer(Object);
-        await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task Delete()
@@ -35,16 +16,25 @@ public class LoadBalancerDetailViewModel
         await _loadBalancerService.ApplyConfiguration();
     }
 
-    public async Task Initialize(Guid Id)
+    public async Task<List<TargetGroup>> GetAlbTargetGroups()
     {
-        var obj = await _loadBalancerService.GetLoadBalancer(Id);
-        if(obj == null)
-            throw new KeyNotFoundException();
-        Object = obj;
+        var protocols = new List<TargetGroupProtocol> {
+            TargetGroupProtocol.HTTP,
+            TargetGroupProtocol.HTTPS
+        };
+        return (await _loadBalancerService.GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
     }
 
-    public async Task<List<TargetGroup>> GetTargetGroups()
+    public async Task AddRule(Rule rule)
     {
-        return await _loadBalancerService.GetTargetGroups();
+        if(Object is ApplicationLoadBalancer appBalancer)
+        {
+            appBalancer.Rules.Add(rule);
+            await _loadBalancerService.UpdateLoadBalancer(appBalancer);
+        }
+        else
+        {
+            throw new ArgumentException("Can only add rules to application load balancers");
+        }
     }
 }
