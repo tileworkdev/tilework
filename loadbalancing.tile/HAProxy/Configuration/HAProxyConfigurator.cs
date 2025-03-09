@@ -54,7 +54,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
         if (balancer is ApplicationLoadBalancer appLoadBalancer)
         {
-            targetGroups = appLoadBalancer.Rules.Select(r => r.TargetGroup).ToList();
+            targetGroups = appLoadBalancer.Rules != null ? appLoadBalancer.Rules.Select(r => r.TargetGroup).ToList() : new List<TargetGroup>();
         }
         else if(balancer is NetworkLoadBalancer netLoadBalancer)
         {
