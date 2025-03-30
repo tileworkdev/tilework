@@ -1,62 +1,37 @@
+@using System.Linq
+
+@using AutoMapper
+
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.LoadBalancing.Services
+
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject LoadBalancerNewViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject LoadBalancerService LoadBalancerService
+@inject IMapper Mapper
 
 @page "/lb/loadbalancers/new"
 
-<GenericEditview Title="New load balancer" Breadcrumbs="@_items"
-                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                 OnValidSubmit="Submit">
-    <FormContent>
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
-                        Label="Name" Variant="Variant.Outlined" Required="true" />
+@if(form is NewApplicationLoadBalancerForm albForm)
+{
+    <GenericEditview T="NewApplicationLoadBalancerForm" Model="@albForm" Title="New load balancer" Breadcrumbs="@_items"
+                    OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
+                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
+}
+else if(form is NewNetworkLoadBalancerForm nlbForm)
+{
+    <GenericEditview T="NewNetworkLoadBalancerForm" Model="@nlbForm" Title="New load balancer" Breadcrumbs="@_items"
+                    OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
+                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
+}
 
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Port"
-                        Validation="@(new Func<int?, string>(Validators.ValidatePort))"
-                        Label="Port" Variant="Variant.Outlined" Required="true" />
-
-        <MudSelect Class="mb-5" T="LoadBalancerType" @bind-Value="ViewModel.LoadBalancerType"
-                    Label="Type" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-            <MudSelectItem Value="LoadBalancerType.APPLICATION" />
-            <MudSelectItem Value="LoadBalancerType.NETWORK" />
-        </MudSelect>
-
-        @if(ViewModel.Object is ApplicationLoadBalancer appBalancer)
-        {
-            <MudSelect T="AlbProtocol" @bind-Value="@appBalancer.Protocol"
-                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                <MudSelectItem Value="AlbProtocol.HTTP" />
-                <MudSelectItem Value="AlbProtocol.HTTPS" />
-            </MudSelect>
-        }
-        else if(ViewModel.Object is NetworkLoadBalancer netBalancer)
-        {
-            <MudSelect T="NlbProtocol" @bind-Value="@netBalancer.Protocol"
-                        Label="Protocol" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                <MudSelectItem Value="NlbProtocol.TCP" />
-                <MudSelectItem Value="NlbProtocol.UDP" />
-                <MudSelectItem Value="NlbProtocol.TCP_UDP" />
-                <MudSelectItem Value="NlbProtocol.TLS" />
-            </MudSelect>
-
-            <MudSelect T="TargetGroup" @bind-Value="netBalancer.TargetGroup"
-                    Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                @foreach (var group in targetGroups)
-                {
-                    <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
-                }
-            </MudSelect>
-        }
-    </FormContent>
-</GenericEditview>
 
 @code {
-    private List<TargetGroup> targetGroups = new List<TargetGroup>();
+    NewBaseLoadBalancerForm form = new NewBaseLoadBalancerForm();
 
     private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
     {
@@ -67,16 +42,51 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await ViewModel.Initialize();
-
-        targetGroups = await ViewModel.GetNlbTargetGroups();
+        form = new NewApplicationLoadBalancerForm();
     }
 
-    private async Task Submit()
+    private async Task OnChange((string PropertyName, object? Value) change)
+    {
+        if(change.PropertyName == "Type")
+        {
+            LoadBalancerType? value = (LoadBalancerType?) change.Value;
+            if(value == LoadBalancerType.NETWORK && form is NewApplicationLoadBalancerForm albForm)
+            {
+                form = Mapper.Map<NewNetworkLoadBalancerForm>(albForm);
+
+                var targetGroupOptions = (await LoadBalancerService.GetNlbTargetGroups()).Select(tg =>
+                    new SelectOptionItem()
+                    {
+                        Value = tg.Id,
+                        Text = tg.Name
+                    }
+                ).ToList();
+                form.SetOptions(nameof(NewNetworkLoadBalancerForm.TargetGroup), targetGroupOptions);
+            }
+            else if(value == LoadBalancerType.APPLICATION && form is NewNetworkLoadBalancerForm nlbForm)
+            {
+                form = Mapper.Map<NewApplicationLoadBalancerForm>(nlbForm);
+            }
+                
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSubmit()
     {
         try
         {
-            await ViewModel.Save();
+            BaseLoadBalancer obj;
+            if(form is NewApplicationLoadBalancerForm albForm)
+                obj = Mapper.Map<ApplicationLoadBalancer>(albForm);
+            else if(form is NewNetworkLoadBalancerForm nlbForm)
+                obj = Mapper.Map<NetworkLoadBalancer>(nlbForm);
+            else
+                throw new ArgumentException();
+
+            await LoadBalancerService.AddLoadBalancer(obj);
+            await LoadBalancerService.ApplyConfiguration();
+
             NavigationManager.NavigateTo("/lb/loadbalancers");
             Snackbar.Add("Load balancer added successfully!", Severity.Success);
         }

@@ -8,6 +8,7 @@ using Tilework.LoadBalancing.Persistence;
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Interfaces;
 using Tilework.LoadBalancing.Settings;
+using Tilework.LoadBalancing.Enums;
 
 using Tilework.LoadBalancing.Haproxy;
 
@@ -76,6 +77,26 @@ public class LoadBalancerService
     public async Task<List<TargetGroup>> GetTargetGroups()
     {
         return await _dbContext.TargetGroups.ToListAsync();
+    }
+
+    public async Task<List<TargetGroup>> GetNlbTargetGroups()
+    {
+        var protocols = new List<TargetGroupProtocol> {
+            TargetGroupProtocol.TCP,
+            TargetGroupProtocol.UDP,
+            TargetGroupProtocol.TCP_UDP,
+            TargetGroupProtocol.TLS
+        };
+        return (await GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
+    }
+
+    public async Task<List<TargetGroup>> GetAlbTargetGroups()
+    {
+        var protocols = new List<TargetGroupProtocol> {
+            TargetGroupProtocol.HTTP,
+            TargetGroupProtocol.HTTPS
+        };
+        return (await GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
     }
 
     public async Task<TargetGroup?> GetTargetGroup(Guid Id)

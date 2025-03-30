@@ -1,18 +1,20 @@
+using Tilework.Ui.Mappers;
+
 namespace Tilework.Ui.ViewModels;
 
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddUserInterface(this IServiceCollection services)
     {
+        services.AddAutoMapper(typeof(FormMappingProfile));
+
         // Load balancer
         services.AddScoped<LoadBalancerListViewModel>();
         services.AddScoped<LoadBalancerDetailViewModel>();
-        services.AddScoped<LoadBalancerNewViewModel>();
         services.AddScoped<LoadBalancerEditViewModel>();
 
         services.AddScoped<TargetGroupListViewModel>();
         services.AddScoped<TargetGroupDetailViewModel>();
-        services.AddScoped<TargetGroupNewViewModel>();
         services.AddScoped<TargetGroupEditViewModel>();
 
         // Certificate management

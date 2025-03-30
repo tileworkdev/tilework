@@ -9,14 +9,14 @@
 
 @page "/lb/targetgroups/{Id}/edit"
 
-<GenericEditview Title="@ViewModel.Object.Name" 
+<GenericEditviewOld Title="@ViewModel.Object.Name" 
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/targetgroups"))"
                  OnValidSubmit="Submit">
     <FormContent>
         <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
                       Label="Name" Variant="Variant.Outlined" Required="true" />
     </FormContent>
-</GenericEditview>
+</GenericEditviewOld>
 
 @code {
     [Parameter]

@@ -8,7 +8,7 @@
 @inject ISnackbar Snackbar
 @page "/lb/loadbalancers/{Id}/edit"
 
-<GenericEditview Title="@ViewModel.Object.Name"
+<GenericEditviewOld Title="@ViewModel.Object.Name"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
                  OnValidSubmit="Submit">
     <FormContent>
@@ -53,7 +53,7 @@
             </MudSelect>
         }
     </FormContent>
-</GenericEditview>
+</GenericEditviewOld>
 
 @code {
     [Parameter]
