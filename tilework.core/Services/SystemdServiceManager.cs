@@ -61,7 +61,7 @@ public class SystemdServiceManager : IServiceManager
                 actionCommand = "reload";
                 break;
             default:
-                throw new ArgumentException("Unkown service manager action received");
+                throw new ArgumentException("Unknown service manager action received");
         }
 
         ExecuteCommand("systemctl", $"{actionCommand} {serviceName}");
