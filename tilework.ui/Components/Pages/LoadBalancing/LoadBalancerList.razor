@@ -1,14 +1,13 @@
+@using Tilework.LoadBalancing.Services
 @using Tilework.LoadBalancing.Persistence.Models
 
 @namespace Tilework.Ui.Components.Pages
-
-@inject LoadBalancerListViewModel _viewModel
-@inject NavigationManager _navigationManager
+@inject LoadBalancerService _loadBalancerService
 
 
 @page "/lb/loadbalancers"
 
-<GenericListview Title="Load balancers" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Load balancers" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Port</MudTh>
@@ -33,6 +32,7 @@
 </GenericListview>
 
 @code {
+    public List<BaseLoadBalancer> _items { get; set; } = new List<BaseLoadBalancer>();
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -43,4 +43,9 @@
     {
         new ActionItem { Name = "Create new", Href = "/lb/loadbalancers/new" }
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await _loadBalancerService.GetLoadBalancers();
+    }
 }    

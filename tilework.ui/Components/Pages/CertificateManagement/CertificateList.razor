@@ -1,12 +1,15 @@
+@using Tilework.CertificateManagement.Services
+@using Tilework.CertificateManagement.Persistence.Models
+
 @namespace Tilework.Ui.Components.Pages
 
-@inject CertificateListViewModel _viewModel
+@inject CertificateManagementService _certificateManagementService
 @inject NavigationManager _navigationManager
 
 
 @page "/cm/certificates"
 
-<GenericListview Title="Certificates" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Certificates" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>FQDN</MudTh>
@@ -24,6 +27,8 @@
 </GenericListview>
 
 @code {
+    public List<Certificate> _items { get; set; } = new List<Certificate>();
+
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -34,4 +39,9 @@
     {
         new ActionItem { Name = "Create new", Href = "/cm/certificates/new" }
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await _certificateManagementService.GetCertificates();
+    }
 }    

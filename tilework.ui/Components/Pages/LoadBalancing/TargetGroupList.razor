@@ -1,13 +1,14 @@
+@using Tilework.LoadBalancing.Services
 @using Tilework.LoadBalancing.Persistence.Models
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject TargetGroupListViewModel _viewModel
+@inject LoadBalancerService _loadBalancerService
 @inject NavigationManager _navigationManager
 
 @page "/lb/targetgroups"
 
-<GenericListview Title="Target groups" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Target groups" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Targets</MudTh>
@@ -19,6 +20,8 @@
 </GenericListview>
 
 @code {
+    public List<TargetGroup> _items { get; set; } = new List<TargetGroup>();
+
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -29,4 +32,9 @@
     {
         new ActionItem { Name = "Create new", Href = "/lb/targetgroups/new" }
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await _loadBalancerService.GetTargetGroups();
+    }
 }
