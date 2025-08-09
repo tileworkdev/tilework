@@ -129,20 +129,26 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             }
 
 
-            if(lb.Enabled == true && container.State != ContainerState.Running)
+            if (container.State != ContainerState.Running)
             {
-                _logger.LogInformation($"Starting container for load balancer {lb.Name}");
-                await _containerManager.StartContainer(container.Id);
-            }
-            else if(lb.Enabled == false && container.State == ContainerState.Running)
-            {
-                _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
-                await _containerManager.StopContainer(container.Id);
+                if (lb.Enabled == true)
+                {
+                    _logger.LogInformation($"Starting container for load balancer {lb.Name}");
+                    await _containerManager.StartContainer(container.Id);
+                }
             }
             else
             {
-                _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
-                await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
+                if (lb.Enabled == true)
+                {
+                    _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
+                    await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
+                }
+                else
+                {
+                    _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
+                    await _containerManager.StopContainer(container.Id);
+                }
             }
         }
 
