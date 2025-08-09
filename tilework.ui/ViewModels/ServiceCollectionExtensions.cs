@@ -9,10 +9,8 @@ public static class ServiceCollectionExtensions
         services.AddAutoMapper(typeof(FormMappingProfile));
 
         // Load balancer
-        services.AddScoped<LoadBalancerDetailViewModel>();
         services.AddScoped<LoadBalancerEditViewModel>();
 
-        services.AddScoped<TargetGroupDetailViewModel>();
         services.AddScoped<TargetGroupEditViewModel>();
 
         // Certificate management

@@ -1,21 +1,22 @@
 @using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.LoadBalancing.Services
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject TargetGroupDetailViewModel ViewModel
-@inject NavigationManager NavigationManager
-@inject IDialogService DialogService
-@inject ISnackbar Snackbar
+@inject LoadBalancerService _loadBalancerService
+@inject NavigationManager _navigationManager
+@inject IDialogService _dialogService
+@inject ISnackbar _snackbar
 
-@page "/lb/targetgroups/{Id}"
+@page "/lb/targetgroups/{Id:guid}"
 
 
-<GenericDetailview Title="@ViewModel.Object.Name" Breadcrumbs="@_items" Actions="@_actions">
+<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
     <DetailContent>
     </DetailContent>
     <TabContent>
         <MudTabPanel Text="Targets">
-            <MudDataGrid T="Target" Outlined="true" Items="ViewModel.Object.Targets" Hover="true">
+            <MudDataGrid T="Target" Outlined="true" Items="_item.Targets" Hover="true">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Targets</MudText>
                     <MudSpacer />
@@ -38,9 +39,11 @@
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public Guid Id { get; set; }
 
-    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    private TargetGroup _item;
+
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
         new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
@@ -50,15 +53,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try {
-            await ViewModel.Initialize(Guid.Parse(Id));
-        }
-        catch (KeyNotFoundException) {
-            NavigationManager.NavigateTo("/lb/targetgroups");
-            Snackbar.Add($"Target group {Id} not found", Severity.Error);
+        _item = await _loadBalancerService.GetTargetGroup(Id);
+        if(_item == null)
+        {
+            _navigationManager.NavigateTo("/lb/targetgroups");
+            _snackbar.Add($"Target group {Id} not found", Severity.Error);
         }
 
-        _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+        _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
         _actions = new List<ActionItem>
         {
@@ -76,12 +78,13 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var dialog = DialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await ViewModel.Delete();
-            NavigationManager.NavigateTo("/lb/targetgroups");
+            await _loadBalancerService.DeleteTargetGroup(_item);
+            await _loadBalancerService.ApplyConfiguration();
+            _navigationManager.NavigateTo("/lb/targetgroups");
         }
     }
 
@@ -97,11 +100,12 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var dialog = DialogService.Show<TargetDialog>("Add target", parameters, options);
+        var dialog = _dialogService.Show<TargetDialog>("Add target", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await ViewModel.AddTarget(target);
+            _item.Targets.Add(target);
+            await _loadBalancerService.UpdateTargetGroup(_item);
         }
     }
 }

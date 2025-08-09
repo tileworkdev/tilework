@@ -1,24 +1,26 @@
 @using Tilework.LoadBalancing.Persistence.Models
 @using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Services
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject LoadBalancerDetailViewModel ViewModel
-@inject IDialogService DialogService
-@inject NavigationManager NavigationManager
+@inject LoadBalancerService _loadBalancerService
+@inject IDialogService _dialogService
+@inject NavigationManager _navigationManager
+@inject ISnackbar _snackbar
 
-@page "/lb/loadbalancers/{Id}"
+@page "/lb/loadbalancers/{Id:guid}"
 
-<GenericDetailview Title="@ViewModel.Object.Name" Breadcrumbs="@_items" Actions="@_actions">
+<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
     <DetailContent>
         <MudGrid Spacing="5">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@(ViewModel.IsAlb() ? "Application" : "Network")</MudText>
+                <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancer appBalancer ? "Application" : "Network")</MudText>
             </MudItem>
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Status</MudText>
-                @if (ViewModel.Object.Enabled)
+                @if (_item.Enabled)
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Success">Enabled</MudChip>
                 }
@@ -30,7 +32,7 @@
         </MudGrid>
     </DetailContent>
     <TabContent>
-        @if(ViewModel.Object is ApplicationLoadBalancer appBalancer)
+        @if(_item is ApplicationLoadBalancer appBalancer)
         {
             <MudTabPanel Text="Rules">
                 <MudDataGrid T="Rule" Outlined="true" Items="appBalancer.Rules" Hover="true">
@@ -65,9 +67,11 @@
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public Guid Id { get; set; }
 
-    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    private BaseLoadBalancer _item;
+
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
         new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers", icon: Icons.Material.Filled.AltRoute)
@@ -77,22 +81,23 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try {
-            await ViewModel.Initialize(Guid.Parse(Id));
+        var _item = await _loadBalancerService.GetLoadBalancer(Id);
+        if(_item == null)
+        {
+            _navigationManager.NavigateTo("/lb/loadbalancers");
+            _snackbar.Add($"Load balancer {Id} not found", Severity.Error);
         }
-        catch (KeyNotFoundException) {
-            NavigationManager.NavigateTo("/lb/loadbalancers");
-        }
+            
         
-        _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: null, disabled: true));
+        _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
         _actions = new List<ActionItem>
         {
             new ActionItem() { Name="Edit", Href=$"/lb/loadbalancers/{Id}/edit" },
             new ActionItem() { Name="Delete", OnClick=ConfirmDelete },
             new ActionItem() {
-                Name= ViewModel.Object.Enabled ? "Disable" : "Enable",
-                OnClick= ViewModel.Object.Enabled ? ViewModel.Disable : ViewModel.Enable }
+                Name= _item.Enabled ? "Disable" : "Enable",
+                OnClick= _item.Enabled ? Disable : Enable }
         };
     }
 
@@ -105,12 +110,13 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var dialog = DialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await ViewModel.Delete();
-            NavigationManager.NavigateTo("/lb/loadbalancers");
+            await _loadBalancerService.DeleteLoadBalancer(_item);
+            await _loadBalancerService.ApplyConfiguration();
+            _navigationManager.NavigateTo("/lb/loadbalancers");
         }
     }
 
@@ -119,15 +125,46 @@
         var rule = new Rule();
         var parameters = new DialogParameters<RuleDialog>();
         parameters.Add(x => x.Rule, rule);
-        parameters.Add(x => x.TargetGroups, await ViewModel.GetAlbTargetGroups());
+        parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var dialog = DialogService.Show<RuleDialog>("Add rule", parameters, options);
+        var dialog = _dialogService.Show<RuleDialog>("Add rule", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await ViewModel.AddRule(rule);
+            if(_item is ApplicationLoadBalancer appBalancer)
+            {
+                appBalancer.Rules.Add(rule);
+                await _loadBalancerService.UpdateLoadBalancer(appBalancer);
+            }
+            else
+            {
+                _snackbar.Add("Can only add rules to application load balancers", Severity.Error);
+            }
         }
+    }
+
+    private async Task<List<TargetGroup>> GetAlbTargetGroups()
+    {
+        var protocols = new List<TargetGroupProtocol> {
+            TargetGroupProtocol.HTTP,
+            TargetGroupProtocol.HTTPS
+        };
+        return (await _loadBalancerService.GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
+    }
+
+    private async Task Enable()
+    {
+        _item.Enabled = true;
+        await _loadBalancerService.UpdateLoadBalancer(_item);
+        await _loadBalancerService.ApplyConfiguration();
+    }
+    
+    private async Task Disable()
+    {
+        _item.Enabled = false;
+        await _loadBalancerService.UpdateLoadBalancer(_item);
+        await _loadBalancerService.ApplyConfiguration();
     }
 }
