@@ -81,14 +81,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var _item = await _loadBalancerService.GetLoadBalancer(Id);
+        _item = await _loadBalancerService.GetLoadBalancer(Id);
         if(_item == null)
         {
             _navigationManager.NavigateTo("/lb/loadbalancers");
             _snackbar.Add($"Load balancer {Id} not found", Severity.Error);
+            return;
         }
-            
-        
+
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
         _actions = new List<ActionItem>
