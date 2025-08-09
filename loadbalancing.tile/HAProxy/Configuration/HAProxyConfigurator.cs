@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using AutoMapper;
 
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Interfaces;
@@ -18,14 +19,17 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerSettings _settings;
     private readonly ILogger<HAProxyConfigurator> _logger;
+    private readonly IMapper _mapper;
 
     public HAProxyConfigurator(IOptions<LoadBalancerSettings> settings,
                                IContainerManager containerManager,
-                               ILogger<HAProxyConfigurator> logger)
+                               ILogger<HAProxyConfigurator> logger,
+                               IMapper mapper)
     {
         _logger = logger;
         _settings = settings.Value;
         _containerManager = containerManager;
+        _mapper = mapper;
     }
 
     public List<BaseLoadBalancer> LoadConfiguration()
@@ -46,7 +50,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         haproxyConfig.Frontends = new List<ConfigSection>();
         haproxyConfig.Backends = new List<ConfigSection>();
 
-        var fe = LoadBalancerToFrontend.Map(balancer);
+        var fe = _mapper.Map<FrontendSection>(balancer);
         haproxyConfig.Frontends.Add(fe);
 
 
@@ -64,7 +68,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             throw new ArgumentException("Invalid load balancer type");
 
 
-        haproxyConfig.Backends = targetGroups.Select(tg => (ConfigSection) TargetGroupToBackend.Map(tg)).ToList();
+        haproxyConfig.Backends = targetGroups.Select(tg => (ConfigSection)_mapper.Map<BackendSection>(tg)).ToList();
 
         haproxyConfig.Save();
     }
@@ -87,7 +91,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                 {
                     Port=lb.Port,
                     HostPort=lb.Port,
-                    Type= LoadBalancerToPortType.Map(lb)
+                    Type= _mapper.Map<PortType>(lb)
                 };
 
                 try {
