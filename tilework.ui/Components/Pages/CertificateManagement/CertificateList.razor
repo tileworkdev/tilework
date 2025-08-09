@@ -13,16 +13,16 @@
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>FQDN</MudTh>
-        <MudTh>Status</MudTh>
+        @* <MudTh>Status</MudTh>
         <MudTh>Expiration</MudTh>
-        <MudTh>Key algorithm</MudTh>
+        <MudTh>Key algorithm</MudTh> *@
     </HeaderContent>
     <RowContent>
-        <MudTd DataLabel="Name"><MudLink Href="@($"/lb/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Name"><MudLink Href="@($"/cm/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="FQDN">@context.Fqdn</MudTd>
-        <MudTd DataLabel="Status">@context.Status</MudTd>
+        @* <MudTd DataLabel="Status">@context.Status</MudTd>
         <MudTd DataLabel="Expiration">@context.CertificateData?.NotAfter</MudTd>
-        @* <MudTd DataLabel="Key algorithm">@context.PrivateKey.KeyData</MudTd> *@
+        <MudTd DataLabel="Key algorithm">@context.PrivateKey.KeyData</MudTd> *@
     </RowContent>
 </GenericListview>
 
