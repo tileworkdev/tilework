@@ -7,16 +7,16 @@
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject NavigationManager NavigationManager
-@inject ISnackbar Snackbar
-@inject LoadBalancerService LoadBalancerService
-@inject IMapper Mapper
+@inject NavigationManager _navigationManager
+@inject ISnackbar _snackbar
+@inject LoadBalancerService _loadBalancerService
+@inject IMapper _mapper
 
 
 @page "/lb/targetgroups/new"
 
 <GenericEditview T="NewTargetGroupForm" Model="@form" Title="New target group" Breadcrumbs="@_items"
-                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/targetgroups"))"
+                 OnCancel="@(async () => _navigationManager.NavigateTo("/lb/targetgroups"))"
                  OnValidSubmit="Submit" />
 
 @code {
@@ -33,14 +33,14 @@
     {
         try
         {
-            var obj = Mapper.Map<TargetGroup>(form);
-            await LoadBalancerService.AddTargetGroup(obj);
-            NavigationManager.NavigateTo("/lb/targetgroups");
-            Snackbar.Add("target group added successfully!", Severity.Success);
+            var obj = _mapper.Map<TargetGroup>(form);
+            await _loadBalancerService.AddTargetGroup(obj);
+            _navigationManager.NavigateTo("/lb/targetgroups");
+            _snackbar.Add("target group added successfully!", Severity.Success);
         }
         catch(Exception ex)
         {
-            Snackbar.Add($"Failed to add target group: {ex.Message}", Severity.Error);
+            _snackbar.Add($"Failed to add target group: {ex.Message}", Severity.Error);
         }
     }
 }

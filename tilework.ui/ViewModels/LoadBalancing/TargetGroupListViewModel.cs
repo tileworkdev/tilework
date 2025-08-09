@@ -1,13 +1,13 @@
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.LoadBalancing.Services;
-
+using Tilework.Ui.Interfaces;
 namespace Tilework.Ui.ViewModels;
 
-public class TargetGroupListViewModel
+public class TargetGroupListViewModel : IListViewModel<TargetGroup>
 {
     private readonly LoadBalancerService _loadBalancerService;
 
-    public List<TargetGroup> TargetGroups { get; set; } = new List<TargetGroup>();
+    public List<TargetGroup> Items { get; set; } = new List<TargetGroup>();
 
     public TargetGroupListViewModel(LoadBalancerService loadBalancerService)
     {
@@ -16,6 +16,6 @@ public class TargetGroupListViewModel
 
     public async Task Initialize()
     {
-        TargetGroups = await _loadBalancerService.GetTargetGroups();
+        Items = await _loadBalancerService.GetTargetGroups();
     }
 }

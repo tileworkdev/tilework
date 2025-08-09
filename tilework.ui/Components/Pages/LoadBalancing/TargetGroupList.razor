@@ -2,18 +2,18 @@
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject TargetGroupListViewModel ViewModel
-@inject NavigationManager NavigationManager
+@inject TargetGroupListViewModel _viewModel
+@inject NavigationManager _navigationManager
 
 @page "/lb/targetgroups"
 
-<GenericListview Title="Target groups" Items="@ViewModel.TargetGroups" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Target groups" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Targets</MudTh>
     </HeaderContent>
     <RowContent>
-        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Name"><MudLink Href="@($"/lb/targetgroups/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Targets">@context.Targets.Count()</MudTd>
     </RowContent>
 </GenericListview>
@@ -29,13 +29,4 @@
     {
         new ActionItem { Name = "Create new", Href = "/lb/targetgroups/new" }
     };
-
-    protected override async Task OnInitializedAsync()
-    {
-        await ViewModel.Initialize();
-    }
-    private string DetailLink(Guid Id)
-    {
-        return $"/lb/targetgroups/{Id.ToString()}";
-    }
 }

@@ -2,13 +2,13 @@
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject LoadBalancerListViewModel ViewModel
-@inject NavigationManager NavigationManager
+@inject LoadBalancerListViewModel _viewModel
+@inject NavigationManager _navigationManager
 
 
 @page "/lb/loadbalancers"
 
-<GenericListview Title="Load balancers" Items="@ViewModel.Balancers" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Load balancers" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Port</MudTh>
@@ -16,7 +16,7 @@
         <MudTh>Status</MudTh>
     </HeaderContent>
     <RowContent>
-        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Name"><MudLink Href="@($"/lb/loadbalancers/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Port">@context.Port</MudTd>
         <MudTd DataLabel="Type">@(context is ApplicationLoadBalancer ? "Application" : "Network")</MudTd>
         <MudTd DataLabel="Status">
@@ -43,14 +43,4 @@
     {
         new ActionItem { Name = "Create new", Href = "/lb/loadbalancers/new" }
     };
-
-    protected override async Task OnInitializedAsync()
-    {
-        await ViewModel.Initialize();
-    }
-
-    private string DetailLink(Guid Id)
-    {
-        return $"/lb/loadbalancers/{Id.ToString()}";
-    }
 }    

@@ -1,12 +1,12 @@
 @namespace Tilework.Ui.Components.Pages
 
-@inject CertificateListViewModel ViewModel
-@inject NavigationManager NavigationManager
+@inject CertificateListViewModel _viewModel
+@inject NavigationManager _navigationManager
 
 
 @page "/cm/certificates"
 
-<GenericListview Title="Certificates" Items="@ViewModel.Objects" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Certificates" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>FQDN</MudTh>
@@ -15,20 +15,11 @@
         <MudTh>Key algorithm</MudTh>
     </HeaderContent>
     <RowContent>
-        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Name"><MudLink Href="@($"/lb/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="FQDN">@context.Fqdn</MudTd>
-        @* <MudTd DataLabel="Port">@context.Port</MudTd>
-        <MudTd DataLabel="Type">@(context is ApplicationLoadBalancer ? "Application" : "Network")</MudTd>
-        <MudTd DataLabel="Status">
-            @if (context.Enabled)
-            {
-                <MudChip T="string" Size="Size.Small" Color="Color.Success">Enabled</MudChip>
-            }
-            else
-            {
-                <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
-            }
-        </MudTd> *@
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Expiration">@context.CertificateData?.NotAfter</MudTd>
+        @* <MudTd DataLabel="Key algorithm">@context.PrivateKey.KeyData</MudTd> *@
     </RowContent>
 </GenericListview>
 
@@ -43,14 +34,4 @@
     {
         new ActionItem { Name = "Create new", Href = "/cm/certificates/new" }
     };
-
-    protected override async Task OnInitializedAsync()
-    {
-        await ViewModel.Initialize();
-    }
-
-    private string DetailLink(Guid Id)
-    {
-        return $"/cm/certificates/{Id.ToString()}";
-    }
 }    

@@ -1,14 +1,15 @@
 using Tilework.CertificateManagement.Services;
 using Tilework.CertificateManagement.Persistence.Models;
+using Tilework.Ui.Interfaces;
 
 namespace Tilework.Ui.ViewModels;
 
-public class CertificateListViewModel
+public class CertificateListViewModel : IListViewModel<Certificate>
 {
 
     private readonly CertificateManagementService _certificateManagementService;
 
-    public List<Certificate> Objects { get; set; } = new List<Certificate>();
+    public List<Certificate> Items { get; set; } = new List<Certificate>();
 
     public CertificateListViewModel(CertificateManagementService certificateManagementService)
     {
@@ -17,6 +18,6 @@ public class CertificateListViewModel
 
     public async Task Initialize()
     {
-        Objects = await _certificateManagementService.GetCertificates();
+        Items = await _certificateManagementService.GetCertificates();
     }
 }

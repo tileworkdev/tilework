@@ -1,13 +1,14 @@
 using Tilework.LoadBalancing.Services;
+using Tilework.Ui.Interfaces;
 
 namespace Tilework.Ui.ViewModels;
 
-public class LoadBalancerListViewModel
+public class LoadBalancerListViewModel : IListViewModel<BaseLoadBalancer>
 {
 
     private readonly LoadBalancerService _loadBalancerService;
 
-    public List<BaseLoadBalancer> Balancers { get; set; } = new List<BaseLoadBalancer>();
+    public List<BaseLoadBalancer> Items { get; set; } = new List<BaseLoadBalancer>();
 
     public LoadBalancerListViewModel(LoadBalancerService loadBalancerService)
     {
@@ -16,6 +17,6 @@ public class LoadBalancerListViewModel
 
     public async Task Initialize()
     {
-        Balancers = await _loadBalancerService.GetLoadBalancers();
+        Items = await _loadBalancerService.GetLoadBalancers();
     }
 }

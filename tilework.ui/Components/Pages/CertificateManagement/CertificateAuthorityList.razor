@@ -1,19 +1,19 @@
 @namespace Tilework.Ui.Components.Pages
 
-@inject CertificateAuthorityListViewModel ViewModel
-@inject NavigationManager NavigationManager
+@inject CertificateAuthorityListViewModel _viewModel
+@inject NavigationManager _navigationManager
 
 
 @page "/cm/authorities"
 
-<GenericListview Title="ACME CAs" Items="@ViewModel.Objects" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="ACME CAs" ViewModel="@_viewModel" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Email</MudTh>
         <MudTh>URL</MudTh>
     </HeaderContent>
     <RowContent>
-        <MudTd DataLabel="Name"><MudLink Href="@DetailLink(context.Id)">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Name"><MudLink Href="@($"/lb/authorities/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
         <MudTd DataLabel="URL">@context.DirectoryUrl</MudTd>
     </RowContent>
@@ -30,14 +30,4 @@
     {
         new ActionItem { Name = "Create new", Href = "/cm/authorities/new" }
     };
-
-    protected override async Task OnInitializedAsync()
-    {
-        await ViewModel.Initialize();
-    }
-
-    private string DetailLink(Guid Id)
-    {
-        return $"/cm/authorities/{Id.ToString()}";
-    }
 }    

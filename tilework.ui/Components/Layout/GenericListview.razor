@@ -1,10 +1,11 @@
+@using Tilework.Ui.Interfaces
 @namespace Tilework.Ui.Components.Layout
 
 @typeparam T
 
 <MudBreadcrumbs Items="Breadcrumbs" Separator=">"></MudBreadcrumbs>
 
-<MudTable T="T" Outlined="true" Items="Items" Hover="true">
+<MudTable T="T" Outlined="true" Items="@ViewModel.Items" Hover="true">
     <ToolBarContent>
         <MudText Typo="Typo.h6">@Title</MudText>
         <MudSpacer />
@@ -28,11 +29,17 @@
 
 @code {
     [Parameter] public string Title { get; set; } = "";
-    [Parameter] public List<T> Items { get; set; } = new List<T>();
+    [Parameter] public IListViewModel<T> ViewModel { get; set; } = default!;
     [Parameter] public List<ActionItem> Actions { get; set; } = new List<ActionItem>();
     [Parameter] public List<BreadcrumbItem> Breadcrumbs { get; set; } = new List<BreadcrumbItem>();
 
     [Parameter] public RenderFragment? ActionContent { get; set; }
     [Parameter] public RenderFragment? HeaderContent { get; set; }
     [Parameter] public RenderFragment<T>? RowContent { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.Initialize();
+    }
 }
