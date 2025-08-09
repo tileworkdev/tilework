@@ -1,0 +1,10 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+services:
+  tileworkui:
+    image: tileworkui
+    build:
+      context: .
+      dockerfile: tilework.ui/Dockerfile
+    ports:
+      - 5180:5180
