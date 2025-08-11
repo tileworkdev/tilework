@@ -4,6 +4,8 @@ EXPOSE 5180
 
 ENV ASPNETCORE_URLS=http://+:5180
 
+RUN groupadd docker && usermod -aG docker app
+
 USER app
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG configuration=Release
