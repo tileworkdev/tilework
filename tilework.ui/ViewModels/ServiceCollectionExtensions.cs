@@ -15,8 +15,6 @@ public static class ServiceCollectionExtensions
 
         // Certificate management
         services.AddScoped<CertificateAuthorityNewViewModel>();
-        services.AddScoped<CertificateNewViewModel>();
-
 
         return services;
     }
