@@ -1,28 +1,29 @@
 @using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Services
 @using Tilework.LoadBalancing.Persistence.Models
+@using AutoMapper
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject TargetGroupEditViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject LoadBalancerService LoadBalancerService
+@inject IMapper _mapper
 
-@page "/lb/targetgroups/{Id}/edit"
+@page "/lb/targetgroups/{Id:guid}/edit"
 
-<GenericEditviewOld Title="@ViewModel.Object.Name" 
+<GenericEditview T="EditTargetGroupForm" Model="@form" Title="@Object.Name" 
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/targetgroups"))"
-                 OnValidSubmit="Submit">
-    <FormContent>
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
-                      Label="Name" Variant="Variant.Outlined" Required="true" />
-    </FormContent>
-</GenericEditviewOld>
+                 OnValidSubmit="Submit" />
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public Guid Id { get; set; }
 
-    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    private EditTargetGroupForm form = new EditTargetGroupForm();
+    private TargetGroup Object;
+
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
         new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
@@ -31,22 +32,27 @@
     protected override async Task OnInitializedAsync()
     {
         try {
-            await ViewModel.Initialize(Guid.Parse(Id));
+            Object = await LoadBalancerService.GetTargetGroup(Id);
+            if(Object == null)
+                throw new KeyNotFoundException();
         }
         catch (KeyNotFoundException) {
             NavigationManager.NavigateTo("/lb/targetgroups");
             Snackbar.Add($"Target group {Id} not found", Severity.Error);
         }
         
-        _items.Add(new BreadcrumbItem(ViewModel.Object.Name, href: $"/lb/targetgroups/{Id}"));
-        _items.Add(new BreadcrumbItem("edit", href: null, disabled: true));
+        _breadcrumbs.Add(new BreadcrumbItem(Object.Name, href: $"/lb/targetgroups/{Id}"));
+        _breadcrumbs.Add(new BreadcrumbItem("edit", href: null, disabled: true));
     }
 
     private async Task Submit()
     {
         try
         {
-            await ViewModel.Save();
+            Object = _mapper.Map(form, Object);
+            await LoadBalancerService.UpdateTargetGroup(Object);
+            await LoadBalancerService.ApplyConfiguration();
+
             NavigationManager.NavigateTo("/lb/targetgroups");
             Snackbar.Add("target group saved successfully!", Severity.Success);
         }

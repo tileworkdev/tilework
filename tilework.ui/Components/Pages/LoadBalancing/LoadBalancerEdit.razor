@@ -6,7 +6,7 @@
 @inject LoadBalancerEditViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@page "/lb/loadbalancers/{Id}/edit"
+@page "/lb/loadbalancers/{Id:guid}/edit"
 
 <GenericEditviewOld Title="@ViewModel.Object.Name"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
@@ -57,7 +57,7 @@
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public Guid Id { get; set; }
 
     private List<TargetGroup> targetGroups = new List<TargetGroup>();
 
@@ -70,7 +70,7 @@
     protected override async Task OnInitializedAsync()
     {
         try {
-            await ViewModel.Initialize(Guid.Parse(Id));
+            await ViewModel.Initialize(Id);
         }
         catch (KeyNotFoundException) {
             NavigationManager.NavigateTo("/lb/loadbalancers");

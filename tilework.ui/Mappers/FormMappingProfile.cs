@@ -10,6 +10,9 @@ public class FormMappingProfile : Profile
     public FormMappingProfile()
     {
         CreateMap<NewTargetGroupForm, TargetGroup>();
+        CreateMap<EditTargetGroupForm, TargetGroup>();
+
+        CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
         CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancer>();
         CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancer>();
 
