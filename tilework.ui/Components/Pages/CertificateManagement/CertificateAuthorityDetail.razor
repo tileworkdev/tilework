@@ -23,11 +23,6 @@
             </MudItem>
         </MudGrid>
     </DetailContent>
-    <TabContent>
-        <MudTabPanel Text="Certificates">
-            <MudText>TODO</MudText>
-        </MudTabPanel>
-    </TabContent>
 </GenericDetailview>
 
 @code {
@@ -58,7 +53,6 @@
 
         _actions = new List<ActionItem>
         {
-            new ActionItem() { Name = "Edit", Href = $"/cm/authorities/{Id}/edit" },
             new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
         };
     }
