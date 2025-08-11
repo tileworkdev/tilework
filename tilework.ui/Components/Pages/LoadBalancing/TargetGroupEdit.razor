@@ -33,14 +33,16 @@
     {
         try {
             Object = await LoadBalancerService.GetTargetGroup(Id);
-            if(Object == null)
+            if (Object == null)
                 throw new KeyNotFoundException();
+
+            form = _mapper.Map<EditTargetGroupForm>(Object);
         }
         catch (KeyNotFoundException) {
             NavigationManager.NavigateTo("/lb/targetgroups");
             Snackbar.Add($"Target group {Id} not found", Severity.Error);
         }
-        
+
         _breadcrumbs.Add(new BreadcrumbItem(Object.Name, href: $"/lb/targetgroups/{Id}"));
         _breadcrumbs.Add(new BreadcrumbItem("edit", href: null, disabled: true));
     }

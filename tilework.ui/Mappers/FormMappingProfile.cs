@@ -12,6 +12,7 @@ public class FormMappingProfile : Profile
     {
         CreateMap<NewTargetGroupForm, TargetGroup>();
         CreateMap<EditTargetGroupForm, TargetGroup>();
+        CreateMap<TargetGroup, EditTargetGroupForm>();
 
         CreateMap<NewCertificateAuthorityForm, CertificateAuthority>();
 
