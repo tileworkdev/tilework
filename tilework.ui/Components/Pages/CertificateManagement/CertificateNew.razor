@@ -1,39 +1,24 @@
+@using System.Linq
 @using Tilework.CertificateManagement.Enums
 @using Tilework.CertificateManagement.Persistence.Models
+@using Tilework.CertificateManagement.Services
+@using Tilework.Ui.Models
 
-@inject CertificateNewViewModel ViewModel
+@namespace Tilework.Ui.Components.Pages
+
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject CertificateManagementService CertificateManagementService
 
 @page "/cm/certificates/new"
 
-<GenericEditview Title="New certificate" Breadcrumbs="@_items"
+<GenericEditview T="NewCertificateForm" Model="@form" Title="New certificate" Breadcrumbs="@_items"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/cm/certificates"))"
-                 OnValidSubmit="Submit">
-    <FormContent>
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
-                      Label="Name" Variant="Variant.Outlined" Required="true" />
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Fqdn"
-                      Label="FQDN" Variant="Variant.Outlined" Required="true" />
-        <MudSelect T="KeyAlgorithm" @bind-Value="@ViewModel.Object.Algorithm"
-                    Label="Key algorithm" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-            <MudSelectItem Value="KeyAlgorithm.RSA_2048" />
-            <MudSelectItem Value="KeyAlgorithm.RSA_3072" />
-            <MudSelectItem Value="KeyAlgorithm.RSA_4096" />
-            <MudSelectItem Value="KeyAlgorithm.ECDSA_P256" />
-            <MudSelectItem Value="KeyAlgorithm.ECDSA_P384" />
-        </MudSelect>
-            <MudSelect T="CertificateAuthority" @bind-Value="ViewModel.Object.Authority"
-                    Label="Certificate authority" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                @foreach (var ca in ViewModel.Authorities)
-                {
-                    <MudSelectItem T="CertificateAuthority" Value="@ca">@ca.Name</MudSelectItem>
-                }
-            </MudSelect>
-    </FormContent>
-</GenericEditview>
+                 OnValidSubmit="Submit" />
 
 @code {
+    NewCertificateForm form = new NewCertificateForm();
+
     private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -43,14 +28,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await ViewModel.Initialize();
+        var authorities = await CertificateManagementService.GetCertificateAuthorities();
+        var authorityOptions = authorities.Select(ca => new SelectOptionItem
+        {
+            Value = ca,
+            Text = ca.Name
+        }).ToList();
+
+        form.SetOptions(nameof(NewCertificateForm.Authority), authorityOptions);
     }
 
     private async Task Submit()
     {
         try
         {
-            await ViewModel.Save();
+            await CertificateManagementService.AddCertificate(form.Name, form.Fqdn, form.Authority!, form.Algorithm);
             NavigationManager.NavigateTo("/cm/certificates");
             Snackbar.Add("Certificate added successfully!", Severity.Success);
         }
