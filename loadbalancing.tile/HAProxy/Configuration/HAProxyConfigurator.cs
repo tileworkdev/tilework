@@ -68,7 +68,10 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             throw new ArgumentException("Invalid load balancer type");
 
 
-        haproxyConfig.Backends = targetGroups.Select(tg => (ConfigSection)_mapper.Map<BackendSection>(tg)).ToList();
+        haproxyConfig.Backends = targetGroups
+            .GroupBy(tg => tg.Id).Select(g => g.First()) // Deduplicate target groups
+            .Select(tg => (ConfigSection)_mapper.Map<BackendSection>(tg)) // map them to backend sections
+            .ToList();
 
         haproxyConfig.Save();
     }
