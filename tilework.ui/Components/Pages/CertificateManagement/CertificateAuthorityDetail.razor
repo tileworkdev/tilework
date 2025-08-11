@@ -76,7 +76,8 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            // TODO: delete authority and navigate to list
+            await _certificateManagementService.DeleteCertificateAuthority(_item);
+            _navigationManager.NavigateTo("/cm/authorities");
         }
     }
 }
