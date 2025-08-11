@@ -106,6 +106,7 @@
         {
             _item.Targets.Add(target);
             await _loadBalancerService.UpdateTargetGroup(_item);
+            await _loadBalancerService.ApplyConfiguration();
         }
     }
 }

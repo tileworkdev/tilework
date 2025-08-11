@@ -110,7 +110,6 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     _logger.LogCritical($"Failed to create container for load balancer {lb.Name}: {ex.ToString()}");
                     throw;
                 }
-
             }
 
             var localConfigPath = Path.GetTempFileName();
