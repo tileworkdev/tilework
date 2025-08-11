@@ -34,7 +34,7 @@ public class LoadBalancerService
         _settings = settings.Value;
         _configurator = LoadConfigurator(serviceProvider, _settings);
         
-        ApplyConfiguration();
+        ApplyConfiguration().GetAwaiter().GetResult();
     }
 
     private ILoadBalancingConfigurator LoadConfigurator(IServiceProvider serviceProvider, LoadBalancerSettings settings)
