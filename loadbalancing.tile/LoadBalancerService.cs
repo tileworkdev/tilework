@@ -33,8 +33,6 @@ public class LoadBalancerService
         _logger = logger;
         _settings = settings.Value;
         _configurator = LoadConfigurator(serviceProvider, _settings);
-        
-        ApplyConfiguration().GetAwaiter().GetResult();
     }
 
     private ILoadBalancingConfigurator LoadConfigurator(IServiceProvider serviceProvider, LoadBalancerSettings settings)
