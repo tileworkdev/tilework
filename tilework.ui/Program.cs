@@ -53,7 +53,7 @@ app.MapRazorComponents<App>()
 
 
 
-app.RunDbMigrations(builder.Services);
+app.Services.RunDbMigrations(builder.Services);
 
 
 app.Run();

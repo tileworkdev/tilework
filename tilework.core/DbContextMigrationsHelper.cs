@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,11 +6,11 @@ namespace Tilework.Core;
 
 public static class DbContextMigrationsHelper
 {
-    public static void RunDbMigrations(this IApplicationBuilder app, IServiceCollection services)
+    public static void RunDbMigrations(this IServiceProvider root, IServiceCollection services)
     {
-        using var scope = app.ApplicationServices.CreateScope();
+        using var scope = root.CreateScope();
         var serviceProvider = scope.ServiceProvider;
-        var logger = serviceProvider.GetRequiredService<ILogger<IApplicationBuilder>>();
+        var logger = serviceProvider.GetRequiredService<ILogger<DbContext>>();
 
         var dbContextTypes = services
             .Where(service => service.ServiceType.IsSubclassOf(typeof(DbContext)))
