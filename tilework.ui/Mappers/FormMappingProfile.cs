@@ -16,11 +16,17 @@ public class FormMappingProfile : Profile
 
         CreateMap<NewCertificateAuthorityForm, CertificateAuthority>();
 
-        CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
         CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancer>();
         CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancer>();
-
         CreateMap<NewNetworkLoadBalancerForm, NewApplicationLoadBalancerForm>();
         CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
+
+        CreateMap<EditApplicationLoadBalancerForm, ApplicationLoadBalancer>();
+        CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancer>();
+        CreateMap<ApplicationLoadBalancer, EditApplicationLoadBalancerForm>();
+        CreateMap<NetworkLoadBalancer, EditNetworkLoadBalancerForm>();
+        CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
+        CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
+
     }
 }

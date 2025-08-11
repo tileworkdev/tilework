@@ -8,8 +8,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddAutoMapper(typeof(FormMappingProfile));
 
-        services.AddScoped<LoadBalancerEditViewModel>();
-
         return services;
     }
 }
