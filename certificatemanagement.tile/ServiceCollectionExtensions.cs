@@ -19,6 +19,8 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContext<CertificateManagementContext>(dbContextOptions);
 
+        services.AddHostedService<CertificateManagementInitializer>();
+        
         return services;
     }
 }

@@ -52,8 +52,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 
-
-app.Services.RunDbMigrations(builder.Services);
-
-
 app.Run();

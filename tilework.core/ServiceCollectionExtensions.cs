@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 
 using Tilework.Core.Interfaces;
 
@@ -11,6 +10,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IServiceManager, SystemdServiceManager>();
         services.AddSingleton<IContainerManager, DockerServiceManager>();
+        services.AddHostedService<CoreInitializer>();
+
         return services;
     }
 }

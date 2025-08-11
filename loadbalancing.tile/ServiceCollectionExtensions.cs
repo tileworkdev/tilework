@@ -23,6 +23,8 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContext<LoadBalancerContext>(dbContextOptions);
 
+        services.AddHostedService<LoadBalancingInitializer>();
+
         return services;
     }
 }
