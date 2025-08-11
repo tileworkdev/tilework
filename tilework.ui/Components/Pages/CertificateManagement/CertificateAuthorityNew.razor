@@ -1,26 +1,24 @@
-@using Tilework.CertificateManagement.Enums
 @using Tilework.CertificateManagement.Persistence.Models
+@using Tilework.CertificateManagement.Services
+@using Tilework.Ui.Models
+@using AutoMapper
 
-@inject CertificateAuthorityNewViewModel ViewModel
+@namespace Tilework.Ui.Components.Pages
+
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject CertificateManagementService CertificateManagementService
+@inject IMapper Mapper
 
 @page "/cm/authorities/new"
 
-<GenericEditviewOld Title="New ACME CA" Breadcrumbs="@_breadcrumbs"
+<GenericEditview T="NewCertificateAuthorityForm" Model="@form" Title="New ACME CA" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
-                 OnValidSubmit="Submit">
-    <FormContent>
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Name"
-                      Label="Name" Variant="Variant.Outlined" Required="true" />
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.DirectoryUrl"
-                      Label="Directory URL" Variant="Variant.Outlined" Required="true" />
-        <MudTextField Class="mb-5" @bind-Value="ViewModel.Object.Email"
-                      Label="Email" Variant="Variant.Outlined" Required="true" />
-    </FormContent>
-</GenericEditviewOld>
+                 OnValidSubmit="Submit" />
 
 @code {
+    NewCertificateAuthorityForm form = new();
+
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -28,16 +26,12 @@
         new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
     };
 
-    protected override async Task OnInitializedAsync()
-    {
-        await ViewModel.Initialize();
-    }
-
     private async Task Submit()
     {
         try
         {
-            await ViewModel.Save();
+            var authority = Mapper.Map<CertificateAuthority>(form);
+            await CertificateManagementService.AddCertificateAuthority(authority);
             NavigationManager.NavigateTo("/cm/authorities");
             Snackbar.Add("ACME CA added successfully!", Severity.Success);
         }
@@ -47,3 +41,4 @@
         }
     }
 }
+
