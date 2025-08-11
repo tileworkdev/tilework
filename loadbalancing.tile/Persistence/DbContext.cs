@@ -13,10 +13,20 @@ public class LoadBalancerContext : DbContext
         optionsBuilder.UseLazyLoadingProxies();
     }
 
+
     public DbSet<BaseLoadBalancer> LoadBalancers { get; set; }
     public DbSet<ApplicationLoadBalancer> ApplicationLoadBalancers { get; set; }
     public DbSet<NetworkLoadBalancer> NetworkLoadBalancers { get; set; }
     public DbSet<Rule> Rules { get; set; }
     public DbSet<TargetGroup> TargetGroups { get; set; }
     public DbSet<Target> Targets { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Rule>()
+        .OwnsMany(p => p.Conditions, b =>
+        {
+            b.ToJson();
+        });
+    }
 }

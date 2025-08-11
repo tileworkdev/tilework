@@ -4,7 +4,6 @@ namespace Tilework.LoadBalancing.Persistence.Models;
 public class Rule
 {
     public Guid Id { get; set; }
-    public string Hostname { get; set; }
 
     public Guid TargetGroupId { get; set; }
     public virtual TargetGroup TargetGroup { get; set; }

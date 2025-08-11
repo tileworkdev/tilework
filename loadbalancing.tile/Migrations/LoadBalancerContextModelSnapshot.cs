@@ -57,10 +57,6 @@ namespace loadbalancing.tile.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Hostname")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<Guid>("ListenerId")
                         .HasColumnType("TEXT");
 
@@ -161,6 +157,37 @@ namespace loadbalancing.tile.Migrations
                         .HasForeignKey("TargetGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsMany("Tilework.LoadBalancing.Persistence.Models.Condition", "Conditions", b1 =>
+                        {
+                            b1.Property<Guid>("RuleId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int?>("Operator")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Type")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.HasKey("RuleId", "Id");
+
+                            b1.ToTable("Rules");
+
+                            b1.ToJson("Conditions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RuleId");
+                        });
+
+                    b.Navigation("Conditions");
 
                     b.Navigation("Listener");
 

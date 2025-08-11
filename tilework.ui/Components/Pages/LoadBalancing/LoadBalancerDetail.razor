@@ -42,7 +42,7 @@
                         <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddRule">Add rule</MudButton>
                     </ToolBarContent>
                     <Columns>
-                        <PropertyColumn Property="t => t.Hostname" Title="Hostname" Editable="false" />
+                        @* <PropertyColumn Property="t => t.Hostname" Title="Hostname" Editable="false" /> *@
                         <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>

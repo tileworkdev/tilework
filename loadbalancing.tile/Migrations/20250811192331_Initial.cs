@@ -73,9 +73,9 @@ namespace loadbalancing.tile.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Hostname = table.Column<string>(type: "TEXT", nullable: false),
                     TargetGroupId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ListenerId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    ListenerId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Conditions = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

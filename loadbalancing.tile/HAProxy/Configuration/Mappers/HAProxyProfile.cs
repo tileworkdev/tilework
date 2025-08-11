@@ -22,15 +22,15 @@ public class HAProxyProfile : Profile
                     dest.Mode = Mode.HTTP;
                     if (alb.Rules != null)
                     {
-                        foreach (var rule in alb.Rules)
-                        {
-                            var usebe = new UseBackend()
-                            {
-                                Hostname = rule.Hostname,
-                                Target = rule.TargetGroup.Id.ToString(),
-                            };
-                            dest.UseBackends.Add(usebe);
-                        }
+                        // foreach (var rule in alb.Rules)
+                        // {
+                        //     var usebe = new UseBackend()
+                        //     {
+                        //         Hostname = rule.Hostname,
+                        //         Target = rule.TargetGroup.Id.ToString(),
+                        //     };
+                        //     dest.UseBackends.Add(usebe);
+                        // }
                     }
                 }
                 else if (src is NetworkLoadBalancer nlb)
