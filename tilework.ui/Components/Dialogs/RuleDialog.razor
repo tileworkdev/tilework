@@ -45,7 +45,7 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter] public Rule Rule { get; set; } = new Rule();
     [Parameter] public List<TargetGroup> TargetGroups { get; set; } = new List<TargetGroup>();
