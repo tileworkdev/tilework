@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/tilework.ui/bin/Debug/net8.0/tilework.ui.dll",
+            "program": "${workspaceFolder}/tilework.ui/bin/Debug/net9.0/tilework.ui.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/tilework.ui/bin/Debug/net8.0",
+            "cwd": "${workspaceFolder}/tilework.ui/bin/Debug/net9.0",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",

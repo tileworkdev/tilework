@@ -24,7 +24,7 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter] public Target Target { get; set; } = new Target();
 
