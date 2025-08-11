@@ -13,9 +13,6 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<TargetGroupEditViewModel>();
 
-        // Certificate management
-        services.AddScoped<CertificateAuthorityNewViewModel>();
-
         return services;
     }
 }
