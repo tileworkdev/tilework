@@ -19,18 +19,18 @@ public class CertificateManagementService
     private readonly CertificateManagementContext _dbContext;
     private readonly CertificateManagementSettings _settings;
     private readonly ILogger<CertificateManagementService> _logger;
-    private readonly LoadBalancerService _loadBalancerService;
+    private readonly AcmeVerificationService _verificationService;
 
 
     public CertificateManagementService(CertificateManagementContext dbContext,
                                         IOptions<CertificateManagementSettings> settings,
                                         ILogger<CertificateManagementService> logger,
-                                        LoadBalancerService loadBalancerService)
+                                        AcmeVerificationService verificationService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
-        _loadBalancerService = loadBalancerService;
+        _verificationService = verificationService;
     }
 
     public async Task<List<Certificate>> GetCertificates()

@@ -76,7 +76,7 @@
         parameters.Add(x => x.ButtonText, "Delete");
         parameters.Add(x => x.Color, Color.Error);
 
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
         var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
@@ -98,7 +98,7 @@
         var parameters = new DialogParameters<TargetDialog>();
         parameters.Add(x => x.Target, target);
 
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
         var dialog = _dialogService.Show<TargetDialog>("Add target", parameters, options);
         var result = await dialog.Result;

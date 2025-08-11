@@ -101,7 +101,7 @@
         parameters.Add(x => x.ButtonText, "Delete");
         parameters.Add(x => x.Color, Color.Error);
 
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
         var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
@@ -120,7 +120,7 @@
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
 
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
         var dialog = _dialogService.Show<RuleDialog>("Add rule", parameters, options);
         var result = await dialog.Result;
