@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.Configure<CertificateManagementSettings>(configuration);
 
         services.AddScoped<CertificateManagementService>();
+        services.AddScoped<AcmeVerificationService>();
 
         services.AddDbContext<CertificateManagementContext>(dbContextOptions);
 
