@@ -15,14 +15,14 @@
 
 @page "/lb/targetgroups/new"
 
-<GenericEditview T="NewTargetGroupForm" Model="@form" Title="New target group" Breadcrumbs="@_items"
+<GenericEditview T="NewTargetGroupForm" Model="@form" Title="New target group" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => _navigationManager.NavigateTo("/lb/targetgroups"))"
                  OnValidSubmit="Submit" />
 
 @code {
     NewTargetGroupForm form = new NewTargetGroupForm();
 
-    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
         new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute),
