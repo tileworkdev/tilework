@@ -1,20 +1,36 @@
+@using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Persistence.Models
-@using System.Net
 
 @namespace Tilework.Ui.Components.Dialogs
 
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1"/>
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" />
             Add rule
         </MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
-            <MudTextField @bind-Value="@Rule.Hostname" Label="Hostname" Variant="Variant.Outlined" Required="true"/>
-            <MudSelect T="TargetGroup" @bind-Value="Rule.TargetGroup"
-                    Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            @foreach (var condition in Rule.Conditions)
+            {
+                if (condition.Operator != null)
+                {
+                    <MudText Class="mb-2">@condition.Operator.ToString().ToUpper()</MudText>
+                }
+
+                <ConditionForm Condition="condition" />
+
+                if (condition == Rule.Conditions.Last())
+                {
+                    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+                        <MudButton Variant="Variant.Outlined" OnClick="() => AddCondition(ConditionOperator.And)">AND</MudButton>
+                        <MudButton Variant="Variant.Outlined" OnClick="() => AddCondition(ConditionOperator.Or)">OR</MudButton>
+                    </MudStack>
+                }
+            }
+
+            <MudSelect T="TargetGroup" @bind-Value="Rule.TargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 @foreach (var group in TargetGroups)
                 {
                     <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
@@ -38,17 +54,29 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (Rule.Conditions == null || !Rule.Conditions.Any())
+        {
+            Rule.Conditions = new List<Condition> { new Condition() };
+        }
+
         await base.OnInitializedAsync();
+    }
+
+    void AddCondition(ConditionOperator op)
+    {
+        Rule.Conditions.Add(new Condition { Operator = op });
     }
 
     async Task Submit()
     {
         await form.Validate();
 
-        if(form.IsValid)
+        if (form.IsValid)
         {
             MudDialog.Close(DialogResult.Ok(true));
         }
     }
+
     void Cancel() => MudDialog.Cancel();
 }
+
