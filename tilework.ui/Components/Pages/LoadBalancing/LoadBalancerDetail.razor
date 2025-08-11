@@ -77,7 +77,7 @@
         new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers", icon: Icons.Material.Filled.AltRoute)
     };
 
-    private List<ActionItem> _actions = new List<ActionItem> {};
+    private List<ActionItem> _actions = new List<ActionItem>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,14 +91,7 @@
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
-        _actions = new List<ActionItem>
-        {
-            new ActionItem() { Name="Edit", Href=$"/lb/loadbalancers/{Id}/edit" },
-            new ActionItem() { Name="Delete", OnClick=ConfirmDelete },
-            new ActionItem() {
-                Name= _item.Enabled ? "Disable" : "Enable",
-                OnClick= _item.Enabled ? Disable : Enable }
-        };
+        SetActions();
     }
 
     private async Task ConfirmDelete()
@@ -159,12 +152,28 @@
         _item.Enabled = true;
         await _loadBalancerService.UpdateLoadBalancer(_item);
         await _loadBalancerService.ApplyConfiguration();
+        SetActions();
     }
-    
+
     private async Task Disable()
     {
         _item.Enabled = false;
         await _loadBalancerService.UpdateLoadBalancer(_item);
         await _loadBalancerService.ApplyConfiguration();
+        SetActions();
+    }
+
+    private void SetActions()
+    {
+        _actions = new List<ActionItem>
+        {
+            new ActionItem() { Name="Edit", Href=$"/lb/loadbalancers/{Id}/edit" },
+            new ActionItem() { Name="Delete", OnClick=ConfirmDelete },
+            new ActionItem()
+            {
+                Name = _item.Enabled ? "Disable" : "Enable",
+                OnClick = _item.Enabled ? Disable : Enable
+            }
+        };
     }
 }
