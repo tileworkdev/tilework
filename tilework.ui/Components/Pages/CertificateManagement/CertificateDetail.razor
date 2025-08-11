@@ -71,7 +71,8 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            // TODO: delete certificate and navigate to list
+            await _certificateManagementService.DeleteCertificate(_item);
+            _navigationManager.NavigateTo("/cm/certificates");
         }
     }
 }

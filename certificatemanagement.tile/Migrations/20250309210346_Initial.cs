@@ -18,7 +18,9 @@ namespace certificatemanagement.tile.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
-                    DirectoryUrl = table.Column<string>(type: "TEXT", nullable: false)
+                    DirectoryUrl = table.Column<string>(type: "TEXT", nullable: false),
+                    KeyData = table.Column<string>(type: "TEXT", nullable: false),
+                    Kid = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -30,7 +32,7 @@ namespace certificatemanagement.tile.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    KeyData = table.Column<string>(type: "TEXT", nullable: false)
+                    KeyDataString = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -46,7 +48,7 @@ namespace certificatemanagement.tile.Migrations
                     Fqdn = table.Column<string>(type: "TEXT", nullable: false),
                     AuthorityId = table.Column<Guid>(type: "TEXT", nullable: false),
                     PrivateKeyId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CertificateData = table.Column<string>(type: "TEXT", nullable: false)
+                    CertificateDataString = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

@@ -30,8 +30,7 @@ namespace certificatemanagement.tile.Migrations
                     b.Property<Guid>("AuthorityId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CertificateData")
-                        .IsRequired()
+                    b.Property<string>("CertificateDataString")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Fqdn")
@@ -68,6 +67,14 @@ namespace certificatemanagement.tile.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("KeyData")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kid")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -83,7 +90,7 @@ namespace certificatemanagement.tile.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("KeyData")
+                    b.Property<string>("KeyDataString")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

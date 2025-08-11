@@ -2,7 +2,11 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
+using ACMESharp.Protocol;
+
+using Tilework.LoadBalancing.Services;
 using Tilework.CertificateManagement.Persistence;
 using Tilework.CertificateManagement.Persistence.Models;
 using Tilework.CertificateManagement.Settings;
@@ -15,16 +19,18 @@ public class CertificateManagementService
     private readonly CertificateManagementContext _dbContext;
     private readonly CertificateManagementSettings _settings;
     private readonly ILogger<CertificateManagementService> _logger;
-    
+    private readonly LoadBalancerService _loadBalancerService;
 
-    public CertificateManagementService(IServiceProvider serviceProvider,
-                               CertificateManagementContext dbContext,
-                               IOptions<CertificateManagementSettings> settings,
-                               ILogger<CertificateManagementService> logger)
+
+    public CertificateManagementService(CertificateManagementContext dbContext,
+                                        IOptions<CertificateManagementSettings> settings,
+                                        ILogger<CertificateManagementService> logger,
+                                        LoadBalancerService loadBalancerService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
+        _loadBalancerService = loadBalancerService;
     }
 
     public async Task<List<Certificate>> GetCertificates()
@@ -39,63 +45,119 @@ public class CertificateManagementService
 
     public async Task<Certificate> AddCertificate(string name, string fqdn, CertificateAuthority authority, KeyAlgorithm algorithm)
     {
+        var key = GenerateKey(algorithm);
+
         var certificate = new Certificate()
         {
             Name = name,
             Fqdn = fqdn,
             Authority = authority,
-            PrivateKey = GenerateKey(algorithm)
+            PrivateKey = key
         };
 
+        _dbContext.Certificates.Add(certificate);
         await _dbContext.SaveChangesAsync();
+
+        await SignCertificate(certificate);
 
         return certificate;
     }
 
     private PrivateKey GenerateKey(KeyAlgorithm algorithm)
     {
-        AsymmetricAlgorithm algo;
-        
 
-        switch(algorithm)
+        AsymmetricAlgorithm keyAlg = algorithm switch
         {
-            case KeyAlgorithm.RSA_2048:
-                algo = RSA.Create(2048);
-                break;
-            case KeyAlgorithm.RSA_3072:
-                algo = RSA.Create(3072);
-                break;
-            case KeyAlgorithm.RSA_4096:
-                algo = RSA.Create(4096);
-                break;
-            case KeyAlgorithm.ECDSA_P256:
-                algo = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-                break;
-            case KeyAlgorithm.ECDSA_P384:
-                algo = ECDsa.Create(ECCurve.NamedCurves.nistP384);
-                break;
-            default:
-                throw new NotImplementedException();
-        }
+            KeyAlgorithm.RSA_2048 => RSA.Create(2048),
+            KeyAlgorithm.RSA_3072 => RSA.Create(3072),
+            KeyAlgorithm.RSA_4096 => RSA.Create(4096),
+            KeyAlgorithm.ECDSA_P256 => ECDsa.Create(ECCurve.NamedCurves.nistP256),
+            KeyAlgorithm.ECDSA_P384 => ECDsa.Create(ECCurve.NamedCurves.nistP384),
+            _ => throw new NotImplementedException(),
+        };
 
-        var keyData = algo.ExportPkcs8PrivateKey();
-
-        var pem =  "-----BEGIN PRIVATE KEY-----\n" +
-                   Convert.ToBase64String(keyData, Base64FormattingOptions.InsertLineBreaks) +
-                   "\n-----END PRIVATE KEY-----";
-
-        return new PrivateKey() { KeyData = pem };
+        return new PrivateKey() { KeyData = keyAlg };        
     }
 
-    // SignCertificate()
-    // {
+    private CertificateRequest GenerateCsr(Certificate certificate)
+    {
+        CertificateRequest csr;
+        if(certificate.PrivateKey.KeyData is RSA rsaKey)
+        {
+            csr = new CertificateRequest(
+                $"CN={certificate.Fqdn}",
+                rsaKey,
+                HashAlgorithmName.SHA256, 
+                RSASignaturePadding.Pkcs1
+            );
+        }
+        else if(certificate.PrivateKey.KeyData is ECDsa ecKey)
+        {
+            csr = new CertificateRequest(
+                $"CN={certificate.Fqdn}",
+                ecKey,
+                HashAlgorithmName.SHA256
+            );
+        }
+        else
+            throw new ArgumentException("Invalid private key type for CSR generation");
 
-    // }
+        csr.CertificateExtensions.Add(
+            new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, true));
 
-    // DeleteCertificate()
-    // {
+        return csr;
+    }
 
-    // }
+    private async Task CreateAcmeAccount(CertificateAuthority authority)
+    {
+        var httpClient = new HttpClient { BaseAddress = new Uri(authority.DirectoryUrl) };
+        var acmeClient = new AcmeProtocolClient(httpClient, usePostAsGet: true);
+
+        acmeClient.Directory = await acmeClient.GetDirectoryAsync();
+
+        await acmeClient.GetNonceAsync();
+
+        acmeClient.Account = await acmeClient.CreateAccountAsync(new List<string>() { $"mailto: {authority.Email}" }, true);
+
+        authority.Kid = acmeClient.Account.Kid;
+        authority.KeyData = acmeClient.Signer.Export();
+    }
+
+    private async Task SignCertificate(Certificate certificate)
+    {
+        var signer = new ACMESharp.Crypto.JOSE.Impl.ESJwsTool();
+        signer.Import(certificate.Authority.KeyData);
+
+        var account = new AccountDetails();
+        account.Kid = certificate.Authority.Kid;
+
+        var httpClient = new HttpClient { BaseAddress = new Uri(certificate.Authority.DirectoryUrl) };
+        var acmeClient = new AcmeProtocolClient(httpClient, acct: account, signer: signer, usePostAsGet: true);
+
+        acmeClient.Directory = await acmeClient.GetDirectoryAsync();
+
+        await acmeClient.GetNonceAsync();
+
+        var order = await acmeClient.CreateOrderAsync(new List<string>() { certificate.Fqdn });
+
+        var authzUrl = order.Payload.Authorizations.First();
+        var authz = await acmeClient.GetAuthorizationDetailsAsync(authzUrl);
+        var challenge = authz.Challenges.First(c => c.Type == "http-01");
+
+        // var authz = (await acmeClient.GetPendingAuthorizationsAsync(order)).First();
+        // var challenge = authz.Challenges.First(c => c.Type == "http-01");
+
+        // var challenge = await acmeClient.GetChallengeDetailsAsync(order.auth);
+
+        // var csr = GenerateCsr(certificate);
+    }
+
+    public async Task DeleteCertificate(Certificate certificate)
+    {
+        // TODO: Should not be able to delete if not revoked
+        _dbContext.Certificates.Remove(certificate);
+        await _dbContext.SaveChangesAsync();
+    }
 
     public async Task<List<CertificateAuthority>> GetCertificateAuthorities()
     {
@@ -110,6 +172,7 @@ public class CertificateManagementService
     public async Task AddCertificateAuthority(CertificateAuthority authority)
     {
         _dbContext.CertificateAuthorities.Add(authority);
+        await CreateAcmeAccount(authority);
         await _dbContext.SaveChangesAsync();
     }
 
