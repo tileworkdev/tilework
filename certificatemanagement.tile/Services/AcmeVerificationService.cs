@@ -38,7 +38,14 @@ public class AcmeVerificationService
             name,
             _settings.AcmeVerificationImage,
             "certificatemanagement.tile",
-            null
+            new List<ContainerPort> {
+                new ContainerPort()
+                {
+                    Port = 80,
+                    HostPort = 80,
+                    Type = PortType.TCP
+                }
+            }
         );
 
         var tempFilePath = Path.GetTempFileName();
