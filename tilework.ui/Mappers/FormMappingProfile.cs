@@ -17,14 +17,19 @@ public class FormMappingProfile : Profile
         CreateMap<NewCertificateAuthorityForm, CertificateAuthority>();
 
         CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancer>();
-        CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancer>();
+        CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancer>()
+            .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
+            .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
         CreateMap<NewNetworkLoadBalancerForm, NewApplicationLoadBalancerForm>();
         CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
 
         CreateMap<EditApplicationLoadBalancerForm, ApplicationLoadBalancer>();
-        CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancer>();
+        CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancer>()
+            .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
+            .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
         CreateMap<ApplicationLoadBalancer, EditApplicationLoadBalancerForm>();
-        CreateMap<NetworkLoadBalancer, EditNetworkLoadBalancerForm>();
+        CreateMap<NetworkLoadBalancer, EditNetworkLoadBalancerForm>()
+            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroupId));
         CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
         CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
 
