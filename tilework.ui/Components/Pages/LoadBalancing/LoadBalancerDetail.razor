@@ -46,17 +46,28 @@
                         <PropertyColumn Property="t => t.Priority" Title="Priority" Editable="false" />
                         <TemplateColumn Title="Conditions">
                             <CellTemplate>
-                                <MudStack>
-                                    @for (int i = 0; i < context.Item.Conditions.Count; i++)
-                                    {
-                                        var condition = context.Item.Conditions[i];
-                                        <div><strong>@condition.Type.GetDescription()</strong> &#61; @string.Join(" OR ", condition.Values)</div>
-                                        @if (i != context.Item.Conditions.Count - 1)
+                                @for (int i = 0; i < context.Item.Conditions.Count; i++)
+                                {
+                                    var condition = context.Item.Conditions[i];
+
+                                    <div>
+                                        <strong>@condition.Type.GetDescription()</strong>
+                                        &#61;
+                                        @for (int j = 0; j < condition.Values.Count; j++)
                                         {
-                                            <div><strong>AND</strong></div>
+                                            @condition.Values[j]
+                                            @if (j != condition.Values.Count - 1)
+                                            {
+                                                <strong> OR </strong>
+                                            }
                                         }
+                                    </div>
+
+                                    @if (i != context.Item.Conditions.Count - 1)
+                                    {
+                                        <div><strong>AND</strong></div>
                                     }
-                                </MudStack>
+                                }
                             </CellTemplate>
                         </TemplateColumn>
                         <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" />
