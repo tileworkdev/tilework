@@ -1,5 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
+namespace Tilework.LoadBalancing.Persistence.Models;
+
+[Index(nameof(Name), IsUnique = true)]
 public abstract class BaseLoadBalancer
 {
     public Guid Id { get; set; }

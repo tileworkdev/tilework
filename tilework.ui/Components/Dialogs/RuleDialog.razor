@@ -14,20 +14,20 @@
         <MudForm @ref="form">
             @foreach (var condition in Rule.Conditions)
             {
-                if (condition.Operator != null)
+                @* if (condition.Operator != null)
                 {
                     <MudText Class="mb-2">@condition.Operator.ToString().ToUpper()</MudText>
-                }
+                } *@
 
                 <ConditionForm Condition="condition" />
 
-                if (condition == Rule.Conditions.Last())
+                @* if (condition == Rule.Conditions.Last())
                 {
                     <MudStack Direction="Row" Spacing="2" Class="mb-4">
                         <MudButton Variant="Variant.Outlined" OnClick="() => AddCondition(ConditionOperator.And)">AND</MudButton>
                         <MudButton Variant="Variant.Outlined" OnClick="() => AddCondition(ConditionOperator.Or)">OR</MudButton>
                     </MudStack>
-                }
+                } *@
             }
 
             <MudSelect T="TargetGroup" @bind-Value="Rule.TargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
@@ -62,10 +62,10 @@
         await base.OnInitializedAsync();
     }
 
-    void AddCondition(ConditionOperator op)
+    @* void AddCondition(ConditionOperator op)
     {
         Rule.Conditions.Add(new Condition { Operator = op });
-    }
+    } *@
 
     async Task Submit()
     {

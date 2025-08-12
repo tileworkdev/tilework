@@ -1,9 +1,13 @@
+using Microsoft.EntityFrameworkCore;
+
+
 namespace Tilework.LoadBalancing.Persistence.Models;
 
-
+[Index(nameof(Priority), nameof(ListenerId), IsUnique = true)]
 public class Rule
 {
     public Guid Id { get; set; }
+    public int Priority { get; set; }
 
     public Guid TargetGroupId { get; set; }
     public virtual TargetGroup TargetGroup { get; set; }

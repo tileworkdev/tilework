@@ -11,9 +11,12 @@
             <MudSelectItem Value="ConditionType.QueryString">Query string</MudSelectItem>
         </MudSelect>
     </MudItem>
-    <MudItem xs="8">
-        <MudTextField @bind-Value="Condition.Value" Label="Value" Variant="Variant.Outlined" Required="true" />
-    </MudItem>
+    @foreach (var value in Condition.Values)
+    {
+        <MudItem xs="8">
+            <MudTextField Value="@value" Label="Value" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+    }
 </MudGrid>
 
 @code {

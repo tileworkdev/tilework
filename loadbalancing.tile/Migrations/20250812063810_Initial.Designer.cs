@@ -11,7 +11,7 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    [Migration("20250811192331_Initial")]
+    [Migration("20250812063810_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -19,12 +19,12 @@ namespace loadbalancing.tile.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "9.0.8")
                 .HasAnnotation("Proxies:ChangeTracking", false)
                 .HasAnnotation("Proxies:CheckEquality", false)
                 .HasAnnotation("Proxies:LazyLoading", true);
 
-            modelBuilder.Entity("BaseLoadBalancer", b =>
+            modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.BaseLoadBalancer", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,6 +47,9 @@ namespace loadbalancing.tile.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("LoadBalancers");
 
                     b.HasDiscriminator().HasValue("BaseLoadBalancer");
@@ -63,6 +66,9 @@ namespace loadbalancing.tile.Migrations
                     b.Property<Guid>("ListenerId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Priority")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("TargetGroupId")
                         .HasColumnType("TEXT");
 
@@ -71,6 +77,9 @@ namespace loadbalancing.tile.Migrations
                     b.HasIndex("ListenerId");
 
                     b.HasIndex("TargetGroupId");
+
+                    b.HasIndex("Priority", "ListenerId")
+                        .IsUnique();
 
                     b.ToTable("Rules");
                 });
@@ -113,12 +122,15 @@ namespace loadbalancing.tile.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("TargetGroups");
                 });
 
             modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.ApplicationLoadBalancer", b =>
                 {
-                    b.HasBaseType("BaseLoadBalancer");
+                    b.HasBaseType("Tilework.LoadBalancing.Persistence.Models.BaseLoadBalancer");
 
                     b.Property<int>("Protocol")
                         .HasColumnType("INTEGER");
@@ -128,7 +140,7 @@ namespace loadbalancing.tile.Migrations
 
             modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.NetworkLoadBalancer", b =>
                 {
-                    b.HasBaseType("BaseLoadBalancer");
+                    b.HasBaseType("Tilework.LoadBalancing.Persistence.Models.BaseLoadBalancer");
 
                     b.Property<int>("Protocol")
                         .HasColumnType("INTEGER");
@@ -166,21 +178,18 @@ namespace loadbalancing.tile.Migrations
                             b1.Property<Guid>("RuleId")
                                 .HasColumnType("TEXT");
 
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int?>("Operator")
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate()
                                 .HasColumnType("INTEGER");
 
                             b1.Property<int>("Type")
                                 .HasColumnType("INTEGER");
 
-                            b1.Property<string>("Value")
+                            b1.PrimitiveCollection<string>("Values")
                                 .IsRequired()
                                 .HasColumnType("TEXT");
 
-                            b1.HasKey("RuleId", "Id");
+                            b1.HasKey("RuleId", "__synthesizedOrdinal");
 
                             b1.ToTable("Rules");
 

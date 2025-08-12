@@ -73,6 +73,7 @@ namespace loadbalancing.tile.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
                     TargetGroupId = table.Column<Guid>(type: "TEXT", nullable: false),
                     ListenerId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Conditions = table.Column<string>(type: "TEXT", nullable: true)
@@ -95,6 +96,12 @@ namespace loadbalancing.tile.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_LoadBalancers_Name",
+                table: "LoadBalancers",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LoadBalancers_TargetGroupId",
                 table: "LoadBalancers",
                 column: "TargetGroupId");
@@ -105,9 +112,21 @@ namespace loadbalancing.tile.Migrations
                 column: "ListenerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Rules_Priority_ListenerId",
+                table: "Rules",
+                columns: new[] { "Priority", "ListenerId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Rules_TargetGroupId",
                 table: "Rules",
                 column: "TargetGroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TargetGroups_Name",
+                table: "TargetGroups",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Targets_TargetGroupId",

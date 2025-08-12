@@ -6,7 +6,5 @@ public class Condition
 {
     public ConditionType Type { get; set; }
 
-    public string Value { get; set; }
-
-    public ConditionOperator? Operator { get; set; }
+    public List<string> Values { get; set; } = new List<string>();
 }
