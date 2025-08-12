@@ -1,7 +1,7 @@
-using System;
 using System.Reflection;
-using System.Text;
 using System.Collections;
+
+using Tilework.Core.Enums;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
@@ -13,12 +13,14 @@ public abstract class ConfigSection
     private List<string[]> _statements = new List<string[]>();
     public List<string[]> Statements
     {
-        get {
+        get
+        {
             return _statements.Concat(GetStatements()).ToList();
         }
-        set {
+        set
+        {
             _statements = new List<string[]>();
-            foreach(var statement in value)
+            foreach (var statement in value)
                 SetStatement(statement);
         }
     }
@@ -40,7 +42,7 @@ public abstract class ConfigSection
             if (attribute != null)
             {
                 var value = property.GetValue(this);
-                if(value != null)
+                if (value != null)
                 {
                     if (value is IEnumerable && !(value is string))
                     {
@@ -69,9 +71,9 @@ public abstract class ConfigSection
             var attribute = property.GetCustomAttribute(typeof(StatementAttribute)) as StatementAttribute;
             if (attribute != null && attribute.Name == statement[0])
             {
-                if(typeof(IList).IsAssignableFrom(property.PropertyType) == true)
+                if (typeof(IList).IsAssignableFrom(property.PropertyType) == true)
                 {
-                    var currentValue = (IList) property.GetValue(this);
+                    var currentValue = (IList)property.GetValue(this);
                     var elementType = property.PropertyType.GetGenericArguments()[0];
                     currentValue.Add(StringToProp(elementType, statement));
                     property.SetValue(this, currentValue);

@@ -1,5 +1,6 @@
 @using Tilework.LoadBalancing.Persistence.Models
 @using Tilework.LoadBalancing.Enums
+@using Tilework.Core.Enums
 @using Tilework.LoadBalancing.Services
 
 @namespace Tilework.Ui.Components.Pages
@@ -42,7 +43,22 @@
                         <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddRule">Add rule</MudButton>
                     </ToolBarContent>
                     <Columns>
-                        @* <PropertyColumn Property="t => t.Hostname" Title="Hostname" Editable="false" /> *@
+                        <PropertyColumn Property="t => t.Priority" Title="Priority" Editable="false" />
+                        <TemplateColumn Title="Conditions">
+                            <CellTemplate>
+                                <MudStack>
+                                    @for (int i = 0; i < context.Item.Conditions.Count; i++)
+                                    {
+                                        var condition = context.Item.Conditions[i];
+                                        <div><strong>@condition.Type.GetDescription()</strong> &#61; @string.Join(" OR ", condition.Values)</div>
+                                        @if (i != context.Item.Conditions.Count - 1)
+                                        {
+                                            <div><strong>AND</strong></div>
+                                        }
+                                    }
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
                         <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>

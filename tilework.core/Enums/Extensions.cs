@@ -1,9 +1,7 @@
-using System;
 using System.ComponentModel;
 using System.Reflection;
-using System.Linq;
 
-namespace Tilework.LoadBalancing.Haproxy;
+namespace Tilework.Core.Enums;
 
 public static class EnumExtensions
 {
