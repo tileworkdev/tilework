@@ -11,10 +11,12 @@
 <GenericListview Title="Target groups" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
+        <MudTh>Type</MudTh>
         <MudTh>Targets</MudTh>
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/lb/targetgroups/{context.Id}")">@context.Name</MudLink></MudTd>
+        <MudTd DataLabel="Name">@context.Protocol</MudTd>
         <MudTd DataLabel="Targets">@context.Targets.Count()</MudTd>
     </RowContent>
 </GenericListview>
