@@ -22,15 +22,32 @@ public class HAProxyProfile : Profile
                     dest.Mode = Mode.HTTP;
                     if (alb.Rules != null)
                     {
-                        // foreach (var rule in alb.Rules)
-                        // {
-                        //     var usebe = new UseBackend()
-                        //     {
-                        //         Hostname = rule.Hostname,
-                        //         Target = rule.TargetGroup.Id.ToString(),
-                        //     };
-                        //     dest.UseBackends.Add(usebe);
-                        // }
+                        foreach (var rule in alb.Rules)
+                        {
+                            var acls = new List<Acl>();
+                            for (int i = 0; i < rule.Conditions.Count; i++)
+                            {
+                                var condition = rule.Conditions[i];
+
+                                var acl = new Acl()
+                                {
+                                    Name = $"{rule.Id.ToString()}-{i}",
+                                    Type = condition.Type,
+                                    Values = condition.Values
+                                };
+
+                                acls.Add(acl);
+                            }
+
+                            dest.Acls.AddRange(acls);
+
+                            var usebe = new UseBackend()
+                            {
+                                Acls = acls.Select(a => a.Name).ToList(),
+                                Target = rule.TargetGroup.Id.ToString(),
+                            };
+                            dest.UseBackends.Add(usebe);
+                        }
                     }
                 }
                 else if (src is NetworkLoadBalancer nlb)

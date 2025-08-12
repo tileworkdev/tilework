@@ -8,6 +8,9 @@ public class FrontendSection : ConfigSection
     [Statement("mode")]
     public Mode Mode { get; set; }
 
+    [Statement("acl")]
+    public List<Acl> Acls { get; set; } = new List<Acl>();
+
     [Statement("use_backend")]
     public List<UseBackend> UseBackends { get; set; } = new List<UseBackend>();
 
