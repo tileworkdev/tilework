@@ -8,4 +8,5 @@ public interface ILoadBalancingConfigurator
 
     List<BaseLoadBalancer> LoadConfiguration();
     Task ApplyConfiguration(List<BaseLoadBalancer> config);
+    Task Shutdown();
 }

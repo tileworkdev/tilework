@@ -22,7 +22,7 @@ public class LoadBalancerService
     private readonly LoadBalancerSettings _settings;
     private readonly ILoadBalancingConfigurator _configurator;
     private readonly ILogger<LoadBalancerService> _logger;
-    
+
 
     public LoadBalancerService(IServiceProvider serviceProvider,
                                LoadBalancerContext dbContext,
@@ -124,5 +124,10 @@ public class LoadBalancerService
     {
         var balancers = await _dbContext.LoadBalancers.ToListAsync();
         await _configurator.ApplyConfiguration(balancers);
+    }
+
+    public async Task Shutdown()
+    {
+        await _configurator.Shutdown(); 
     }
 }

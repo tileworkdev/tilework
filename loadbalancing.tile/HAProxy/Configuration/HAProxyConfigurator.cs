@@ -60,7 +60,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         {
             targetGroups = appLoadBalancer.Rules != null ? appLoadBalancer.Rules.Select(r => r.TargetGroup).ToList() : new List<TargetGroup>();
         }
-        else if(balancer is NetworkLoadBalancer netLoadBalancer)
+        else if (balancer is NetworkLoadBalancer netLoadBalancer)
         {
             targetGroups = new List<TargetGroup>() { netLoadBalancer.TargetGroup };
         }
@@ -78,26 +78,27 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
     public async Task ApplyConfiguration(List<BaseLoadBalancer> config)
     {
-        if(string.IsNullOrEmpty(_settings.BackendImage))
+        if (string.IsNullOrEmpty(_settings.BackendImage))
             throw new ArgumentException("No image setting supplied for load balancing tile");
 
         var containers = await GetLoadBalancerContainers();
-        foreach(var lb in config)
+        foreach (var lb in config)
         {
             var name = lb.Id.ToString();
             var container = containers.FirstOrDefault(cnt => cnt.Name == name);
 
-            if(container == null)
+            if (container == null)
             {
                 _logger.LogInformation($"Creating new container for load balancer {lb.Name}");
                 var port = new ContainerPort()
                 {
-                    Port=lb.Port,
-                    HostPort=lb.Port,
-                    Type= _mapper.Map<PortType>(lb)
+                    Port = lb.Port,
+                    HostPort = lb.Port,
+                    Type = _mapper.Map<PortType>(lb)
                 };
 
-                try {
+                try
+                {
                     container = await _containerManager.CreateContainer(
                         name,
                         _settings.BackendImage,
@@ -155,10 +156,10 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         }
 
         var containersToDelete = containers.Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
-        foreach(var cnt in containersToDelete)
+        foreach (var cnt in containersToDelete)
         {
             _logger.LogInformation($"Deleting defunct load balancer {cnt.Name}");
-            if(cnt.State == ContainerState.Running)
+            if (cnt.State == ContainerState.Running)
                 await _containerManager.StopContainer(cnt.Id);
             await _containerManager.DeleteContainer(cnt.Id);
         }
@@ -169,5 +170,17 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         var containers = await GetLoadBalancerContainers();
         var container = containers.First(cnt => cnt.Name == balancer.Id.ToString());
         return container.State == ContainerState.Running;
+    }
+
+    public async Task Shutdown()
+    {
+        var containers = await GetLoadBalancerContainers();
+        foreach (var cnt in containers)
+        {
+            _logger.LogInformation($"Stopping and deleting load balancer {cnt.Name}");
+            if (cnt.State == ContainerState.Running)
+                await _containerManager.StopContainer(cnt.Id);
+            await _containerManager.DeleteContainer(cnt.Id);
+        }
     }
 }
