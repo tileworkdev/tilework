@@ -33,6 +33,15 @@
 @code {
     [Parameter] public Condition Condition { get; set; }
 
+    protected override void OnParametersSet()
+    {
+        if (Condition?.Values == null || Condition.Values.Count == 0)
+        {
+            Condition.Values ??= new List<string>();
+            Condition.Values.Add(string.Empty);
+        }
+    }
+
     void AddValue()
     {
         Condition.Values.Add(string.Empty);
@@ -43,6 +52,10 @@
         if (index >= 0 && index < Condition.Values.Count)
         {
             Condition.Values.RemoveAt(index);
+            if (Condition.Values.Count == 0)
+            {
+                Condition.Values.Add(string.Empty);
+            }
         }
     }
 }
