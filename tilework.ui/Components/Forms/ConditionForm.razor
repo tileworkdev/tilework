@@ -15,10 +15,9 @@
         <MudStack Spacing="2">
             @for (var i = 0; i < Condition.Values.Count; i++)
             {
-                var index = i;
                 <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1">
-                    <MudTextField @bind-Value="Condition.Values[index]" Label="Value" Variant="Variant.Outlined" Required="true" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveValue(index))" />
+                    <MudTextField @bind-Value="Condition.Values[i]" Label="Value" Variant="Variant.Outlined" Required="true" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveValue(i))" />
                 </MudStack>
             }
             <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddValue" />
