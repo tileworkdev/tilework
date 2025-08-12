@@ -28,6 +28,7 @@
                     <TemplateColumn CellClass="d-flex justify-end">
                         <CellTemplate>
                             <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteTarget(context.Item))" />
                         </CellTemplate>
                     </TemplateColumn>
                 </Columns>
@@ -88,10 +89,6 @@
         }
     }
 
-    private async Task EditTarget()
-    {
-    }
-
     private async Task AddTarget()
     {
         var target = new Target();
@@ -105,6 +102,25 @@
         if (!result.Canceled)
         {
             _item.Targets.Add(target);
+            await _loadBalancerService.UpdateTargetGroup(_item);
+            await _loadBalancerService.ApplyConfiguration();
+        }
+    }
+
+    private async Task ConfirmDeleteTarget(Target target)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to delete the target? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Delete");
+        parameters.Add(x => x.Color, Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            _item.Targets.Remove(target);
             await _loadBalancerService.UpdateTargetGroup(_item);
             await _loadBalancerService.ApplyConfiguration();
         }
