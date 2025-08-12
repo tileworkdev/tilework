@@ -66,7 +66,7 @@ public class DockerServiceManager : IContainerManager
         return images.Any(img => img.RepoTags?.Contains(image) == true);
     }
 
-    public async Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort> ports)
+    public async Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort>? ports)
     {
         string[] imageParts = image.Split(':');
 
@@ -95,17 +95,21 @@ public class DockerServiceManager : IContainerManager
         var exposedPorts = new Dictionary<string, EmptyStruct>();
         var portBindings = new Dictionary<string, IList<PortBinding>>();
 
-        foreach (var port in ports)
-        {
-            string portKey = $"{port.Port}/{port.Type.ToString().ToLower()}";
-            exposedPorts[portKey] = default;
 
-            if (port.HostPort.HasValue)
+        if (ports != null)
+        {
+            foreach (var port in ports)
             {
-                portBindings[portKey] = new List<PortBinding>
+                string portKey = $"{port.Port}/{port.Type.ToString().ToLower()}";
+                exposedPorts[portKey] = default;
+
+                if (port.HostPort.HasValue)
                 {
-                    new PortBinding { HostPort = port.HostPort.Value.ToString() }
-                };
+                    portBindings[portKey] = new List<PortBinding>
+                    {
+                        new PortBinding { HostPort = port.HostPort.Value.ToString() }
+                    };
+                }
             }
         }
 
