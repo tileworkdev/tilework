@@ -63,6 +63,7 @@
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
                                 <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteRule(context.Item))" />
                             </CellTemplate>
                         </TemplateColumn>
                     </Columns>
@@ -151,6 +152,25 @@
             {
                 _snackbar.Add("Can only add rules to application load balancers", Severity.Error);
             }
+        }
+    }
+
+    private async Task ConfirmDeleteRule(Rule rule)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to delete the rule? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Delete");
+        parameters.Add(x => x.Color, Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled && _item is ApplicationLoadBalancer appBalancer)
+        {
+            appBalancer.Rules.Remove(rule);
+            await _loadBalancerService.UpdateLoadBalancer(appBalancer);
+            await _loadBalancerService.ApplyConfiguration();
         }
     }
 
