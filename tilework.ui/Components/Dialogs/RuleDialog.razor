@@ -25,6 +25,8 @@
                 Add condition
             </MudButton>
 
+            <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
+
             <MudSelect T="TargetGroup" @bind-Value="Rule.TargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 @foreach (var group in TargetGroups)
                 {
