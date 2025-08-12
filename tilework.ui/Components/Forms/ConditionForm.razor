@@ -22,11 +22,11 @@
                 {
                     var index = i;
                     <MudGrid>
-                        <MudItem xs="11">
+                        <MudItem xs="10">
                             <MudTextField @bind-Value="Condition.Values[index]" Label="Value" Variant="Variant.Outlined" Required="true" />
                         </MudItem>
-                        <MudItem xs="1" Class="d-flex align-center">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Outlined" OnClick="@(() => RemoveValue(index))" />
+                        <MudItem xs="2" Class="d-flex align-center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => RemoveValue(index))" />
                         </MudItem>
                     </MudGrid>
                 }

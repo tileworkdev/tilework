@@ -2,7 +2,7 @@ namespace Tilework.LoadBalancing.Haproxy;
 
 public class UseBackend
 {
-    public string Hostname { get; set; }
+    public List<string> Acls { get; set; }
     public string Target { get; set; }
 
     public UseBackend() {}
@@ -14,6 +14,6 @@ public class UseBackend
 
     public override string ToString()
     {
-        return $"{Target} if {{ hdr(host) -i {Hostname} }}";
+        return $"{Target} if {string.Join(" ", Acls)}";
     }
 }
