@@ -1,5 +1,7 @@
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Persistence.Models
+@using System.Linq
+@using System.Collections.Generic
 
 @namespace Tilework.Ui.Components.Dialogs
 
@@ -14,21 +16,14 @@
         <MudForm @ref="form">
             @foreach (var condition in Rule.Conditions)
             {
-                @* if (condition.Operator != null)
-                {
-                    <MudText Class="mb-2">@condition.Operator.ToString().ToUpper()</MudText>
-                } *@
-
-                <ConditionForm Condition="condition" />
-
-                @* if (condition == Rule.Conditions.Last())
-                {
-                    <MudStack Direction="Row" Spacing="2" Class="mb-4">
-                        <MudButton Variant="Variant.Outlined" OnClick="() => AddCondition(ConditionOperator.And)">AND</MudButton>
-                        <MudButton Variant="Variant.Outlined" OnClick="() => AddCondition(ConditionOperator.Or)">OR</MudButton>
-                    </MudStack>
-                } *@
+                <ConditionForm Condition="condition"
+                               UsedTypes="@Rule.Conditions.Where(c => c != condition).Select(c => c.Type)"
+                               OnDelete="@(() => RemoveCondition(condition))" />
             }
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Disabled="@(!CanAddCondition)" OnClick="AddCondition" Class="mb-4">
+                Add condition
+            </MudButton>
 
             <MudSelect T="TargetGroup" @bind-Value="Rule.TargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 @foreach (var group in TargetGroups)
@@ -62,11 +57,6 @@
         await base.OnInitializedAsync();
     }
 
-    @* void AddCondition(ConditionOperator op)
-    {
-        Rule.Conditions.Add(new Condition { Operator = op });
-    } *@
-
     async Task Submit()
     {
         await form.Validate();
@@ -78,5 +68,21 @@
     }
 
     void Cancel() => MudDialog.Cancel();
+
+    bool CanAddCondition => Enum.GetValues<ConditionType>().Except(Rule.Conditions.Select(c => c.Type)).Any();
+
+    void AddCondition()
+    {
+        var availableType = Enum.GetValues<ConditionType>().Except(Rule.Conditions.Select(c => c.Type)).FirstOrDefault();
+        if (!EqualityComparer<ConditionType>.Default.Equals(availableType, default))
+        {
+            Rule.Conditions.Add(new Condition { Type = availableType });
+        }
+    }
+
+    void RemoveCondition(Condition condition)
+    {
+        Rule.Conditions.Remove(condition);
+    }
 }
 

@@ -1,18 +1,22 @@
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.Ui.Enums
+@using System.Linq
+@using System.Collections.Generic
 
 @namespace Tilework.Ui.Components.Forms
 
-<MudPaper Class="pa-2" Outlined="true">
-    <MudGrid Class="mb-4">
+<MudPaper Class="mb-4 p-4">
+    <MudGrid>
         <MudItem xs="4">
             <MudSelect T="ConditionType" @bind-Value="Condition.Type" Label="Condition type" Variant="Variant.Outlined" Required="true">
-                <MudSelectItem Value="ConditionType.HostHeader">Host header</MudSelectItem>
-                <MudSelectItem Value="ConditionType.Path">Path</MudSelectItem>
-                <MudSelectItem Value="ConditionType.QueryString">Query string</MudSelectItem>
+                @foreach (var type in AvailableTypes)
+                {
+                    <MudSelectItem Value="@type">@type.GetDescription()</MudSelectItem>
+                }
             </MudSelect>
         </MudItem>
-        <MudItem xs="8">
+        <MudItem xs="7">
             <MudStack Spacing="2">
                 @for (var i = 0; i < Condition.Values.Count; i++)
                 {
@@ -29,11 +33,18 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddValue" />
             </MudStack>
         </MudItem>
+        <MudItem xs="1" Class="d-flex align-center justify-end">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Outlined" OnClick="OnDelete" />
+        </MudItem>
     </MudGrid>
 </MudPaper>
 
 @code {
     [Parameter] public Condition Condition { get; set; }
+    [Parameter] public IEnumerable<ConditionType> UsedTypes { get; set; } = Enumerable.Empty<ConditionType>();
+    [Parameter] public EventCallback OnDelete { get; set; }
+
+    private IEnumerable<ConditionType> AvailableTypes => Enum.GetValues<ConditionType>().Except(UsedTypes);
 
     protected override void OnParametersSet()
     {
