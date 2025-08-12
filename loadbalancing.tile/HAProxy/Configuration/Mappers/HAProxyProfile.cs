@@ -22,7 +22,7 @@ public class HAProxyProfile : Profile
                     dest.Mode = Mode.HTTP;
                     if (alb.Rules != null)
                     {
-                        foreach (var rule in alb.Rules)
+                        foreach (var rule in alb.Rules.OrderBy(r => r.Priority))
                         {
                             var acls = new List<Acl>();
                             for (int i = 0; i < rule.Conditions.Count; i++)

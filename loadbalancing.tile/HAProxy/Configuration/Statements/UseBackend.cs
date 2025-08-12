@@ -14,6 +14,14 @@ public class UseBackend
 
     public override string ToString()
     {
-        return $"{Target} if {string.Join(" ", Acls)}";
+        if (Acls == null || Acls.Count == 0)
+        {
+            return $"{Target}";
+        }
+        else
+        {
+            return $"{Target} if {string.Join(" ", Acls)}";
+        }
+        
     }
 }
