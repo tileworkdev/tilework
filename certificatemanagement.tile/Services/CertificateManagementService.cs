@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using ACMESharp.Protocol;
+using ACMESharp.Authorizations;
 
 using Tilework.LoadBalancing.Services;
 using Tilework.CertificateManagement.Persistence;
@@ -110,6 +111,8 @@ public class CertificateManagementService
 
     private async Task CreateAcmeAccount(CertificateAuthority authority)
     {
+        _logger.LogInformation($"Creating a new account at {authority.DirectoryUrl} with {authority.Email} for CA {authority.Name}");
+
         var httpClient = new HttpClient { BaseAddress = new Uri(authority.DirectoryUrl) };
         var acmeClient = new AcmeProtocolClient(httpClient, usePostAsGet: true);
 
@@ -121,6 +124,8 @@ public class CertificateManagementService
 
         authority.Kid = acmeClient.Account.Kid;
         authority.KeyData = acmeClient.Signer.Export();
+
+        _logger.LogInformation($"Created account at {authority.DirectoryUrl} with {authority.Email} for CA {authority.Name} successfully");
     }
 
     private async Task SignCertificate(Certificate certificate)
@@ -134,6 +139,7 @@ public class CertificateManagementService
         var httpClient = new HttpClient { BaseAddress = new Uri(certificate.Authority.DirectoryUrl) };
         var acmeClient = new AcmeProtocolClient(httpClient, acct: account, signer: signer, usePostAsGet: true);
 
+        _logger.LogInformation($"Creating order for certificate {certificate.Id} with {certificate.Authority.DirectoryUrl}");
         acmeClient.Directory = await acmeClient.GetDirectoryAsync();
 
         await acmeClient.GetNonceAsync();
@@ -144,10 +150,42 @@ public class CertificateManagementService
         var authz = await acmeClient.GetAuthorizationDetailsAsync(authzUrl);
         var challenge = authz.Challenges.First(c => c.Type == "http-01");
 
+        var challengeDetails = (Http01ChallengeValidationDetails) AuthorizationDecoder.DecodeChallengeValidation(authz, challenge.Type, signer);
+
+        await _verificationService.StartVerification(certificate, challengeDetails.HttpResourcePath, challengeDetails.HttpResourceValue);
+
+        try
+        {
+            _logger.LogInformation($"Requesting challenge validation for {certificate.Id} with {certificate.Authority.DirectoryUrl}");
+            await acmeClient.AnswerChallengeAsync(challenge.Url);
+
+            for(int i = 0; i < 20; i++)
+            {
+                challenge = await acmeClient.GetChallengeDetailsAsync(authzUrl);
+                if (challenge.Status != "pending")
+                {
+                    _logger.LogInformation($"Challenge validation for {certificate.Id} finished, result: {challenge.Status}");
+                    break;
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+        finally
+        {
+            await _verificationService.StopVerification(certificate);
+        }
+        
+
+
+        
+
         // var authz = (await acmeClient.GetPendingAuthorizationsAsync(order)).First();
         // var challenge = authz.Challenges.First(c => c.Type == "http-01");
 
         // var challenge = await acmeClient.GetChallengeDetailsAsync(order.auth);
+
+        // await _verificationService.StopVerification(certificate);
 
         // var csr = GenerateCsr(certificate);
     }
