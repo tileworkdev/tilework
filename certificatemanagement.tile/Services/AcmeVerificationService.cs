@@ -49,7 +49,7 @@ public class AcmeVerificationService
             await _containerManager.CopyFileToContainer(
                 container.Id,
                 tempFilePath,
-                $"/usr/share/nginx/html/{filename}"
+                $"/usr/share/nginx/html/.well-known/acme-challenge/{filename}"
             );
         }
         finally
@@ -79,6 +79,7 @@ public class AcmeVerificationService
         {
             Name = "AcmeVerification",
             Protocol = AlbProtocol.HTTP,
+            Port = 80,
             Enabled = true
         };
         await _loadBalancerService.AddLoadBalancer(lb);
@@ -116,7 +117,7 @@ public class AcmeVerificationService
                 new Condition() {
                     Type = ConditionType.Path,
                     Values = new List<string>() {
-                        $"{filename}"
+                        $"/.well-known/acme-challenge/{filename}"
                     }
                 }
             }
@@ -153,11 +154,12 @@ public class AcmeVerificationService
 
             _logger.LogInformation($"Existing load balancer found in port 80. Adding temporary rule for ACME verification");
         }
-        
+
         var container = await CreateContainer(filename, data);
 
 
         await AddLoadBalancerTarget((ApplicationLoadBalancer)balancer, host, filename);
+        await _loadBalancerService.ApplyConfiguration();
 
     }
 
@@ -166,5 +168,20 @@ public class AcmeVerificationService
         _logger.LogInformation($"Stopping HTTP-01 verification server for {host}/{filename}");
         await DeleteContainer(filename);
         await CheckRemoveLoadBalancer();
+    }
+
+    public async Task StopAllVerifications()
+    {
+        var containers = (await _containerManager.ListContainers("certificatemanagement.tile"))
+            .Where(cnt => cnt.Name.StartsWith("AcmeVerification-"))
+            .ToList();
+
+        foreach (var container in containers)
+        {
+            var filename = container.Name.Substring("AcmeVerification-".Length);
+            await DeleteContainer(filename);
+            await CheckRemoveLoadBalancer();
+        }
+        
     }
 }

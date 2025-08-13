@@ -27,5 +27,12 @@ public sealed class CertificateManagementInitializer : IHostedService
         await dbContext.Database.MigrateAsync(ct);
     }
 
-    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+    public async Task StopAsync(CancellationToken ct)
+    {
+        _logger.LogInformation($"Initiating shutdown for module: LoadBalancing");
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var loadBalancerService = scope.ServiceProvider.GetRequiredService<AcmeVerificationService>();
+
+        await loadBalancerService.StopAllVerifications();
+    }
 }

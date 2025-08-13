@@ -16,6 +16,7 @@ namespace Tilework.Core.Services;
 
 public class DockerServiceManager : IContainerManager
 {
+    private static string defaultNetworkName = "tileworknet";
     private readonly ILogger<DockerServiceManager> _logger;
     private readonly DockerClient _client;
     public DockerServiceManager(ILogger<DockerServiceManager> logger)
@@ -34,6 +35,65 @@ public class DockerServiceManager : IContainerManager
         throw new ArgumentException($"Invalid container state: {state}");
     }
 
+    private async Task<ContainerNetwork> GetOrCreateDefaultNetwork()
+    {
+        var networks = await ListNetworks();
+        var network = networks.FirstOrDefault(net => net.Name == defaultNetworkName);
+
+        if (network == null)
+            network = await CreateNetwork(defaultNetworkName);
+
+        return network;
+    }
+
+    public async Task<List<ContainerNetwork>> ListNetworks()
+    {
+        var labelFilters = new Dictionary<string, bool>
+        {
+            { "TileworkManaged=true", true }
+        };
+
+        var networks = await _client.Networks.ListNetworksAsync(
+            new NetworksListParameters
+            {
+                Filters = new Dictionary<string, IDictionary<string, bool>> {
+                    { "label", labelFilters }
+                }
+            }
+        );
+
+        return networks.Select(net => new ContainerNetwork
+        {
+            Id = net.ID,
+            Name = net.Name
+        }).ToList();
+    }
+
+
+    public async Task<ContainerNetwork> CreateNetwork(string name)
+    {
+        var tags = new Dictionary<string, string> {
+            {"TileworkManaged", "true"}
+        };
+
+        var response = await _client.Networks.CreateNetworkAsync(
+            new NetworksCreateParameters
+            {
+                Name = name,
+                Driver = "bridge",
+                Labels = tags
+            });
+
+        return (await ListNetworks()).First(net => net.Id == response.ID);
+    }
+
+
+    public async Task DeleteNetwork(string id)
+    {
+        await _client.Networks.DeleteNetworkAsync(id);
+    }
+
+
     public async Task<List<Container>> ListContainers(string? module = null)
     {
         var labelFilters = new Dictionary<string, bool>
@@ -46,14 +106,16 @@ public class DockerServiceManager : IContainerManager
 
 
         var containers = await _client.Containers.ListContainersAsync(
-            new ContainersListParameters() {
-                All=true,
+            new ContainersListParameters()
+            {
+                All = true,
                 Filters = new Dictionary<string, IDictionary<string, bool>> {
                     { "label", labelFilters }
                 }
             });
 
-        return containers.Select(cnt => new Container {
+        return containers.Select(cnt => new Container
+        {
             Id = cnt.ID,
             Name = cnt.Names[0].TrimStart('/'),
             State = ParseState(cnt.State)
@@ -113,6 +175,8 @@ public class DockerServiceManager : IContainerManager
             }
         }
 
+        var network = await GetOrCreateDefaultNetwork();
+
         var response = await _client.Containers.CreateContainerAsync(new CreateContainerParameters()
         {
             Image = image,
@@ -127,6 +191,13 @@ public class DockerServiceManager : IContainerManager
                 },
                 PortBindings = portBindings
             },
+            NetworkingConfig = new NetworkingConfig
+            {
+                EndpointsConfig = new Dictionary<string, EndpointSettings>
+                {
+                    [network.Name] = new EndpointSettings()
+                }
+            }
         });
 
         return (await ListContainers()).First(cnt => cnt.Id == response.ID);
