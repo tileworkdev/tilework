@@ -32,10 +32,10 @@ public class AcmeVerificationService
         _containerManager = containerManager;
     }
 
-    private async Task<Container> CreateContainer(string filename, string fileData)
+    private async Task<Container> CreateContainer(string name, string filename, string fileData)
     {
         var container = await _containerManager.CreateContainer(
-            $"AcmeVerification-{filename}",
+            $"AcmeVerification-{name}",
             _settings.AcmeVerificationImage,
             "certificatemanagement.tile",
             null
@@ -63,10 +63,10 @@ public class AcmeVerificationService
         return container;
     }
 
-    private async Task DeleteContainer(string filename)
+    private async Task DeleteContainer(string name)
     {
         var containers = await _containerManager.ListContainers("certificatemanagement.tile");
-        var container = containers.First(cnt => cnt.Name == $"AcmeVerification-{filename}");
+        var container = containers.First(cnt => cnt.Name == $"AcmeVerification-{name}");
 
         if (container.State == ContainerState.Running)
             await _containerManager.StopContainer(container.Id);
@@ -86,12 +86,19 @@ public class AcmeVerificationService
         return lb;
     }
 
-    private async Task AddLoadBalancerTarget(ApplicationLoadBalancer balancer, string host, string filename)
+    private async Task AddLoadBalancerTarget(ApplicationLoadBalancer balancer, string host, string filename, Certificate certificate, string target)
     {
         var tg = new TargetGroup()
         {
-            Name = $"AcmeVerification-{filename}",
-            Protocol = TargetGroupProtocol.HTTP
+            Name = $"AcmeVerification-{certificate.Id}",
+            Protocol = TargetGroupProtocol.HTTP,
+            Targets = new List<Target>()
+            {
+                new Target() {
+                    Host=Host.Parse(target),
+                    Port=80,
+                }
+            }
         };
 
         await _loadBalancerService.AddTargetGroup(tg);
@@ -132,9 +139,9 @@ public class AcmeVerificationService
 
     }
 
-    public async Task StartVerification(string host, string filename, string data)
+    public async Task StartVerification(Certificate certificate, string host, string filename, string data)
     {
-        _logger.LogInformation($"Starting HTTP-01 verification server for {host}/{filename}");
+        _logger.LogInformation($"Starting HTTP-01 verification server for {certificate.Id}");
 
         var balancers = await _loadBalancerService.GetLoadBalancers();
 
@@ -155,18 +162,17 @@ public class AcmeVerificationService
             _logger.LogInformation($"Existing load balancer found in port 80. Adding temporary rule for ACME verification");
         }
 
-        var container = await CreateContainer(filename, data);
+        var container = await CreateContainer(certificate.Id.ToString(), filename, data);
 
 
-        await AddLoadBalancerTarget((ApplicationLoadBalancer)balancer, host, filename);
+        await AddLoadBalancerTarget((ApplicationLoadBalancer)balancer, host, filename, certificate, container.Name);
         await _loadBalancerService.ApplyConfiguration();
-
     }
 
-    public async Task StopVerification(string host, string filename)
+    public async Task StopVerification(Certificate certificate)
     {
-        _logger.LogInformation($"Stopping HTTP-01 verification server for {host}/{filename}");
-        await DeleteContainer(filename);
+        _logger.LogInformation($"Stopping HTTP-01 verification server for {certificate.Id}");
+        await DeleteContainer(certificate.Id.ToString());
         await CheckRemoveLoadBalancer();
     }
 
@@ -178,10 +184,9 @@ public class AcmeVerificationService
 
         foreach (var container in containers)
         {
-            var filename = container.Name.Substring("AcmeVerification-".Length);
-            await DeleteContainer(filename);
+            var name = container.Name.Substring("AcmeVerification-".Length);
+            await DeleteContainer(name);
             await CheckRemoveLoadBalancer();
         }
-        
     }
 }

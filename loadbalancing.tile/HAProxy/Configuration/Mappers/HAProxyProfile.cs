@@ -78,7 +78,7 @@ public class HAProxyProfile : Profile
                 dest.Servers = src.Targets.Select(target => new Server()
                 {
                     Name = target.Id.ToString(),
-                    Address = target.Host.ToString(),
+                    Address = target.Host.Value,
                     Port = target.Port,
                     Check = true,
                 }).ToList();

@@ -21,11 +21,11 @@ public readonly record struct Host(string Value)
     public static Host Parse(string input) =>
         TryParse(input, out var v) ? v : throw new FormatException("Invalid host/IP.");
 
-    static string NormalizeIp(string s) => s; // keep as-is or canonicalize if you wish
+    static string NormalizeIp(string s) => s;
     static string NormalizeHost(string s)
     {
         s = s.Trim().TrimEnd('.').ToLowerInvariant();
-        // IDN → punycode
+        // IDN -> punycode
         var idn = new System.Globalization.IdnMapping();
         var labels = s.Split('.');
         for (int i = 0; i < labels.Length; i++) labels[i] = idn.GetAscii(labels[i]);

@@ -158,6 +158,7 @@ public class CertificateManagementService
         try
         {
             await _verificationService.StartVerification(
+                certificate,
                 verificationHost,
                 verificationFile,
                 challengeDetails.HttpResourceValue
@@ -180,7 +181,7 @@ public class CertificateManagementService
         }
         finally
         {
-            await _verificationService.StopVerification(verificationHost, verificationFile);
+            await _verificationService.StopVerification(certificate);
         }
         
 
