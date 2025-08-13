@@ -152,14 +152,21 @@ public class CertificateManagementService
 
         var challengeDetails = (Http01ChallengeValidationDetails) AuthorizationDecoder.DecodeChallengeValidation(authz, challenge.Type, signer);
 
-        await _verificationService.StartVerification(certificate, challengeDetails.HttpResourcePath, challengeDetails.HttpResourceValue);
-
+        var verificationHost = new Uri(challengeDetails.HttpResourceUrl).Host;
+        var verificationFile = Path.GetFileName(challengeDetails.HttpResourcePath);
+        
         try
         {
+            await _verificationService.StartVerification(
+                verificationHost,
+                verificationFile,
+                challengeDetails.HttpResourceValue
+            );
+
             _logger.LogInformation($"Requesting challenge validation for {certificate.Id} with {certificate.Authority.DirectoryUrl}");
             await acmeClient.AnswerChallengeAsync(challenge.Url);
 
-            for(int i = 0; i < 20; i++)
+            for (int i = 0; i < 20; i++)
             {
                 challenge = await acmeClient.GetChallengeDetailsAsync(authzUrl);
                 if (challenge.Status != "pending")
@@ -173,7 +180,7 @@ public class CertificateManagementService
         }
         finally
         {
-            await _verificationService.StopVerification(certificate);
+            await _verificationService.StopVerification(verificationHost, verificationFile);
         }
         
 
