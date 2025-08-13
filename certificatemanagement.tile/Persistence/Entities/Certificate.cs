@@ -40,7 +40,7 @@ public class Certificate
     public X509Certificate2? CertificateData
     {
         get {
-            return string.IsNullOrEmpty(CertificateDataString) ? null : new X509Certificate2(System.Text.Encoding.ASCII.GetBytes(CertificateDataString));
+            return string.IsNullOrEmpty(CertificateDataString) ? null : X509CertificateLoader.LoadCertificate(Encoding.ASCII.GetBytes(CertificateDataString));
         }
         set {
             if(value != null)

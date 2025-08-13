@@ -104,6 +104,9 @@ public class CertificateManagementService
             throw new ArgumentException("Invalid private key type for CSR generation");
 
         csr.CertificateExtensions.Add(
+            new X509BasicConstraintsExtension(false, false, 0, false));
+
+        csr.CertificateExtensions.Add(
             new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, true));
 
         return csr;
@@ -150,11 +153,11 @@ public class CertificateManagementService
         var authz = await acmeClient.GetAuthorizationDetailsAsync(authzUrl);
         var challenge = authz.Challenges.First(c => c.Type == "http-01");
 
-        var challengeDetails = (Http01ChallengeValidationDetails) AuthorizationDecoder.DecodeChallengeValidation(authz, challenge.Type, signer);
+        var challengeDetails = (Http01ChallengeValidationDetails)AuthorizationDecoder.DecodeChallengeValidation(authz, challenge.Type, signer);
 
         var verificationHost = new Uri(challengeDetails.HttpResourceUrl).Host;
         var verificationFile = Path.GetFileName(challengeDetails.HttpResourcePath);
-        
+
         try
         {
             await _verificationService.StartVerification(
@@ -183,19 +186,39 @@ public class CertificateManagementService
         {
             await _verificationService.StopVerification(certificate);
         }
-        
+
+        if (challenge.Status != "valid")
+        {
+            throw new Exception($"ACME authentication failed: {challenge.Status}");
+        }
 
 
-        
+        var csr = GenerateCsr(certificate);
 
-        // var authz = (await acmeClient.GetPendingAuthorizationsAsync(order)).First();
-        // var challenge = authz.Challenges.First(c => c.Type == "http-01");
+        _logger.LogInformation($"Requesting order finalization for {certificate.Id} with {certificate.Authority.DirectoryUrl}");
+        await acmeClient.FinalizeOrderAsync(order.Payload.Finalize, csr.CreateSigningRequest());
 
-        // var challenge = await acmeClient.GetChallengeDetailsAsync(order.auth);
+        for (int i = 0; i < 20; i++)
+        {
+            order = await acmeClient.GetOrderDetailsAsync(order.OrderUrl);
+            if (order.Payload.Status == "invalid" || order.Payload.Status == "valid")
+            {
+                _logger.LogInformation($"Order for {certificate.Id} finished, result: {order.Payload.Status}");
+                break;
+            }
 
-        // await _verificationService.StopVerification(certificate);
+            await Task.Delay(1000);
+        }
 
-        // var csr = GenerateCsr(certificate);
+        if (order.Payload.Status != "valid")
+        {
+            throw new Exception($"ACME certificate issuing failed: {order.Payload.Status}");
+        }
+
+        var cert = await acmeClient.GetOrderCertificateAsync(order);
+
+        certificate.CertificateData = X509CertificateLoader.LoadCertificate(cert);
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task DeleteCertificate(Certificate certificate)
