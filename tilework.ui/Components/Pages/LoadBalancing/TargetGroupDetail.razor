@@ -23,7 +23,7 @@
                     <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
                 </ToolBarContent>
                 <Columns>
-                    <PropertyColumn Property="t => t.Address.ToString()" Title="Address" Editable="false" />
+                    <PropertyColumn Property="t => t.Host.ToString()" Title="Host" Editable="false" />
                     <PropertyColumn Property="t => t.Port" Title="Port" />
                     <TemplateColumn CellClass="d-flex justify-end">
                         <CellTemplate>

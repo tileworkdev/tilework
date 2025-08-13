@@ -11,7 +11,7 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    [Migration("20250812063810_Initial")]
+    [Migration("20250813091917_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -90,8 +90,9 @@ namespace loadbalancing.tile.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Address")
+                    b.Property<string>("Host")
                         .IsRequired()
+                        .HasMaxLength(253)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Port")

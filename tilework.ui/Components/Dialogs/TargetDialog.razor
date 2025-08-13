@@ -1,5 +1,5 @@
 @using Tilework.LoadBalancing.Persistence.Models
-@using System.Net
+@using Tilework.Core.Models
 
 @namespace Tilework.Ui.Components.Dialogs
 
@@ -12,8 +12,8 @@
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
-            <MudTextField @bind-Value="@IpAddressString" Label="Address" Variant="Variant.Outlined"
-                          Validation="@(new Func<string, string>(ValidateIPAddress))" Required="true"/>
+            <MudTextField @bind-Value="@HostString" Label="Host" Variant="Variant.Outlined"
+                          Validation="@(new Func<string, string>(ValidateHost))" Required="true"/>
             <MudTextField @bind-Value="@Target.Port" Variant="Variant.Outlined" Label="Port"/>
         </MudForm>
     </DialogContent>
@@ -30,11 +30,11 @@
 
     private MudForm form;
 
-    private string IpAddressString;
+    private string HostString;
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        IpAddressString = Target.Address?.ToString();
+        HostString = Target.Host.ToString();
     }
 
     async Task Submit()
@@ -43,14 +43,14 @@
 
         if(form.IsValid)
         {
-            Target.Address = IPAddress.Parse(IpAddressString);
+            Target.Host = Host.Parse(HostString);
             MudDialog.Close(DialogResult.Ok(true));
         }
     }
     void Cancel() => MudDialog.Cancel();
 
-    private string ValidateIPAddress(string value)
+    private string ValidateHost(string value)
     {
-        return IPAddress.TryParse(value, out _) ? null : "Invalid IP Address";
+        return Host.TryParse(value, out _) ? null : "Invalid host";
     }
 }

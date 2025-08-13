@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Net;
+using Tilework.Core.Models;
 
 namespace Tilework.LoadBalancing.Persistence.Models;
 
@@ -9,7 +9,7 @@ public class Target
     public Guid Id { get; set; }
 
     [Required]
-    public IPAddress Address { get; set; }
+    public Host Host { get; set; }
     public int Port { get; set; }
 
     public Guid TargetGroupId { get; set; }

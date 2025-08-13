@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
+using Tilework.Core.Models;
 using Tilework.LoadBalancing.Persistence.Models;
 
 namespace Tilework.LoadBalancing.Persistence;
@@ -28,5 +30,19 @@ public class LoadBalancerContext : DbContext
         {
             b.ToJson();
         });
+
+        modelBuilder.Entity<Target>()
+            .Property(e => e.Host)
+            .HasConversion(
+                v => v.Value,
+                v => Host.Parse(v))
+            .HasMaxLength(253);
+
+        modelBuilder.Entity<Target>()
+            .Property(e => e.Host)
+            .Metadata.SetValueComparer(new ValueComparer<Host>(
+                (a, b) => a.Value == b.Value,
+                v => v.Value.GetHashCode(),
+                v => new Host(v.Value)));
     }
 }
