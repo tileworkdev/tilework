@@ -134,9 +134,34 @@ public class AcmeVerificationService
         await _loadBalancerService.UpdateLoadBalancer(balancer);
     }
 
-    private async Task CheckRemoveLoadBalancer()
+    private async Task CheckRemoveLoadBalancer(string certId)
     {
+        var balancers = await _loadBalancerService.GetLoadBalancers();
+        var balancer = balancers.FirstOrDefault(lb => lb.Port == 80);
 
+        if (balancer == null)
+            return;
+
+        var appBalancer = (ApplicationLoadBalancer)balancer;
+
+        for (int i = appBalancer.Rules.Count - 1; i >= 0; i--)
+        {
+            var rule = appBalancer.Rules[i];
+            if (rule.TargetGroup.Name == $"AcmeVerification-{certId}")
+            {
+                var tg = rule.TargetGroup;
+                appBalancer.Rules.Remove(rule);
+                await _loadBalancerService.UpdateLoadBalancer(appBalancer);
+                await _loadBalancerService.DeleteTargetGroup(tg);
+            }
+        }
+
+        if (appBalancer.Name == "AcmeVerification" && appBalancer.Rules.Count == 0)
+        {
+            await _loadBalancerService.DeleteLoadBalancer(appBalancer);
+        }
+
+        await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task StartVerification(Certificate certificate, string host, string filename, string data)
@@ -173,7 +198,7 @@ public class AcmeVerificationService
     {
         _logger.LogInformation($"Stopping HTTP-01 verification server for {certificate.Id}");
         await DeleteContainer(certificate.Id.ToString());
-        await CheckRemoveLoadBalancer();
+        await CheckRemoveLoadBalancer(certificate.Id.ToString());
     }
 
     public async Task StopAllVerifications()
@@ -186,7 +211,7 @@ public class AcmeVerificationService
         {
             var name = container.Name.Substring("AcmeVerification-".Length);
             await DeleteContainer(name);
-            await CheckRemoveLoadBalancer();
+            await CheckRemoveLoadBalancer(name);
         }
     }
 }
