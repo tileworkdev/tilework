@@ -1,5 +1,6 @@
 @using Tilework.CertificateManagement.Persistence.Models
 @using Tilework.CertificateManagement.Services
+@using Tilework.CertificateManagement.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -53,9 +54,14 @@
 
         _actions = new List<ActionItem>
         {
-            new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke },
             new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
         };
+
+        if(_item.Status == CertificateStatus.ACTIVE)
+        {
+            _actions.Add(new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke });
+        }
+
     }
 
     private async Task ConfirmRevoke()

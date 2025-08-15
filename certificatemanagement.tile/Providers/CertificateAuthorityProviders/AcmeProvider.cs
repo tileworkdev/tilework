@@ -3,9 +3,11 @@ using Microsoft.Extensions.Logging;
 
 using ACMESharp.Protocol;
 using ACMESharp.Authorizations;
+using ACMESharp.Protocol.Resources;
 
 using Tilework.CertificateManagement.Interfaces;
 using Tilework.CertificateManagement.Models;
+
 
 namespace Tilework.CertificateManagement.Services;
 
@@ -176,7 +178,20 @@ public class AcmeProvider : ICAProvider
         await acmeClient.GetNonceAsync();
 
         var certDer = certificate.Export(X509ContentType.Cert);
-        await acmeClient.RevokeCertificateAsync(certDer);
+        try
+        {
+            await acmeClient.RevokeCertificateAsync(certDer);
+        }
+        catch(AcmeProtocolException ex)
+        {
+            if (ex.ProblemType == ProblemType.AlreadyRevoked)
+            {
+                _logger.LogInformation($"Failed to revoke certificate: already revoked");
+            }
+            else
+                throw;
+        }
+        
 
         return acmeConfig;
     }
