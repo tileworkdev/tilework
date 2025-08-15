@@ -149,7 +149,7 @@ public class CertificateManagementService
 
         certificate.CertificateData = crt;
         certificate.ExpiresAtUtc = new DateTimeOffset(crt.NotAfter.ToUniversalTime());
-        certificate.Status = CertificateStatus.ISSUED;
+        certificate.Status = CertificateStatus.ACTIVE;
 
         certificate.Authority.Parameters = DeserializeConfig(config);
 
@@ -158,7 +158,7 @@ public class CertificateManagementService
 
     private async Task RevokeCertificate(Certificate certificate)
     {
-        if (certificate.Status != CertificateStatus.ISSUED)
+        if (certificate.Status != CertificateStatus.ACTIVE)
             throw new InvalidOperationException($"Cannot revoke certificate: status is {certificate.Status}");
         if (certificate.CertificateData == null)
             throw new InvalidOperationException($"Cannot revoke certificate: no certificate data found");
@@ -172,7 +172,7 @@ public class CertificateManagementService
 
     public async Task DeleteCertificate(Certificate certificate)
     {
-        if(certificate.Status == CertificateStatus.ISSUED)
+        if(certificate.Status == CertificateStatus.ACTIVE)
             await RevokeCertificate(certificate);
 
         _dbContext.Certificates.Remove(certificate);
