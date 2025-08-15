@@ -1,5 +1,4 @@
-
-using Tilework.LoadBalancing.Enums;
+using Tilework.Core.LoadBalancing.Enums;
 
 namespace Tilework.LoadBalancing.Persistence.Models;
 

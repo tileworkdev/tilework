@@ -1,6 +1,6 @@
-using Tilework.LoadBalancing.Enums;
+using Tilework.Core.LoadBalancing.Enums;
 
-namespace Tilework.LoadBalancing.Persistence.Models;
+namespace Tilework.Core.LoadBalancing.Models;
 
 public class Condition
 {

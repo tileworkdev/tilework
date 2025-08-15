@@ -27,6 +27,10 @@ namespace loadbalancing.tile.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CertificateIds")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Discriminator")
                         .IsRequired()
                         .HasMaxLength(34)
@@ -171,7 +175,7 @@ namespace loadbalancing.tile.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsMany("Tilework.LoadBalancing.Persistence.Models.Condition", "Conditions", b1 =>
+                    b.OwnsMany("Tilework.Core.LoadBalancing.Models.Condition", "Conditions", b1 =>
                         {
                             b1.Property<Guid>("RuleId")
                                 .HasColumnType("TEXT");

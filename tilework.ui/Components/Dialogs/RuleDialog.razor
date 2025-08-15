@@ -1,5 +1,5 @@
-@using Tilework.LoadBalancing.Enums
-@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.Core.LoadBalancing.Enums
+@using Tilework.Core.LoadBalancing.Models
 @using System.Linq
 @using System.Collections.Generic
 
@@ -27,10 +27,10 @@
 
             <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
 
-            <MudSelect T="TargetGroup" @bind-Value="Rule.TargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelect T="Guid" @bind-Value="Rule.TargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 @foreach (var group in TargetGroups)
                 {
-                    <MudSelectItem T="TargetGroup" Value="@group">@group.Name</MudSelectItem>
+                    <MudSelectItem T="Guid" Value="@group.Id">@group.Name</MudSelectItem>
                 }
             </MudSelect>
         </MudForm>
@@ -44,8 +44,8 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
-    [Parameter] public Rule Rule { get; set; } = new Rule();
-    [Parameter] public List<TargetGroup> TargetGroups { get; set; } = new List<TargetGroup>();
+    [Parameter] public RuleDTO Rule { get; set; } = new();
+    [Parameter] public List<TargetGroupDTO> TargetGroups { get; set; } = new();
 
     private MudForm form;
 

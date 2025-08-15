@@ -19,6 +19,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\tilework.core\tilework.core.csproj" />
-    <ProjectReference Include="..\loadbalancing.tile\loadbalancing.tile.csproj" />
   </ItemGroup>
 </Project>

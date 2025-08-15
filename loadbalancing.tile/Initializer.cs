@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using Tilework.LoadBalancing.Persistence;
+using Tilework.Core.Interfaces;
 
 namespace Tilework.LoadBalancing.Services;
 
@@ -28,7 +29,7 @@ public sealed class LoadBalancingInitializer : IHostedService
         var dbContext = scope.ServiceProvider.GetRequiredService<LoadBalancerContext>();
         await dbContext.Database.MigrateAsync(ct);
 
-        var loadBalancerService = scope.ServiceProvider.GetRequiredService<LoadBalancerService>();
+        var loadBalancerService = scope.ServiceProvider.GetRequiredService<ILoadBalancerService>();
         await loadBalancerService.ApplyConfiguration();
     }
 
@@ -36,7 +37,7 @@ public sealed class LoadBalancingInitializer : IHostedService
     {
         _logger.LogInformation($"Initiating shutdown for module: LoadBalancing");
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var loadBalancerService = scope.ServiceProvider.GetRequiredService<LoadBalancerService>();
+        var loadBalancerService = scope.ServiceProvider.GetRequiredService<ILoadBalancerService>();
 
         await loadBalancerService.Shutdown();
     }

@@ -32,6 +32,7 @@ namespace loadbalancing.tile.Migrations
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Port = table.Column<int>(type: "INTEGER", nullable: false),
                     Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CertificateIds = table.Column<string>(type: "TEXT", nullable: false),
                     Discriminator = table.Column<string>(type: "TEXT", maxLength: 34, nullable: false),
                     Protocol = table.Column<int>(type: "INTEGER", nullable: true),
                     NetworkLoadBalancer_Protocol = table.Column<int>(type: "INTEGER", nullable: true),

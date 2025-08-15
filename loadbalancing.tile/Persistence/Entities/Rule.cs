@@ -1,6 +1,5 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using Tilework.LoadBalancing.Haproxy;
+using Tilework.Core.LoadBalancing.Models;
 
 
 namespace Tilework.LoadBalancing.Persistence.Models;

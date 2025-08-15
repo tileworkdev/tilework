@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Text.Json;
 
 using Tilework.Core.Models;
 using Tilework.LoadBalancing.Persistence.Models;
@@ -44,5 +45,14 @@ public class LoadBalancerContext : DbContext
                 (a, b) => a.Value == b.Value,
                 v => v.Value.GetHashCode(),
                 v => new Host(v.Value)));
+
+        modelBuilder.Entity<BaseLoadBalancer>(entity =>
+        {
+            entity.Property(u => u.CertificateIds)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<Guid>>(v, (JsonSerializerOptions?)null) ?? new List<Guid>()
+                );
+        });
     }
 }

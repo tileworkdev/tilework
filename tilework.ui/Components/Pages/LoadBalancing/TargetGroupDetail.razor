@@ -1,9 +1,10 @@
-@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.Core.LoadBalancing.Models
+@using Tilework.Core.Interfaces
 @using Tilework.LoadBalancing.Services
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject LoadBalancerService _loadBalancerService
+@inject ILoadBalancerService _loadBalancerService
 @inject NavigationManager _navigationManager
 @inject IDialogService _dialogService
 @inject ISnackbar _snackbar
@@ -16,7 +17,7 @@
     </DetailContent>
     <TabContent>
         <MudTabPanel Text="Targets">
-            <MudDataGrid T="Target" Outlined="true" Items="_item.Targets" Hover="true">
+            <MudDataGrid T="TargetDTO" Outlined="true" Items="_targets" Hover="true">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Targets</MudText>
                     <MudSpacer />
@@ -42,7 +43,8 @@
     [Parameter]
     public Guid Id { get; set; }
 
-    private TargetGroup _item;
+    private TargetGroupDTO _item;
+    private List<TargetDTO> _targets;
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -60,6 +62,8 @@
             _navigationManager.NavigateTo("/lb/targetgroups");
             _snackbar.Add($"Target group {Id} not found", Severity.Error);
         }
+
+        _targets = await _loadBalancerService.GetTargets(_item);
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
@@ -83,7 +87,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _loadBalancerService.DeleteTargetGroup(_item);
+            await _loadBalancerService.DeleteTargetGroup(_item.Id);
             await _loadBalancerService.ApplyConfiguration();
             _navigationManager.NavigateTo("/lb/targetgroups");
         }
@@ -91,7 +95,7 @@
 
     private async Task AddTarget()
     {
-        var target = new Target();
+        var target = new TargetDTO();
         var parameters = new DialogParameters<TargetDialog>();
         parameters.Add(x => x.Target, target);
 
@@ -101,13 +105,12 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            _item.Targets.Add(target);
-            await _loadBalancerService.UpdateTargetGroup(_item);
+            await _loadBalancerService.AddTarget(_item, target);
             await _loadBalancerService.ApplyConfiguration();
         }
     }
 
-    private async Task ConfirmDeleteTarget(Target target)
+    private async Task ConfirmDeleteTarget(TargetDTO target)
     {
         var parameters = new DialogParameters<ConfirmDialog>();
         parameters.Add(x => x.ContentText, "Do you really want to delete the target? This process cannot be undone.");
@@ -120,8 +123,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            _item.Targets.Remove(target);
-            await _loadBalancerService.UpdateTargetGroup(_item);
+            await _loadBalancerService.RemoveTarget(_item, target);
             await _loadBalancerService.ApplyConfiguration();
         }
     }

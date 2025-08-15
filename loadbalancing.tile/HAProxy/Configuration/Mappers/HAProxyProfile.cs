@@ -1,8 +1,7 @@
 using AutoMapper;
-using System;
-using System.Linq;
+
 using Tilework.Core.Enums;
-using Tilework.LoadBalancing.Enums;
+using Tilework.Core.LoadBalancing.Enums;
 using Tilework.LoadBalancing.Persistence.Models;
 
 namespace Tilework.LoadBalancing.Haproxy;

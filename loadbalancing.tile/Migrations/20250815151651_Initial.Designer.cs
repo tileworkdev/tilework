@@ -11,7 +11,7 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    [Migration("20250813091917_Initial")]
+    [Migration("20250815151651_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -28,6 +28,10 @@ namespace loadbalancing.tile.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CertificateIds")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Discriminator")
@@ -174,7 +178,7 @@ namespace loadbalancing.tile.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsMany("Tilework.LoadBalancing.Persistence.Models.Condition", "Conditions", b1 =>
+                    b.OwnsMany("Tilework.Core.LoadBalancing.Models.Condition", "Conditions", b1 =>
                         {
                             b1.Property<Guid>("RuleId")
                                 .HasColumnType("TEXT");

@@ -1,9 +1,10 @@
 using AutoMapper;
 
 using Tilework.Ui.Models;
-using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.CertificateManagement.Persistence.Models;
 using Tilework.CertificateManagement.Models;
+using Tilework.Core.LoadBalancing.Models;
+
 using System.Text.Json;
 
 namespace Tilework.Ui.Mappers;
@@ -12,9 +13,9 @@ public class FormMappingProfile : Profile
 {
     public FormMappingProfile()
     {
-        CreateMap<NewTargetGroupForm, TargetGroup>();
-        CreateMap<EditTargetGroupForm, TargetGroup>();
-        CreateMap<TargetGroup, EditTargetGroupForm>();
+        CreateMap<NewTargetGroupForm, TargetGroupDTO>();
+        CreateMap<EditTargetGroupForm, TargetGroupDTO>();
+        CreateMap<TargetGroupDTO, EditTargetGroupForm>();
 
         CreateMap<NewAcmeCertificateAuthorityForm, CertificateAuthority>()
             .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
@@ -29,20 +30,18 @@ public class FormMappingProfile : Profile
                 )
             ));
 
-        CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancer>();
-        CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancer>()
-            .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
-            .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
+        CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
+        CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
+            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
         CreateMap<NewNetworkLoadBalancerForm, NewApplicationLoadBalancerForm>();
         CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
 
-        CreateMap<EditApplicationLoadBalancerForm, ApplicationLoadBalancer>();
-        CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancer>()
-            .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
-            .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
-        CreateMap<ApplicationLoadBalancer, EditApplicationLoadBalancerForm>();
-        CreateMap<NetworkLoadBalancer, EditNetworkLoadBalancerForm>()
-            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroupId));
+        CreateMap<EditApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
+        CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
+            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
+        CreateMap<ApplicationLoadBalancerDTO, EditApplicationLoadBalancerForm>();
+        CreateMap<NetworkLoadBalancerDTO, EditNetworkLoadBalancerForm>()
+            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
         CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
         CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
 

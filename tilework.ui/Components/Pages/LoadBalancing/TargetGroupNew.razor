@@ -1,5 +1,6 @@
-@using Tilework.LoadBalancing.Enums
-@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.Core.LoadBalancing.Enums
+@using Tilework.Core.LoadBalancing.Models
+@using Tilework.Core.Interfaces
 @using Tilework.LoadBalancing.Services
 @using AutoMapper
 
@@ -9,7 +10,7 @@
 
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
-@inject LoadBalancerService _loadBalancerService
+@inject ILoadBalancerService _loadBalancerService
 @inject IMapper _mapper
 
 
@@ -33,7 +34,7 @@
     {
         try
         {
-            var obj = _mapper.Map<TargetGroup>(form);
+            var obj = _mapper.Map<TargetGroupDTO>(form);
             await _loadBalancerService.AddTargetGroup(obj);
             _navigationManager.NavigateTo("/lb/targetgroups");
             _snackbar.Add("target group added successfully!", Severity.Success);

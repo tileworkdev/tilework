@@ -7,17 +7,17 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
 
-using Tilework.LoadBalancing.Services;
 using Tilework.CertificateManagement.Persistence;
 using Tilework.CertificateManagement.Persistence.Models;
 using Tilework.CertificateManagement.Settings;
 using Tilework.CertificateManagement.Enums;
 using Tilework.CertificateManagement.Interfaces;
 using Tilework.CertificateManagement.Models;
+using Tilework.Core.Interfaces;
 
 namespace Tilework.CertificateManagement.Services;
 
-public class CertificateManagementService
+public class CertificateManagementService : ICertificateManagementService
 {
     private readonly CertificateManagementContext _dbContext;
     private readonly CertificateManagementSettings _settings;

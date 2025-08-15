@@ -2,16 +2,15 @@
 
 @using AutoMapper
 
-@using Tilework.LoadBalancing.Enums
-@using Tilework.LoadBalancing.Persistence.Models
-@using Tilework.LoadBalancing.Services
-
+@using Tilework.Core.LoadBalancing.Enums
+@using Tilework.Core.LoadBalancing.Models
+@using Tilework.Core.Interfaces
 
 @namespace Tilework.Ui.Components.Pages
 
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@inject LoadBalancerService LoadBalancerService
+@inject ILoadBalancerService _loadBalancerService
 @inject IMapper Mapper
 
 @page "/lb/loadbalancers/new"
@@ -54,7 +53,7 @@ else if(form is NewNetworkLoadBalancerForm nlbForm)
             {
                 form = Mapper.Map<NewNetworkLoadBalancerForm>(albForm);
 
-                var targetGroupOptions = (await LoadBalancerService.GetNlbTargetGroups()).Select(tg =>
+                var targetGroupOptions = (await _loadBalancerService.GetNlbTargetGroups()).Select(tg =>
                     new SelectOptionItem()
                     {
                         Value = tg.Id,
@@ -76,16 +75,16 @@ else if(form is NewNetworkLoadBalancerForm nlbForm)
     {
         try
         {
-            BaseLoadBalancer obj;
+            BaseLoadBalancerDTO item;
             if(form is NewApplicationLoadBalancerForm albForm)
-                obj = Mapper.Map<ApplicationLoadBalancer>(albForm);
+                item = Mapper.Map<ApplicationLoadBalancerDTO>(albForm);
             else if(form is NewNetworkLoadBalancerForm nlbForm)
-                obj = Mapper.Map<NetworkLoadBalancer>(nlbForm);
+                item = Mapper.Map<NetworkLoadBalancerDTO>(nlbForm);
             else
                 throw new ArgumentException();
 
-            await LoadBalancerService.AddLoadBalancer(obj);
-            await LoadBalancerService.ApplyConfiguration();
+            await _loadBalancerService.AddLoadBalancer(item);
+            await _loadBalancerService.ApplyConfiguration();
 
             NavigationManager.NavigateTo("/lb/loadbalancers");
             Snackbar.Add("Load balancer added successfully!", Severity.Success);

@@ -1,11 +1,11 @@
-@using Tilework.LoadBalancing.Persistence.Models
-@using Tilework.LoadBalancing.Enums
+@using Tilework.Core.LoadBalancing.Models
+@using Tilework.Core.LoadBalancing.Enums
 @using Tilework.Core.Enums
-@using Tilework.LoadBalancing.Services
+@using Tilework.Core.Interfaces
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject LoadBalancerService _loadBalancerService
+@inject ILoadBalancerService _loadBalancerService
 @inject IDialogService _dialogService
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
@@ -17,7 +17,7 @@
         <MudGrid Spacing="5">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancer appBalancer ? "Application" : "Network")</MudText>
+                <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancerDTO appBalancer ? "Application" : "Network")</MudText>
             </MudItem>
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Status</MudText>
@@ -33,10 +33,10 @@
         </MudGrid>
     </DetailContent>
     <TabContent>
-        @if(_item is ApplicationLoadBalancer appBalancer)
+        @if(_item is ApplicationLoadBalancerDTO appBalancer)
         {
             <MudTabPanel Text="Rules">
-                <MudDataGrid T="Rule" Outlined="true" Items="appBalancer.Rules" Hover="true">
+                <MudDataGrid T="RuleDTO" Outlined="true" Items="_rules" Hover="true">
                     <ToolBarContent>
                         <MudText Typo="Typo.h6">Rules</MudText>
                         <MudSpacer />
@@ -70,7 +70,7 @@
                                 }
                             </CellTemplate>
                         </TemplateColumn>
-                        <PropertyColumn Property="t => t.TargetGroup.Name" Title="Target group" />
+                        <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup)" Title="Target group" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
                                 <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -97,7 +97,8 @@
     [Parameter]
     public Guid Id { get; set; }
 
-    private BaseLoadBalancer _item;
+    private BaseLoadBalancerDTO _item;
+    private List<RuleDTO> _rules = new();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -115,6 +116,11 @@
             _navigationManager.NavigateTo("/lb/loadbalancers");
             _snackbar.Add($"Load balancer {Id} not found", Severity.Error);
             return;
+        }
+
+        if(_item is ApplicationLoadBalancerDTO appBalancer)
+        {
+            _rules = await _loadBalancerService.GetRules(appBalancer);
         }
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
@@ -135,7 +141,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _loadBalancerService.DeleteLoadBalancer(_item);
+            await _loadBalancerService.DeleteLoadBalancer(_item.Id);
             await _loadBalancerService.ApplyConfiguration();
             _navigationManager.NavigateTo("/lb/loadbalancers");
         }
@@ -143,7 +149,7 @@
 
     private async Task AddRule()
     {
-        var rule = new Rule();
+        var rule = new RuleDTO();
         var parameters = new DialogParameters<RuleDialog>();
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
@@ -154,9 +160,9 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            if(_item is ApplicationLoadBalancer appBalancer)
+            if(_item is ApplicationLoadBalancerDTO appBalancer)
             {
-                appBalancer.Rules.Add(rule);
+                await _loadBalancerService.AddRule(appBalancer, rule);
                 await _loadBalancerService.UpdateLoadBalancer(appBalancer);
             }
             else
@@ -166,7 +172,7 @@
         }
     }
 
-    private async Task ConfirmDeleteRule(Rule rule)
+    private async Task ConfirmDeleteRule(RuleDTO rule)
     {
         var parameters = new DialogParameters<ConfirmDialog>();
         parameters.Add(x => x.ContentText, "Do you really want to delete the rule? This process cannot be undone.");
@@ -177,15 +183,14 @@
 
         var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
-        if (!result.Canceled && _item is ApplicationLoadBalancer appBalancer)
+        if (!result.Canceled && _item is ApplicationLoadBalancerDTO appBalancer)
         {
-            appBalancer.Rules.Remove(rule);
-            await _loadBalancerService.UpdateLoadBalancer(appBalancer);
+            await _loadBalancerService.RemoveRule(appBalancer, rule);
             await _loadBalancerService.ApplyConfiguration();
         }
     }
 
-    private async Task<List<TargetGroup>> GetAlbTargetGroups()
+    private async Task<List<TargetGroupDTO>> GetAlbTargetGroups()
     {
         var protocols = new List<TargetGroupProtocol> {
             TargetGroupProtocol.HTTP,
@@ -223,4 +228,9 @@
             }
         };
     }
+
+    @* private async TargetGroupDTO GetTargetGroup()
+    {
+        return await _loadBalancerService.
+    } *@
 }

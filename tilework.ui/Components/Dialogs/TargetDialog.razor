@@ -1,4 +1,4 @@
-@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.Core.LoadBalancing.Models
 @using Tilework.Core.Models
 
 @namespace Tilework.Ui.Components.Dialogs
@@ -26,7 +26,7 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
-    [Parameter] public Target Target { get; set; } = new Target();
+    [Parameter] public TargetDTO Target { get; set; } = new();
 
     private MudForm form;
 

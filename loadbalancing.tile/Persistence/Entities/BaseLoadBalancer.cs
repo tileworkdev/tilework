@@ -15,4 +15,6 @@ public abstract class BaseLoadBalancer
     public int Port { get; set; }
 
     public bool Enabled { get; set; }
+
+    public List<Guid> CertificateIds { get; set; } = new();
 }

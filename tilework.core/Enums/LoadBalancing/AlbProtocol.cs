@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Tilework.LoadBalancing.Enums;
+namespace Tilework.Core.LoadBalancing.Enums;
 
 public enum AlbProtocol
 {

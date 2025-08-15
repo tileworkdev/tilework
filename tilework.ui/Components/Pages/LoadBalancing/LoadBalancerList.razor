@@ -1,8 +1,9 @@
+@using Tilework.Core.LoadBalancing.Models
 @using Tilework.LoadBalancing.Services
-@using Tilework.LoadBalancing.Persistence.Models
+@using Tilework.Core.Interfaces
 
 @namespace Tilework.Ui.Components.Pages
-@inject LoadBalancerService _loadBalancerService
+@inject ILoadBalancerService _loadBalancerService
 
 
 @page "/lb/loadbalancers"
@@ -17,7 +18,7 @@
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/lb/loadbalancers/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Port">@context.Port</MudTd>
-        <MudTd DataLabel="Type">@(context is ApplicationLoadBalancer ? "Application" : "Network")</MudTd>
+        <MudTd DataLabel="Type">@(context is ApplicationLoadBalancerDTO ? "Application" : "Network")</MudTd>
         <MudTd DataLabel="Status">
             @if (context.Enabled)
             {
@@ -32,7 +33,7 @@
 </GenericListview>
 
 @code {
-    public List<BaseLoadBalancer> _items { get; set; } = new List<BaseLoadBalancer>();
+    public List<BaseLoadBalancerDTO> _items { get; set; } = new();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {

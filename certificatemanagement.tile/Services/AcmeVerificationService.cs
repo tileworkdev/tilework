@@ -2,27 +2,26 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Tilework.Core.Interfaces;
-using Tilework.LoadBalancing.Services;
-using Tilework.CertificateManagement.Persistence;
 using Tilework.CertificateManagement.Settings;
-using Tilework.LoadBalancing.Persistence.Models;
-using Tilework.LoadBalancing.Enums;
-using Tilework.CertificateManagement.Persistence.Models;
 using Tilework.Core.Models;
 using Tilework.Core.Enums;
+
+using Tilework.Core.LoadBalancing.Enums;
+using Tilework.Core.LoadBalancing.Models;
+
 
 namespace Tilework.CertificateManagement.Services;
 
 public class AcmeVerificationService
 {
     private readonly ILogger<CertificateManagementService> _logger;
-    private readonly LoadBalancerService _loadBalancerService;
+    private readonly ILoadBalancerService _loadBalancerService;
     private readonly CertificateManagementSettings _settings;
     private readonly IContainerManager _containerManager;
 
 
     public AcmeVerificationService(ILogger<CertificateManagementService> logger,
-                                   LoadBalancerService loadBalancerService,
+                                   ILoadBalancerService loadBalancerService,
                                    IOptions<CertificateManagementSettings> settings,
                                    IContainerManager containerManager)
     {
@@ -73,9 +72,9 @@ public class AcmeVerificationService
         await _containerManager.DeleteContainer(container.Id);
     }
 
-    private async Task<ApplicationLoadBalancer> AddLoadBalancer()
+    private async Task<ApplicationLoadBalancerDTO> AddLoadBalancer()
     {
-        var lb = new ApplicationLoadBalancer()
+        var lb = new ApplicationLoadBalancerDTO()
         {
             Name = "AcmeVerification",
             Protocol = AlbProtocol.HTTP,
@@ -86,32 +85,34 @@ public class AcmeVerificationService
         return lb;
     }
 
-    private async Task AddLoadBalancerTarget(string id, ApplicationLoadBalancer balancer, string host, string filename, string target)
+    private async Task AddLoadBalancerTarget(string id, ApplicationLoadBalancerDTO balancer, string host, string filename, string target)
     {
-        var tg = new TargetGroup()
+        var tg = new TargetGroupDTO()
         {
             Name = $"AcmeVerification-{id}",
             Protocol = TargetGroupProtocol.HTTP,
-            Targets = new List<Target>()
-            {
-                new Target() {
-                    Host=Host.Parse(target),
-                    Port=80,
-                }
-            }
         };
 
         await _loadBalancerService.AddTargetGroup(tg);
 
-        var lowestPriority = balancer.Rules
+        var t = new TargetDTO()
+        {
+            Host = Host.Parse(target),
+            Port = 80,
+        };
+
+        await _loadBalancerService.AddTarget(tg, t);
+
+
+
+        var lowestPriority = (await _loadBalancerService.GetRules(balancer))
             .Select(r => r.Priority)
             .DefaultIfEmpty(0)
             .Min();
 
-        var rule = new Rule()
+        var rule = new RuleDTO()
         {
-            Listener = balancer,
-            TargetGroup = tg,
+            TargetGroup = tg.Id,
             Priority = lowestPriority <= 0 ? lowestPriority - 1 : -1,
             Conditions = new List<Condition>()
             {
@@ -130,8 +131,7 @@ public class AcmeVerificationService
             }
         };
 
-        balancer.Rules.Add(rule);
-        await _loadBalancerService.UpdateLoadBalancer(balancer);
+        await _loadBalancerService.AddRule(balancer, rule);
     }
 
     private async Task CheckRemoveLoadBalancer(string certId)
@@ -142,23 +142,25 @@ public class AcmeVerificationService
         if (balancer == null)
             return;
 
-        var appBalancer = (ApplicationLoadBalancer)balancer;
+        var appBalancer = (ApplicationLoadBalancerDTO)balancer;
 
-        for (int i = appBalancer.Rules.Count - 1; i >= 0; i--)
+        var targetGroups = await _loadBalancerService.GetTargetGroups();
+
+        foreach (var rule in await _loadBalancerService.GetRules(appBalancer))
         {
-            var rule = appBalancer.Rules[i];
-            if (rule.TargetGroup.Name == $"AcmeVerification-{certId}")
+            var tg = targetGroups.FirstOrDefault(tg => tg.Id == rule.TargetGroup);
+
+            if (tg != null && tg.Name == $"AcmeVerification-{certId}")
             {
-                var tg = rule.TargetGroup;
-                appBalancer.Rules.Remove(rule);
-                await _loadBalancerService.UpdateLoadBalancer(appBalancer);
-                await _loadBalancerService.DeleteTargetGroup(tg);
+                await _loadBalancerService.RemoveRule(appBalancer, rule);
+                await _loadBalancerService.DeleteTargetGroup(tg.Id);
             }
+
         }
 
-        if (appBalancer.Name == "AcmeVerification" && appBalancer.Rules.Count == 0)
+        if (appBalancer.Name == "AcmeVerification" && (await _loadBalancerService.GetRules(appBalancer)).Count == 0)
         {
-            await _loadBalancerService.DeleteLoadBalancer(appBalancer);
+            await _loadBalancerService.DeleteLoadBalancer(appBalancer.Id);
         }
 
         await _loadBalancerService.ApplyConfiguration();
@@ -179,7 +181,7 @@ public class AcmeVerificationService
         }
         else
         {
-            if (balancer is not ApplicationLoadBalancer)
+            if (balancer is not ApplicationLoadBalancerDTO)
             {
                 throw new InvalidOperationException("Cannot run verification. A network load balancer uses port 80");
             }
@@ -190,7 +192,7 @@ public class AcmeVerificationService
         var container = await CreateContainer(id, filename, data);
 
 
-        await AddLoadBalancerTarget(id, (ApplicationLoadBalancer)balancer, host, filename, container.Name);
+        await AddLoadBalancerTarget(id, (ApplicationLoadBalancerDTO)balancer, host, filename, container.Name);
         await _loadBalancerService.ApplyConfiguration();
     }
 

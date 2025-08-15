@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Tilework.LoadBalancing.Haproxy;
 using Tilework.LoadBalancing.Settings;
 using Tilework.LoadBalancing.Persistence;
+using Tilework.LoadBalancing.Mappers;
+using Tilework.Core.Interfaces;
 
 namespace Tilework.LoadBalancing.Services;
 
@@ -18,12 +20,14 @@ public static class ServiceCollectionExtensions
 
         services.AddAutoMapper(typeof(HAProxyProfile));
 
-        services.AddScoped<LoadBalancerService>();
+        services.AddScoped<ILoadBalancerService, LoadBalancerService>();
         services.AddScoped<HAProxyConfigurator>();
 
         services.AddDbContext<LoadBalancerContext>(dbContextOptions);
 
         services.AddHostedService<LoadBalancingInitializer>();
+
+        services.AddAutoMapper(typeof(LoadBalancingMappingProfile));
 
         return services;
     }
