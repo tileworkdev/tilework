@@ -18,7 +18,7 @@
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/lb/targetgroups/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Name">@context.Protocol</MudTd>
-        <MudTd DataLabel="Targets">@GetTargetNumber(context)</MudTd>
+        <MudTd DataLabel="Targets">@_loadBalancerService.GetTargets(context).Result.Count</MudTd>
     </RowContent>
 </GenericListview>
 
@@ -39,10 +39,5 @@
     protected override async Task OnInitializedAsync()
     {
         _items = await _loadBalancerService.GetTargetGroups();
-    }
-
-    private async Task<int> GetTargetNumber(TargetGroupDTO tg)
-    {
-        return (await _loadBalancerService.GetTargets(tg)).Count;
     }
 }
