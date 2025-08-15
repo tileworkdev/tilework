@@ -45,6 +45,15 @@ public class CertificateManagementService
         );
     }
 
+    private string DeserializeConfig(ICAConfiguration config)
+    {
+        return config switch
+        {
+            AcmeConfiguration acme => JsonSerializer.Serialize(acme),
+            _ => throw new NotSupportedException(config.GetType().Name)
+        };
+    }
+
 
     public async Task<List<Certificate>> GetCertificates()
     {
@@ -133,7 +142,7 @@ public class CertificateManagementService
         (var crt, config) = await provider.SignCertificateRequest(certificate.Fqdn, csr, config);
 
         certificate.CertificateData = crt;
-        certificate.Authority.Parameters = JsonSerializer.Serialize(config);
+        certificate.Authority.Parameters = DeserializeConfig(config);
         await _dbContext.SaveChangesAsync();
     }
 
@@ -158,7 +167,7 @@ public class CertificateManagementService
     {
         (var provider, var config) = GetProvider(authority);
         config = await provider.Register(config);
-        authority.Parameters = JsonSerializer.Serialize(config);
+        authority.Parameters = DeserializeConfig(config);
 
         _dbContext.CertificateAuthorities.Add(authority);
         await _dbContext.SaveChangesAsync();
