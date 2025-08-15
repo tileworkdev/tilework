@@ -167,6 +167,7 @@ public class CertificateManagementService
         (var provider, var config) = GetProvider(certificate.Authority);
         config = await provider.RevokeCertificate(certificate.CertificateData!, config);
         certificate.Authority.Parameters = DeserializeConfig(config);
+        certificate.Status = CertificateStatus.REVOKED;
         await _dbContext.SaveChangesAsync();
     }
 

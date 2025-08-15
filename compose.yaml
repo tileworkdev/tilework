@@ -1,8 +1,6 @@
-# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
-
 services:
   tileworkui:
-    image: tilework
+    image: registry.solarspy.net/tilework:latest
     build:
       context: .
       dockerfile: tilework.ui/Dockerfile
@@ -11,4 +9,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
     volumes:
+      - tilework_data:/var/lib/tilework
       - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  tilework_data:
+    external: false
