@@ -77,8 +77,11 @@ public class CertificateManagementService
             PrivateKey = key
         };
 
-        _dbContext.Certificates.Add(certificate);
-        await _dbContext.SaveChangesAsync();
+        // TODO: Currently, the process is synchronous so either everything succeeds or nothing.
+        // Eventually, the signing process should be done in the background and we could save the
+        // thing here
+        // _dbContext.Certificates.Add(certificate);
+        // await _dbContext.SaveChangesAsync();
 
         await SignCertificate(certificate);
 
