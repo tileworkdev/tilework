@@ -1,5 +1,6 @@
 @using Tilework.CertificateManagement.Services
 @using Tilework.CertificateManagement.Persistence.Models
+@using Tilework.Core.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -13,16 +14,16 @@
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>FQDN</MudTh>
-        @* <MudTh>Status</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Key algorithm</MudTh>
         <MudTh>Expiration</MudTh>
-        <MudTh>Key algorithm</MudTh> *@
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/cm/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="FQDN">@context.Fqdn</MudTd>
-        @* <MudTd DataLabel="Status">@context.Status</MudTd>
-        <MudTd DataLabel="Expiration">@context.CertificateData?.NotAfter</MudTd>
-        <MudTd DataLabel="Key algorithm">@context.PrivateKey.KeyData</MudTd> *@
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Key algorithm">@context.PrivateKey.Algorithm.GetDescription()</MudTd>
+        <MudTd DataLabel="Expiration">@context.ExpiresAtUtc</MudTd>
     </RowContent>
 </GenericListview>
 

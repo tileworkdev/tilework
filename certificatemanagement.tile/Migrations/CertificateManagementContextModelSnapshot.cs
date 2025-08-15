@@ -33,6 +33,9 @@ namespace certificatemanagement.tile.Migrations
                     b.Property<string>("CertificateDataString")
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("ExpiresAtUtc")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Fqdn")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -83,6 +86,9 @@ namespace certificatemanagement.tile.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Algorithm")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("KeyDataString")
                         .IsRequired()

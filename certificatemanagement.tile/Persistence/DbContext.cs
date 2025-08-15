@@ -16,4 +16,16 @@ public class CertificateManagementContext : DbContext
     public DbSet<Certificate> Certificates { get; set; }
     public DbSet<PrivateKey> PrivateKeys { get; set; }
     public DbSet<CertificateAuthority> CertificateAuthorities { get; set; }
+
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Certificate>()
+            .Property(x => x.ExpiresAtUtc)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUnixTimeSeconds() : (long?)null,
+                v => v.HasValue ? DateTimeOffset.FromUnixTimeSeconds(v.Value) : null
+            )
+            .HasColumnType("INTEGER");
+    }
 }

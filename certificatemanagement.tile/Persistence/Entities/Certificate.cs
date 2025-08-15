@@ -20,6 +20,8 @@ public class Certificate
     public Guid PrivateKeyId { get; set; }
     public virtual PrivateKey PrivateKey { get; set; }
 
+    public DateTimeOffset? ExpiresAtUtc { get; set; }
+
     public string? CertificateDataString { get; set; }
 
     public CertificateStatus Status { get; set; } = CertificateStatus.NEW;

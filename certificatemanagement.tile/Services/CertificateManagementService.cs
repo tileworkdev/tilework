@@ -87,7 +87,6 @@ public class CertificateManagementService
 
     private PrivateKey GenerateKey(KeyAlgorithm algorithm)
     {
-
         AsymmetricAlgorithm keyAlg = algorithm switch
         {
             KeyAlgorithm.RSA_2048 => RSA.Create(2048),
@@ -145,8 +144,11 @@ public class CertificateManagementService
         (var crt, config) = await provider.SignCertificateRequest(certificate.Fqdn, csr, config);
 
         certificate.CertificateData = crt;
+        certificate.ExpiresAtUtc = new DateTimeOffset(crt.NotAfter.ToUniversalTime());
         certificate.Status = CertificateStatus.ISSUED;
+
         certificate.Authority.Parameters = DeserializeConfig(config);
+
         await _dbContext.SaveChangesAsync();
     }
 

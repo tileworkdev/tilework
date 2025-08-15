@@ -30,6 +30,7 @@ namespace certificatemanagement.tile.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Algorithm = table.Column<int>(type: "INTEGER", nullable: false),
                     KeyDataString = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -46,6 +47,7 @@ namespace certificatemanagement.tile.Migrations
                     Fqdn = table.Column<string>(type: "TEXT", nullable: false),
                     AuthorityId = table.Column<Guid>(type: "TEXT", nullable: false),
                     PrivateKeyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ExpiresAtUtc = table.Column<long>(type: "INTEGER", nullable: true),
                     CertificateDataString = table.Column<string>(type: "TEXT", nullable: true),
                     Status = table.Column<int>(type: "INTEGER", nullable: false)
                 },

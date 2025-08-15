@@ -11,7 +11,7 @@ using Tilework.CertificateManagement.Persistence;
 namespace certificatemanagement.tile.Migrations
 {
     [DbContext(typeof(CertificateManagementContext))]
-    [Migration("20250815092947_Initial")]
+    [Migration("20250815094540_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -35,6 +35,9 @@ namespace certificatemanagement.tile.Migrations
 
                     b.Property<string>("CertificateDataString")
                         .HasColumnType("TEXT");
+
+                    b.Property<long?>("ExpiresAtUtc")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Fqdn")
                         .IsRequired()
@@ -86,6 +89,9 @@ namespace certificatemanagement.tile.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Algorithm")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("KeyDataString")
                         .IsRequired()
