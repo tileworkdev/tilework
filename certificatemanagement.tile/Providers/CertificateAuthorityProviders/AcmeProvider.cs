@@ -106,7 +106,7 @@ public class AcmeProvider : ICAProvider
             for (int i = 0; i < 20; i++)
             {
                 challenge = await acmeClient.GetChallengeDetailsAsync(authzUrl);
-                if (challenge.Status != "pending")
+                if (challenge.Status is not ("pending" or "processing"))
                 {
                     _logger.LogInformation($"Challenge validation for {fqdn} finished, result: {challenge.Status}");
                     break;
@@ -120,10 +120,10 @@ public class AcmeProvider : ICAProvider
             await _verificationService.StopVerification(verificationId.ToString());
         }
 
-        if (challenge.Status != "valid")
-        {
-            throw new Exception($"ACME authentication failed: {challenge.Status}");
-        }
+        if(challenge.Status == "invalid")
+            throw new Exception($"ACME authentication failed: {challenge.Error}");
+        else if (challenge.Status is "pending" or "processing")
+            throw new Exception($"ACME authentication timed out. Please try again later");
 
 
         _logger.LogInformation($"Requesting order finalization for {fqdn} with {acmeConfig.DirectoryUrl}");
@@ -153,8 +153,9 @@ public class AcmeProvider : ICAProvider
     }
 
 
-    public Task<ICAConfiguration> RevokeCertificate(X509Certificate2 certificate, ICAConfiguration configuration)
+    public async Task<ICAConfiguration> RevokeCertificate(X509Certificate2 certificate, ICAConfiguration configuration)
     {
-        throw new NotImplementedException();
+        return configuration;
+        // throw new NotImplementedException();
     }
 }

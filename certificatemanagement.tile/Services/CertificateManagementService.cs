@@ -172,7 +172,9 @@ public class CertificateManagementService
 
     public async Task DeleteCertificate(Certificate certificate)
     {
-        await RevokeCertificate(certificate);
+        if(certificate.Status == CertificateStatus.ISSUED)
+            await RevokeCertificate(certificate);
+
         _dbContext.Certificates.Remove(certificate);
         await _dbContext.SaveChangesAsync();
     }
