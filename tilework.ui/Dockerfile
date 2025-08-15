@@ -25,4 +25,8 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 COPY ["tilework.ui/entrypoint.sh", "."]
 USER root
+
+RUN mkdir /var/lib/tilework/
+RUN chown app:app /var/lib/tilework/
+
 ENTRYPOINT ["/bin/sh", "entrypoint.sh"]

@@ -9,6 +9,6 @@ services:
     ports:
       - 5180:5180
     environment:
-      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_ENVIRONMENT=Docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
