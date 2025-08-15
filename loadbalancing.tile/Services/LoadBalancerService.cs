@@ -76,7 +76,7 @@ public class LoadBalancerService : ILoadBalancerService
             ApplicationLoadBalancer => _mapper.Map<ApplicationLoadBalancerDTO>(entity),
             NetworkLoadBalancer => _mapper.Map<NetworkLoadBalancerDTO>(entity),
             _ => throw new InvalidOperationException("Invalid balancer type")
-        };  
+        };
     }
 
     public async Task<BaseLoadBalancerDTO> AddLoadBalancer(BaseLoadBalancerDTO balancer)
@@ -130,7 +130,8 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
         var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        entity.Rules.Remove(_mapper.Map<Rule>(rule));
+        var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
+        entity.Rules.Remove(r);
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
     }
@@ -211,8 +212,9 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task RemoveTarget(TargetGroupDTO group, TargetDTO target)
     {
         var entity = await _dbContext.TargetGroups.FindAsync(group.Id);
-        entity.Targets.Remove(_mapper.Map<Target>(target));
-        _dbContext.TargetGroups.Update(entity);
+        var t = entity.Targets.FirstOrDefault(t => t.Id == target.Id);
+
+        entity.Targets.Remove(t);
         await _dbContext.SaveChangesAsync();
     }
 

@@ -63,7 +63,7 @@
             _snackbar.Add($"Target group {Id} not found", Severity.Error);
         }
 
-        _targets = await _loadBalancerService.GetTargets(_item);
+        await GetTargets();
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
@@ -106,6 +106,7 @@
         if (!result.Canceled)
         {
             await _loadBalancerService.AddTarget(_item, target);
+            await GetTargets();
             await _loadBalancerService.ApplyConfiguration();
         }
     }
@@ -124,7 +125,14 @@
         if (!result.Canceled)
         {
             await _loadBalancerService.RemoveTarget(_item, target);
+            await GetTargets();
             await _loadBalancerService.ApplyConfiguration();
         }
+    }
+
+    private async Task GetTargets()
+    {
+        if(_item != null)
+            _targets = await _loadBalancerService.GetTargets(_item);
     }
 }
