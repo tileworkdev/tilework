@@ -156,7 +156,7 @@ public class CertificateManagementService
         await _dbContext.SaveChangesAsync();
     }
 
-    private async Task RevokeCertificate(Certificate certificate)
+    public async Task RevokeCertificate(Certificate certificate)
     {
         if (certificate.Status != CertificateStatus.ACTIVE)
             throw new InvalidOperationException($"Cannot revoke certificate: status is {certificate.Status}");

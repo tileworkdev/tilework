@@ -53,9 +53,33 @@
 
         _actions = new List<ActionItem>
         {
-            new ActionItem() { Name = "Edit", Href = $"/cm/certificates/{Id}/edit" },
+            new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke },
             new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
         };
+    }
+
+    private async Task ConfirmRevoke()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to revoke the certificate? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Revoke");
+        parameters.Add(x => x.Color, Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<ConfirmDialog>("Revoke", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            try {
+                await _certificateManagementService.RevokeCertificate(_item);
+                _snackbar.Add("Certificate revoked successfully!", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to add certificate authority: {ex.Message}", Severity.Error);
+            }
+        }
     }
 
     private async Task ConfirmDelete()
