@@ -9,16 +9,14 @@
 
 @page "/cm/authorities"
 
-<GenericListview Title="ACME CAs" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
+<GenericListview Title="Certificate authorities" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
         <MudTh>Name</MudTh>
-        <MudTh>Email</MudTh>
-        <MudTh>URL</MudTh>
+        <MudTh>Type</MudTh>
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/cm/authorities/{context.Id}")">@context.Name</MudLink></MudTd>
-        <MudTd DataLabel="Email">@context.Email</MudTd>
-        <MudTd DataLabel="URL">@context.DirectoryUrl</MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
     </RowContent>
 </GenericListview>
 

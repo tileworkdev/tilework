@@ -3,6 +3,8 @@ using AutoMapper;
 using Tilework.Ui.Models;
 using Tilework.LoadBalancing.Persistence.Models;
 using Tilework.CertificateManagement.Persistence.Models;
+using Tilework.CertificateManagement.Models;
+using System.Text.Json;
 
 namespace Tilework.Ui.Mappers;
 
@@ -14,7 +16,18 @@ public class FormMappingProfile : Profile
         CreateMap<EditTargetGroupForm, TargetGroup>();
         CreateMap<TargetGroup, EditTargetGroupForm>();
 
-        CreateMap<NewCertificateAuthorityForm, CertificateAuthority>();
+        CreateMap<NewAcmeCertificateAuthorityForm, CertificateAuthority>()
+            .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
+                JsonSerializer.Serialize(
+                    new AcmeConfiguration()
+                    {
+                        DirectoryUrl = src.DirectoryUrl,
+                        Email = src.Email,
+                        AcceptTos = true
+                    },
+                    (JsonSerializerOptions?)null
+                )
+            ));
 
         CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancer>();
         CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancer>()

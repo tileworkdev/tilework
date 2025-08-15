@@ -1,17 +1,19 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
-using ACMESharp.Protocol;
-using ACMESharp.Authorizations;
 
 using Tilework.LoadBalancing.Services;
 using Tilework.CertificateManagement.Persistence;
 using Tilework.CertificateManagement.Persistence.Models;
 using Tilework.CertificateManagement.Settings;
 using Tilework.CertificateManagement.Enums;
+using Tilework.CertificateManagement.Interfaces;
+using Tilework.CertificateManagement.Models;
 
 namespace Tilework.CertificateManagement.Services;
 
@@ -20,19 +22,29 @@ public class CertificateManagementService
     private readonly CertificateManagementContext _dbContext;
     private readonly CertificateManagementSettings _settings;
     private readonly ILogger<CertificateManagementService> _logger;
-    private readonly AcmeVerificationService _verificationService;
+    // private readonly AcmeVerificationService _verificationService;
+    private readonly IServiceProvider _serviceProvider;
 
 
     public CertificateManagementService(CertificateManagementContext dbContext,
                                         IOptions<CertificateManagementSettings> settings,
                                         ILogger<CertificateManagementService> logger,
-                                        AcmeVerificationService verificationService)
+                                        IServiceProvider serviceProvider)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
-        _verificationService = verificationService;
+        _serviceProvider = serviceProvider;
     }
+
+    private (ICAProvider, ICAConfiguration) GetProvider(CertificateAuthority certificateAuthority)
+    {
+        return (
+            _serviceProvider.GetRequiredService<AcmeProvider>(),
+            JsonSerializer.Deserialize<AcmeConfiguration>(certificateAuthority.Parameters)!
+        );
+    }
+
 
     public async Task<List<Certificate>> GetCertificates()
     {
@@ -112,112 +124,16 @@ public class CertificateManagementService
         return csr;
     }
 
-    private async Task CreateAcmeAccount(CertificateAuthority authority)
-    {
-        _logger.LogInformation($"Creating a new account at {authority.DirectoryUrl} with {authority.Email} for CA {authority.Name}");
-
-        var httpClient = new HttpClient { BaseAddress = new Uri(authority.DirectoryUrl) };
-        var acmeClient = new AcmeProtocolClient(httpClient, usePostAsGet: true);
-
-        acmeClient.Directory = await acmeClient.GetDirectoryAsync();
-
-        await acmeClient.GetNonceAsync();
-
-        acmeClient.Account = await acmeClient.CreateAccountAsync(new List<string>() { $"mailto: {authority.Email}" }, true);
-
-        authority.Kid = acmeClient.Account.Kid;
-        authority.KeyData = acmeClient.Signer.Export();
-
-        _logger.LogInformation($"Created account at {authority.DirectoryUrl} with {authority.Email} for CA {authority.Name} successfully");
-    }
-
     private async Task SignCertificate(Certificate certificate)
     {
-        var signer = new ACMESharp.Crypto.JOSE.Impl.ESJwsTool();
-        signer.Import(certificate.Authority.KeyData);
-
-        var account = new AccountDetails();
-        account.Kid = certificate.Authority.Kid;
-
-        var httpClient = new HttpClient { BaseAddress = new Uri(certificate.Authority.DirectoryUrl) };
-        var acmeClient = new AcmeProtocolClient(httpClient, acct: account, signer: signer, usePostAsGet: true);
-
-        _logger.LogInformation($"Creating order for certificate {certificate.Id} with {certificate.Authority.DirectoryUrl}");
-        acmeClient.Directory = await acmeClient.GetDirectoryAsync();
-
-        await acmeClient.GetNonceAsync();
-
-        var order = await acmeClient.CreateOrderAsync(new List<string>() { certificate.Fqdn });
-
-        var authzUrl = order.Payload.Authorizations.First();
-        var authz = await acmeClient.GetAuthorizationDetailsAsync(authzUrl);
-        var challenge = authz.Challenges.First(c => c.Type == "http-01");
-
-        var challengeDetails = (Http01ChallengeValidationDetails)AuthorizationDecoder.DecodeChallengeValidation(authz, challenge.Type, signer);
-
-        var verificationHost = new Uri(challengeDetails.HttpResourceUrl).Host;
-        var verificationFile = Path.GetFileName(challengeDetails.HttpResourcePath);
-
-        try
-        {
-            await _verificationService.StartVerification(
-                certificate,
-                verificationHost,
-                verificationFile,
-                challengeDetails.HttpResourceValue
-            );
-
-            _logger.LogInformation($"Requesting challenge validation for {certificate.Id} with {certificate.Authority.DirectoryUrl}");
-            await acmeClient.AnswerChallengeAsync(challenge.Url);
-
-            for (int i = 0; i < 20; i++)
-            {
-                challenge = await acmeClient.GetChallengeDetailsAsync(authzUrl);
-                if (challenge.Status != "pending")
-                {
-                    _logger.LogInformation($"Challenge validation for {certificate.Id} finished, result: {challenge.Status}");
-                    break;
-                }
-
-                await Task.Delay(1000);
-            }
-        }
-        finally
-        {
-            await _verificationService.StopVerification(certificate);
-        }
-
-        if (challenge.Status != "valid")
-        {
-            throw new Exception($"ACME authentication failed: {challenge.Status}");
-        }
-
+        (var provider, var config) = GetProvider(certificate.Authority);
 
         var csr = GenerateCsr(certificate);
 
-        _logger.LogInformation($"Requesting order finalization for {certificate.Id} with {certificate.Authority.DirectoryUrl}");
-        await acmeClient.FinalizeOrderAsync(order.Payload.Finalize, csr.CreateSigningRequest());
+        (var crt, config) = await provider.SignCertificateRequest(certificate.Fqdn, csr, config);
 
-        for (int i = 0; i < 20; i++)
-        {
-            order = await acmeClient.GetOrderDetailsAsync(order.OrderUrl);
-            if (order.Payload.Status == "invalid" || order.Payload.Status == "valid")
-            {
-                _logger.LogInformation($"Order for {certificate.Id} finished, result: {order.Payload.Status}");
-                break;
-            }
-
-            await Task.Delay(1000);
-        }
-
-        if (order.Payload.Status != "valid")
-        {
-            throw new Exception($"ACME certificate issuing failed: {order.Payload.Status}");
-        }
-
-        var cert = await acmeClient.GetOrderCertificateAsync(order);
-
-        certificate.CertificateData = X509CertificateLoader.LoadCertificate(cert);
+        certificate.CertificateData = crt;
+        certificate.Authority.Parameters = JsonSerializer.Serialize(config);
         await _dbContext.SaveChangesAsync();
     }
 
@@ -240,8 +156,11 @@ public class CertificateManagementService
 
     public async Task AddCertificateAuthority(CertificateAuthority authority)
     {
+        (var provider, var config) = GetProvider(authority);
+        config = await provider.Register(config);
+        authority.Parameters = JsonSerializer.Serialize(config);
+
         _dbContext.CertificateAuthorities.Add(authority);
-        await CreateAcmeAccount(authority);
         await _dbContext.SaveChangesAsync();
     }
 

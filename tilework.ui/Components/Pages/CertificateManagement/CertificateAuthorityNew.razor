@@ -12,12 +12,12 @@
 
 @page "/cm/authorities/new"
 
-<GenericEditview T="NewCertificateAuthorityForm" Model="@form" Title="New ACME CA" Breadcrumbs="@_breadcrumbs"
+<GenericEditview T="NewAcmeCertificateAuthorityForm" Model="@form" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
                  OnValidSubmit="Submit" />
 
 @code {
-    NewCertificateAuthorityForm form = new();
+    NewAcmeCertificateAuthorityForm form = new();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {

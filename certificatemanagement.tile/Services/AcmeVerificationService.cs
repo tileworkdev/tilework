@@ -86,11 +86,11 @@ public class AcmeVerificationService
         return lb;
     }
 
-    private async Task AddLoadBalancerTarget(ApplicationLoadBalancer balancer, string host, string filename, Certificate certificate, string target)
+    private async Task AddLoadBalancerTarget(string id, ApplicationLoadBalancer balancer, string host, string filename, string target)
     {
         var tg = new TargetGroup()
         {
-            Name = $"AcmeVerification-{certificate.Id}",
+            Name = $"AcmeVerification-{id}",
             Protocol = TargetGroupProtocol.HTTP,
             Targets = new List<Target>()
             {
@@ -164,9 +164,9 @@ public class AcmeVerificationService
         await _loadBalancerService.ApplyConfiguration();
     }
 
-    public async Task StartVerification(Certificate certificate, string host, string filename, string data)
+    public async Task StartVerification(string id, string host, string filename, string data)
     {
-        _logger.LogInformation($"Starting HTTP-01 verification server for {certificate.Id}");
+        _logger.LogInformation($"Starting HTTP-01 verification server for {host}/{id}");
 
         var balancers = await _loadBalancerService.GetLoadBalancers();
 
@@ -187,18 +187,18 @@ public class AcmeVerificationService
             _logger.LogInformation($"Existing load balancer found in port 80. Adding temporary rule for ACME verification");
         }
 
-        var container = await CreateContainer(certificate.Id.ToString(), filename, data);
+        var container = await CreateContainer(id, filename, data);
 
 
-        await AddLoadBalancerTarget((ApplicationLoadBalancer)balancer, host, filename, certificate, container.Name);
+        await AddLoadBalancerTarget(id, (ApplicationLoadBalancer)balancer, host, filename, container.Name);
         await _loadBalancerService.ApplyConfiguration();
     }
 
-    public async Task StopVerification(Certificate certificate)
+    public async Task StopVerification(string id)
     {
-        _logger.LogInformation($"Stopping HTTP-01 verification server for {certificate.Id}");
-        await DeleteContainer(certificate.Id.ToString());
-        await CheckRemoveLoadBalancer(certificate.Id.ToString());
+        _logger.LogInformation($"Stopping HTTP-01 verification server for {id}");
+        await DeleteContainer(id);
+        await CheckRemoveLoadBalancer(id);
     }
 
     public async Task StopAllVerifications()

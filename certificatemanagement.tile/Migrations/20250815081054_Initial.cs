@@ -17,10 +17,8 @@ namespace certificatemanagement.tile.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Email = table.Column<string>(type: "TEXT", nullable: false),
-                    DirectoryUrl = table.Column<string>(type: "TEXT", nullable: false),
-                    KeyData = table.Column<string>(type: "TEXT", nullable: false),
-                    Kid = table.Column<string>(type: "TEXT", nullable: false)
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
+                    Parameters = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
