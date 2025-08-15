@@ -22,7 +22,9 @@ public class NewNetworkLoadBalancerForm : NewBaseLoadBalancerForm
         Type = LoadBalancerType.NETWORK;
     }
     public NlbProtocol Protocol { get; set; }
-    public Guid TargetGroup { get; set; }
+
+    [Required]
+    public Guid? TargetGroup { get; set; }
 }
 
 public class NewApplicationLoadBalancerForm : NewBaseLoadBalancerForm
