@@ -33,11 +33,11 @@
             var authority = Mapper.Map<CertificateAuthority>(form);
             await CertificateManagementService.AddCertificateAuthority(authority);
             NavigationManager.NavigateTo("/cm/authorities");
-            Snackbar.Add("ACME CA added successfully!", Severity.Success);
+            Snackbar.Add("Certificate authority added successfully!", Severity.Success);
         }
         catch(Exception ex)
         {
-            Snackbar.Add($"Failed to add ACME CA: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Failed to add certificate authority: {ex.Message}", Severity.Error);
         }
     }
 }
