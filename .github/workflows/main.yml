@@ -30,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: registry.tilework.dev/tilework
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
