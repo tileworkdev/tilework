@@ -1,6 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
-// using System.Text.Json;
 
 using ACMESharp.Protocol;
 using ACMESharp.Authorizations;
@@ -155,7 +154,30 @@ public class AcmeProvider : ICAProvider
 
     public async Task<ICAConfiguration> RevokeCertificate(X509Certificate2 certificate, ICAConfiguration configuration)
     {
-        return configuration;
-        // throw new NotImplementedException();
+        var acmeConfig = configuration as AcmeConfiguration
+                 ?? throw new ArgumentException("Expected AcmeConfiguration", nameof(configuration));
+
+
+        if (string.IsNullOrEmpty(acmeConfig.Kid))
+            acmeConfig = await CreateAccount(acmeConfig);
+
+
+        var signer = new ACMESharp.Crypto.JOSE.Impl.ESJwsTool();
+        signer.Import(acmeConfig.KeyData);
+
+        var account = new AccountDetails();
+        account.Kid = acmeConfig.Kid;
+
+        var httpClient = new HttpClient { BaseAddress = new Uri(acmeConfig.DirectoryUrl) };
+        var acmeClient = new AcmeProtocolClient(httpClient, acct: account, signer: signer, usePostAsGet: true);
+
+        acmeClient.Directory = await acmeClient.GetDirectoryAsync();
+
+        await acmeClient.GetNonceAsync();
+
+        var certDer = certificate.Export(X509ContentType.Cert);
+        await acmeClient.RevokeCertificateAsync(certDer);
+
+        return acmeConfig;
     }
 }
