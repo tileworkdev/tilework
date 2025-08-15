@@ -55,54 +55,60 @@ public class LoadBalancerService : ILoadBalancerService
         };
     }
 
+    private BaseLoadBalancerDTO MapBalancerToDto(BaseLoadBalancer entity)
+    {
+        return entity switch
+        {
+            ApplicationLoadBalancer appBalancer => _mapper.Map<ApplicationLoadBalancerDTO>(appBalancer),
+            NetworkLoadBalancer netBalancer => _mapper.Map<NetworkLoadBalancerDTO>(netBalancer),
+            _ => throw new InvalidOperationException("Invalid balancer type")
+        };
+    }
+
+    private BaseLoadBalancer MapDtoToBalancer(BaseLoadBalancerDTO dto, BaseLoadBalancer? entity = null)
+    {
+        return dto switch
+        {
+            ApplicationLoadBalancerDTO appBalancer =>
+                entity == null ? _mapper.Map<ApplicationLoadBalancer>(appBalancer) : _mapper.Map(appBalancer, (ApplicationLoadBalancer) entity),
+
+            NetworkLoadBalancerDTO netBalancer =>
+                entity == null ? _mapper.Map<NetworkLoadBalancer>(netBalancer) : _mapper.Map(netBalancer, (NetworkLoadBalancer) entity),
+
+            _ => throw new InvalidOperationException("Invalid balancer type")
+        };
+    }
+
     public async Task<List<BaseLoadBalancerDTO>> GetLoadBalancers()
     {
         var entities = await _dbContext.LoadBalancers.ToListAsync();
-        return entities.Select(e => 
-            e switch
-            {
-                ApplicationLoadBalancer => (BaseLoadBalancerDTO) _mapper.Map<ApplicationLoadBalancerDTO>(e),
-                NetworkLoadBalancer => (BaseLoadBalancerDTO) _mapper.Map<NetworkLoadBalancerDTO>(e),
-                _ => throw new InvalidOperationException("Invalid balancer type")
-            }
-        ).ToList();
+        return entities.Select(e => MapBalancerToDto(e)).ToList();
     }
 
     public async Task<BaseLoadBalancerDTO?> GetLoadBalancer(Guid Id)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(Id);
-        return entity switch
-        {
-            ApplicationLoadBalancer => _mapper.Map<ApplicationLoadBalancerDTO>(entity),
-            NetworkLoadBalancer => _mapper.Map<NetworkLoadBalancerDTO>(entity),
-            _ => throw new InvalidOperationException("Invalid balancer type")
-        };
+        return MapBalancerToDto(entity);
     }
 
     public async Task<BaseLoadBalancerDTO> AddLoadBalancer(BaseLoadBalancerDTO balancer)
     {
-        BaseLoadBalancer entity;
-        if (balancer is ApplicationLoadBalancerDTO appBalancer)
-            entity = _mapper.Map<ApplicationLoadBalancer>(appBalancer);
-        else if (balancer is ApplicationLoadBalancerDTO netBalancer)
-            entity = _mapper.Map<ApplicationLoadBalancer>(netBalancer);
-        else
-            throw new ArgumentException("Invalid balancer type");
+        var entity = MapDtoToBalancer(balancer);
 
         await _dbContext.LoadBalancers.AddAsync(entity);
         await _dbContext.SaveChangesAsync();
-        return _mapper.Map<BaseLoadBalancerDTO>(entity);
+        return MapBalancerToDto(entity);
     }
 
     public async Task<BaseLoadBalancerDTO> UpdateLoadBalancer(BaseLoadBalancerDTO balancer)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        entity = _mapper.Map(balancer, entity);
+        entity = MapDtoToBalancer(balancer, entity);
 
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
         
-        return _mapper.Map<BaseLoadBalancerDTO>(entity);
+        return MapBalancerToDto(entity);
     }
 
     public async Task DeleteLoadBalancer(Guid Id)

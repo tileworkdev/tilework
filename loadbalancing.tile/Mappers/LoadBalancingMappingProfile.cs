@@ -13,8 +13,11 @@ public class LoadBalancingMappingProfile : Profile
         CreateMap<ApplicationLoadBalancerDTO, ApplicationLoadBalancer>();
         CreateMap<ApplicationLoadBalancer, ApplicationLoadBalancerDTO>();
 
-        CreateMap<NetworkLoadBalancer, NetworkLoadBalancerDTO>();
-        CreateMap<NetworkLoadBalancerDTO, NetworkLoadBalancer>();
+        CreateMap<NetworkLoadBalancer, NetworkLoadBalancerDTO>()
+            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroupId));
+        CreateMap<NetworkLoadBalancerDTO, NetworkLoadBalancer>()
+            .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
+            .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
 
         CreateMap<TargetGroupDTO, TargetGroup>();
         CreateMap<TargetGroup, TargetGroupDTO>();

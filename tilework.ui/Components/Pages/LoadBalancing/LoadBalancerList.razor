@@ -13,12 +13,16 @@
         <MudTh>Name</MudTh>
         <MudTh>Port</MudTh>
         <MudTh>Type</MudTh>
+        <MudTh>Protocol</MudTh>
         <MudTh>Status</MudTh>
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/lb/loadbalancers/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="Port">@context.Port</MudTd>
         <MudTd DataLabel="Type">@(context is ApplicationLoadBalancerDTO ? "Application" : "Network")</MudTd>
+        <MudTd DataLabel="Protocol">
+            @(context is ApplicationLoadBalancerDTO ? ((ApplicationLoadBalancerDTO) context).Protocol : ((NetworkLoadBalancerDTO) context).Protocol)
+        </MudTd>
         <MudTd DataLabel="Status">
             @if (context.Enabled)
             {
