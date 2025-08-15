@@ -46,7 +46,8 @@ namespace certificatemanagement.tile.Migrations
                     Fqdn = table.Column<string>(type: "TEXT", nullable: false),
                     AuthorityId = table.Column<Guid>(type: "TEXT", nullable: false),
                     PrivateKeyId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CertificateDataString = table.Column<string>(type: "TEXT", nullable: true)
+                    CertificateDataString = table.Column<string>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

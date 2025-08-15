@@ -22,18 +22,7 @@ public class Certificate
 
     public string? CertificateDataString { get; set; }
 
-    [NotMapped]
-    public CertificateStatus Status
-    {
-        get {
-            if(CertificateData == null)
-                return CertificateStatus.NEW;
-            else if(CertificateData.NotAfter > DateTime.Now)
-                return CertificateStatus.EXPIRED;
-            else
-                return CertificateStatus.ISSUED;
-        }
-    }
+    public CertificateStatus Status { get; set; } = CertificateStatus.NEW;
 
 
     [NotMapped]

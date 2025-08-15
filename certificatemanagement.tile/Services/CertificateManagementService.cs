@@ -135,6 +135,9 @@ public class CertificateManagementService
 
     private async Task SignCertificate(Certificate certificate)
     {
+        if (certificate.Status != CertificateStatus.NEW)
+            throw new InvalidOperationException($"Cannot issue certificate: status is {certificate.Status}");
+
         (var provider, var config) = GetProvider(certificate.Authority);
 
         var csr = GenerateCsr(certificate);
@@ -142,13 +145,29 @@ public class CertificateManagementService
         (var crt, config) = await provider.SignCertificateRequest(certificate.Fqdn, csr, config);
 
         certificate.CertificateData = crt;
+        certificate.Status = CertificateStatus.ISSUED;
         certificate.Authority.Parameters = DeserializeConfig(config);
         await _dbContext.SaveChangesAsync();
     }
 
+    private async Task RevokeCertificate(Certificate certificate)
+    {
+        if (certificate.Status != CertificateStatus.ISSUED)
+            throw new InvalidOperationException($"Cannot revoke certificate: status is {certificate.Status}");
+        if (certificate.CertificateData == null)
+            throw new InvalidOperationException($"Cannot revoke certificate: no certificate data found");
+
+
+        (var provider, var config) = GetProvider(certificate.Authority);
+        config = await provider.RevokeCertificate(certificate.CertificateData!, config);
+        certificate.Authority.Parameters = DeserializeConfig(config);
+        await _dbContext.SaveChangesAsync();
+        
+    }
+
     public async Task DeleteCertificate(Certificate certificate)
     {
-        // TODO: Should not be able to delete if not revoked
+        await RevokeCertificate(certificate);
         _dbContext.Certificates.Remove(certificate);
         await _dbContext.SaveChangesAsync();
     }

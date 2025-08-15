@@ -44,6 +44,9 @@ namespace certificatemanagement.tile.Migrations
                     b.Property<Guid>("PrivateKeyId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorityId");
