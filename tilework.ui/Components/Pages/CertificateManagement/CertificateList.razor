@@ -17,6 +17,7 @@
         <MudTh>Status</MudTh>
         <MudTh>Key algorithm</MudTh>
         <MudTh>Expiration</MudTh>
+        <MudTh>CA</MudTh>
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/cm/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
@@ -24,6 +25,7 @@
         <MudTd DataLabel="Status">@context.Status</MudTd>
         <MudTd DataLabel="Key algorithm">@context.PrivateKey.Algorithm.GetDescription()</MudTd>
         <MudTd DataLabel="Expiration">@context.ExpiresAtUtc</MudTd>
+        <MudTd DataLabel="CA">@context.Authority.Name</MudTd>
     </RowContent>
 </GenericListview>
 
