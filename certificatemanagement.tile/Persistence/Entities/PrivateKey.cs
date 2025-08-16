@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Security.Cryptography;
 
-using Tilework.CertificateManagement.Enums;
+using Tilework.Core.CertificateManagement.Enums;
 
 namespace Tilework.CertificateManagement.Persistence.Models;
 

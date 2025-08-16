@@ -76,15 +76,15 @@ namespace loadbalancing.tile.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Priority = table.Column<int>(type: "INTEGER", nullable: false),
                     TargetGroupId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ListenerId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    LoadBalancerId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Conditions = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Rules", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Rules_LoadBalancers_ListenerId",
-                        column: x => x.ListenerId,
+                        name: "FK_Rules_LoadBalancers_LoadBalancerId",
+                        column: x => x.LoadBalancerId,
                         principalTable: "LoadBalancers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -108,14 +108,14 @@ namespace loadbalancing.tile.Migrations
                 column: "TargetGroupId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Rules_ListenerId",
+                name: "IX_Rules_LoadBalancerId",
                 table: "Rules",
-                column: "ListenerId");
+                column: "LoadBalancerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Rules_Priority_ListenerId",
+                name: "IX_Rules_Priority_LoadBalancerId",
                 table: "Rules",
-                columns: new[] { "Priority", "ListenerId" },
+                columns: new[] { "Priority", "LoadBalancerId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

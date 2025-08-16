@@ -1,14 +1,14 @@
 @using System.Linq
-@using Tilework.CertificateManagement.Enums
-@using Tilework.CertificateManagement.Persistence.Models
-@using Tilework.CertificateManagement.Services
+@using Tilework.Core.CertificateManagement.Enums
+@using Tilework.Core.CertificateManagement.Models
+@using Tilework.Core.Interfaces
 @using Tilework.Ui.Models
 
 @namespace Tilework.Ui.Components.Pages
 
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@inject CertificateManagementService CertificateManagementService
+@inject ICertificateManagementService CertificateManagementService
 
 @page "/cm/certificates/new"
 
@@ -31,7 +31,7 @@
         var authorities = await CertificateManagementService.GetCertificateAuthorities();
         var authorityOptions = authorities.Select(ca => new SelectOptionItem
         {
-            Value = ca,
+            Value = ca.Id,
             Text = ca.Name
         }).ToList();
 
@@ -42,7 +42,7 @@
     {
         try
         {
-            await CertificateManagementService.AddCertificate(form.Name, form.Fqdn, form.Authority!, form.Algorithm);
+            await CertificateManagementService.AddCertificate(form.Name, form.Fqdn, form.Algorithm, (Guid) form.Authority!);
             NavigationManager.NavigateTo("/cm/certificates");
             Snackbar.Add("Certificate added successfully!", Severity.Success);
         }

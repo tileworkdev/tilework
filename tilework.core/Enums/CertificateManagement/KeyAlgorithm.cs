@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Tilework.CertificateManagement.Enums;
+namespace Tilework.Core.CertificateManagement.Enums;
 
 public enum KeyAlgorithm
 {

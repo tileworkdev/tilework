@@ -1,9 +1,9 @@
-@using Tilework.CertificateManagement.Services
-@using Tilework.CertificateManagement.Persistence.Models
+@using Tilework.Core.CertificateManagement.Models
+@using Tilework.Core.Interfaces
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject CertificateManagementService _certificateManagementService
+@inject ICertificateManagementService _certificateManagementService
 @inject NavigationManager _navigationManager
 
 
@@ -21,7 +21,7 @@
 </GenericListview>
 
 @code {
-    public List<CertificateAuthority> _items { get; set; } = new List<CertificateAuthority>();
+    public List<CertificateAuthorityDTO> _items { get; set; } = new();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {

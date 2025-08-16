@@ -64,7 +64,7 @@ namespace loadbalancing.tile.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ListenerId")
+                    b.Property<Guid>("LoadBalancerId")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Priority")
@@ -75,11 +75,11 @@ namespace loadbalancing.tile.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ListenerId");
+                    b.HasIndex("LoadBalancerId");
 
                     b.HasIndex("TargetGroupId");
 
-                    b.HasIndex("Priority", "ListenerId")
+                    b.HasIndex("Priority", "LoadBalancerId")
                         .IsUnique();
 
                     b.ToTable("Rules");
@@ -163,9 +163,9 @@ namespace loadbalancing.tile.Migrations
 
             modelBuilder.Entity("Tilework.LoadBalancing.Persistence.Models.Rule", b =>
                 {
-                    b.HasOne("Tilework.LoadBalancing.Persistence.Models.ApplicationLoadBalancer", "Listener")
+                    b.HasOne("Tilework.LoadBalancing.Persistence.Models.ApplicationLoadBalancer", "LoadBalancer")
                         .WithMany("Rules")
-                        .HasForeignKey("ListenerId")
+                        .HasForeignKey("LoadBalancerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -203,7 +203,7 @@ namespace loadbalancing.tile.Migrations
 
                     b.Navigation("Conditions");
 
-                    b.Navigation("Listener");
+                    b.Navigation("LoadBalancer");
 
                     b.Navigation("TargetGroup");
                 });

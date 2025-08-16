@@ -1,6 +1,6 @@
 using Tilework.CertificateManagement.Interfaces;
 
-namespace Tilework.CertificateManagement.Models;
+namespace Tilework.Core.CertificateManagement.Models;
 
 public class AcmeConfiguration : ICAConfiguration
 {

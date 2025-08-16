@@ -1,9 +1,8 @@
 using Tilework.Core.CertificateManagement.Enums;
 
-namespace Tilework.CertificateManagement.Persistence.Models;
+namespace Tilework.Core.CertificateManagement.Models;
 
-
-public class CertificateAuthority
+public class CertificateAuthorityDTO
 {
     public Guid Id { get; set; }
     public string Name { get; set; }

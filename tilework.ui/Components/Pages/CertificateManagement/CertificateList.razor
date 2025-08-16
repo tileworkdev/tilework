@@ -1,10 +1,10 @@
-@using Tilework.CertificateManagement.Services
-@using Tilework.CertificateManagement.Persistence.Models
+@using Tilework.Core.CertificateManagement.Models
+@using Tilework.Core.Interfaces
 @using Tilework.Core.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject CertificateManagementService _certificateManagementService
+@inject ICertificateManagementService _certificateManagementService
 @inject NavigationManager _navigationManager
 
 
@@ -23,14 +23,14 @@
         <MudTd DataLabel="Name"><MudLink Href="@($"/cm/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="FQDN">@context.Fqdn</MudTd>
         <MudTd DataLabel="Status">@context.Status</MudTd>
-        <MudTd DataLabel="Key algorithm">@context.PrivateKey.Algorithm.GetDescription()</MudTd>
+        <MudTd DataLabel="Key algorithm">@_certificateManagementService.GetPrivateKey(context.PrivateKey).Result?.Algorithm.GetDescription()</MudTd>
         <MudTd DataLabel="Expiration">@context.ExpiresAtUtc</MudTd>
-        <MudTd DataLabel="CA">@context.Authority.Name</MudTd>
+        <MudTd DataLabel="CA">@_certificateManagementService.GeCertificateAuthority(context.Authority).Result?.Name</MudTd>
     </RowContent>
 </GenericListview>
 
 @code {
-    public List<Certificate> _items { get; set; } = new List<Certificate>();
+    public List<CertificateDTO> _items { get; set; } = new();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {

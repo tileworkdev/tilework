@@ -1,10 +1,10 @@
-@using Tilework.CertificateManagement.Persistence.Models
-@using Tilework.CertificateManagement.Services
-@using Tilework.CertificateManagement.Enums
+@using Tilework.Core.CertificateManagement.Models
+@using Tilework.Core.Interfaces
+@using Tilework.Core.CertificateManagement.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
-@inject CertificateManagementService _certificateManagementService
+@inject ICertificateManagementService _certificateManagementService
 @inject NavigationManager _navigationManager
 @inject IDialogService _dialogService
 @inject ISnackbar _snackbar
@@ -20,7 +20,7 @@
             </MudItem>
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Authority</MudText>
-                <MudText Typo="Typo.body2">@_item.Authority?.Name</MudText>
+                <MudText Typo="Typo.body2">@_certificateManagementService.GeCertificateAuthority(_item.Authority).Result?.Name</MudText>
             </MudItem>
         </MudGrid>
     </DetailContent>
@@ -30,7 +30,7 @@
     [Parameter]
     public Guid Id { get; set; }
 
-    private Certificate _item;
+    private CertificateDTO _item;
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -78,7 +78,7 @@
         if (!result.Canceled)
         {
             try {
-                await _certificateManagementService.RevokeCertificate(_item);
+                await _certificateManagementService.RevokeCertificate(_item.Id);
                 _snackbar.Add("Certificate revoked successfully!", Severity.Success);
             }
             catch(Exception ex)
@@ -101,7 +101,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _certificateManagementService.DeleteCertificate(_item);
+            await _certificateManagementService.DeleteCertificate(_item.Id);
             _navigationManager.NavigateTo("/cm/certificates");
         }
     }

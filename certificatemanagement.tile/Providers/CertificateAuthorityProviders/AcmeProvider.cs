@@ -6,7 +6,7 @@ using ACMESharp.Authorizations;
 using ACMESharp.Protocol.Resources;
 
 using Tilework.CertificateManagement.Interfaces;
-using Tilework.CertificateManagement.Models;
+using Tilework.Core.CertificateManagement.Models;
 
 
 namespace Tilework.CertificateManagement.Services;

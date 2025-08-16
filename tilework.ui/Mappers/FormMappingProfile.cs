@@ -1,8 +1,7 @@
 using AutoMapper;
 
 using Tilework.Ui.Models;
-using Tilework.CertificateManagement.Persistence.Models;
-using Tilework.CertificateManagement.Models;
+using Tilework.Core.CertificateManagement.Models;
 using Tilework.Core.LoadBalancing.Models;
 
 using System.Text.Json;
@@ -13,23 +12,12 @@ public class FormMappingProfile : Profile
 {
     public FormMappingProfile()
     {
+        // Target groups
         CreateMap<NewTargetGroupForm, TargetGroupDTO>();
         CreateMap<EditTargetGroupForm, TargetGroupDTO>();
         CreateMap<TargetGroupDTO, EditTargetGroupForm>();
 
-        CreateMap<NewAcmeCertificateAuthorityForm, CertificateAuthority>()
-            .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
-                JsonSerializer.Serialize(
-                    new AcmeConfiguration()
-                    {
-                        DirectoryUrl = src.DirectoryUrl,
-                        Email = src.Email,
-                        AcceptTos = true
-                    },
-                    (JsonSerializerOptions?)null
-                )
-            ));
-
+        // Load balancers
         CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
         CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
             .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
@@ -44,6 +32,21 @@ public class FormMappingProfile : Profile
             .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
         CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
         CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
+
+
+        // Certificate authorities
+        CreateMap<NewAcmeCertificateAuthorityForm, CertificateAuthorityDTO>()
+            .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
+                JsonSerializer.Serialize(
+                    new AcmeConfiguration()
+                    {
+                        DirectoryUrl = src.DirectoryUrl,
+                        Email = src.Email,
+                        AcceptTos = true
+                    },
+                    (JsonSerializerOptions?)null
+                )
+            ));
 
     }
 }

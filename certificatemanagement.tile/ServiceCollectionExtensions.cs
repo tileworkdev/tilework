@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Tilework.Core.Interfaces;
 using Tilework.CertificateManagement.Settings;
 using Tilework.CertificateManagement.Persistence;
+using Tilework.CertificateManagement.Mappers;
 
 namespace Tilework.CertificateManagement.Services;
 
@@ -24,6 +25,8 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<CertificateManagementContext>(dbContextOptions);
 
         services.AddHostedService<CertificateManagementInitializer>();
+
+        services.AddAutoMapper(typeof(CertificateManagementMappingProfile));
         
         return services;
     }

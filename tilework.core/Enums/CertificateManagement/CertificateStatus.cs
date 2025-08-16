@@ -1,4 +1,4 @@
-namespace Tilework.CertificateManagement.Enums;
+namespace Tilework.Core.CertificateManagement.Enums;
 
 public enum CertificateStatus
 {

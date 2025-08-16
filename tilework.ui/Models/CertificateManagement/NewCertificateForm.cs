@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-using Tilework.CertificateManagement.Enums;
-using Tilework.CertificateManagement.Persistence.Models;
+using Tilework.Core.CertificateManagement.Enums;
 
 namespace Tilework.Ui.Models;
 
@@ -17,5 +16,5 @@ public class NewCertificateForm : BaseForm
     public KeyAlgorithm Algorithm { get; set; }
 
     [Required]
-    public CertificateAuthority? Authority { get; set; }
+    public Guid? Authority { get; set; }
 }

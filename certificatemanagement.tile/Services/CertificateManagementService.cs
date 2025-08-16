@@ -6,14 +6,15 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
+using AutoMapper;
 
 using Tilework.CertificateManagement.Persistence;
 using Tilework.CertificateManagement.Persistence.Models;
 using Tilework.CertificateManagement.Settings;
-using Tilework.CertificateManagement.Enums;
 using Tilework.CertificateManagement.Interfaces;
-using Tilework.CertificateManagement.Models;
 using Tilework.Core.Interfaces;
+using Tilework.Core.CertificateManagement.Enums;
+using Tilework.Core.CertificateManagement.Models;
 
 namespace Tilework.CertificateManagement.Services;
 
@@ -22,11 +23,11 @@ public class CertificateManagementService : ICertificateManagementService
     private readonly CertificateManagementContext _dbContext;
     private readonly CertificateManagementSettings _settings;
     private readonly ILogger<CertificateManagementService> _logger;
-    // private readonly AcmeVerificationService _verificationService;
     private readonly IServiceProvider _serviceProvider;
-
+    private readonly IMapper _mapper;
 
     public CertificateManagementService(CertificateManagementContext dbContext,
+                                        IMapper mapper,
                                         IOptions<CertificateManagementSettings> settings,
                                         ILogger<CertificateManagementService> logger,
                                         IServiceProvider serviceProvider)
@@ -35,6 +36,7 @@ public class CertificateManagementService : ICertificateManagementService
         _logger = logger;
         _settings = settings.Value;
         _serviceProvider = serviceProvider;
+        _mapper = mapper;
     }
 
     private (ICAProvider, ICAConfiguration) GetProvider(CertificateAuthority certificateAuthority)
@@ -55,18 +57,21 @@ public class CertificateManagementService : ICertificateManagementService
     }
 
 
-    public async Task<List<Certificate>> GetCertificates()
+    public async Task<List<CertificateDTO>> GetCertificates()
     {
-        return await _dbContext.Certificates.ToListAsync();
+        var entities = await _dbContext.Certificates.ToListAsync();
+        return _mapper.Map<List<CertificateDTO>>(entities);
     }
 
-    public async Task<Certificate?> GetCertificate(Guid Id)
+    public async Task<CertificateDTO?> GetCertificate(Guid Id)
     {
-        return await _dbContext.Certificates.FindAsync(Id);
+        var entity = await _dbContext.Certificates.FindAsync(Id);
+        return _mapper.Map<CertificateDTO>(entity);
     }
 
-    public async Task<Certificate> AddCertificate(string name, string fqdn, CertificateAuthority authority, KeyAlgorithm algorithm)
+    public async Task<CertificateDTO> AddCertificate(string name, string fqdn, KeyAlgorithm algorithm, Guid authorityId)
     {
+        var authority = await _dbContext.CertificateAuthorities.FindAsync(authorityId);
         var key = GenerateKey(algorithm);
 
         var certificate = new Certificate()
@@ -86,7 +91,7 @@ public class CertificateManagementService : ICertificateManagementService
 
         await SignCertificate(certificate);
 
-        return certificate;
+        return _mapper.Map<CertificateDTO>(certificate);
     }
 
     private PrivateKey GenerateKey(KeyAlgorithm algorithm)
@@ -156,7 +161,7 @@ public class CertificateManagementService : ICertificateManagementService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task RevokeCertificate(Certificate certificate)
+    private async Task RevokeCertificate(Certificate certificate)
     {
         if (certificate.Status != CertificateStatus.ACTIVE)
             throw new InvalidOperationException($"Cannot revoke certificate: status is {certificate.Status}");
@@ -171,37 +176,55 @@ public class CertificateManagementService : ICertificateManagementService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task DeleteCertificate(Certificate certificate)
+    public async Task RevokeCertificate(Guid Id)
     {
-        if(certificate.Status == CertificateStatus.ACTIVE)
+        var certificate = await _dbContext.Certificates.FindAsync(Id);
+        RevokeCertificate(certificate);
+    }
+
+    public async Task DeleteCertificate(Guid Id)
+    {
+        var certificate = await _dbContext.Certificates.FindAsync(Id);
+
+        if (certificate.Status == CertificateStatus.ACTIVE)
             await RevokeCertificate(certificate);
 
         _dbContext.Certificates.Remove(certificate);
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<List<CertificateAuthority>> GetCertificateAuthorities()
+    public async Task<PrivateKeyDTO?> GetPrivateKey(Guid Id)
     {
-        return await _dbContext.CertificateAuthorities.ToListAsync();
+        var entity = await _dbContext.PrivateKeys.FindAsync(Id);
+        return _mapper.Map<PrivateKeyDTO>(entity);
     }
 
-    public async Task<CertificateAuthority?> GeCertificateAuthority(Guid Id)
+    public async Task<List<CertificateAuthorityDTO>> GetCertificateAuthorities()
     {
-        return await _dbContext.CertificateAuthorities.FindAsync(Id);
+        var entities = await _dbContext.CertificateAuthorities.ToListAsync();
+        return _mapper.Map<List<CertificateAuthorityDTO>>(entities);
     }
 
-    public async Task AddCertificateAuthority(CertificateAuthority authority)
+    public async Task<CertificateAuthorityDTO?> GeCertificateAuthority(Guid Id)
     {
-        (var provider, var config) = GetProvider(authority);
+        var entity = await _dbContext.CertificateAuthorities.FindAsync(Id);
+        return _mapper.Map<CertificateAuthorityDTO>(entity);
+    }
+
+    public async Task AddCertificateAuthority(CertificateAuthorityDTO authority)
+    {
+        var entity = _mapper.Map<CertificateAuthority>(authority);
+        (var provider, var config) = GetProvider(entity);
         config = await provider.Register(config);
-        authority.Parameters = DeserializeConfig(config);
+        entity.Parameters = DeserializeConfig(config);
 
-        _dbContext.CertificateAuthorities.Add(authority);
+        _dbContext.CertificateAuthorities.Add(entity);
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task DeleteCertificateAuthority(CertificateAuthority authority)
+    public async Task DeleteCertificateAuthority(Guid Id)
     {
+        var authority = await _dbContext.CertificateAuthorities.FindAsync(Id);
         _dbContext.CertificateAuthorities.Remove(authority);
         await _dbContext.SaveChangesAsync();
     }

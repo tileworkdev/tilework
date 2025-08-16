@@ -1,5 +1,5 @@
-@using Tilework.CertificateManagement.Persistence.Models
-@using Tilework.CertificateManagement.Services
+@using Tilework.Core.CertificateManagement.Models
+@using Tilework.Core.Interfaces
 @using Tilework.Ui.Models
 @using AutoMapper
 
@@ -7,7 +7,7 @@
 
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@inject CertificateManagementService CertificateManagementService
+@inject ICertificateManagementService CertificateManagementService
 @inject IMapper Mapper
 
 @page "/cm/authorities/new"
@@ -30,7 +30,7 @@
     {
         try
         {
-            var authority = Mapper.Map<CertificateAuthority>(form);
+            var authority = Mapper.Map<CertificateAuthorityDTO>(form);
             await CertificateManagementService.AddCertificateAuthority(authority);
             NavigationManager.NavigateTo("/cm/authorities");
             Snackbar.Add("Certificate authority added successfully!", Severity.Success);

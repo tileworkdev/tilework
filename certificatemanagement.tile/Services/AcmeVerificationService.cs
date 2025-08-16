@@ -14,13 +14,13 @@ namespace Tilework.CertificateManagement.Services;
 
 public class AcmeVerificationService
 {
-    private readonly ILogger<CertificateManagementService> _logger;
+    private readonly ILogger<AcmeVerificationService> _logger;
     private readonly ILoadBalancerService _loadBalancerService;
     private readonly CertificateManagementSettings _settings;
     private readonly IContainerManager _containerManager;
 
 
-    public AcmeVerificationService(ILogger<CertificateManagementService> logger,
+    public AcmeVerificationService(ILogger<AcmeVerificationService> logger,
                                    ILoadBalancerService loadBalancerService,
                                    IOptions<CertificateManagementSettings> settings,
                                    IContainerManager containerManager)
@@ -81,7 +81,7 @@ public class AcmeVerificationService
             Port = 80,
             Enabled = true
         };
-        await _loadBalancerService.AddLoadBalancer(lb);
+        lb = (ApplicationLoadBalancerDTO) await _loadBalancerService.AddLoadBalancer(lb);
         return lb;
     }
 
@@ -93,7 +93,7 @@ public class AcmeVerificationService
             Protocol = TargetGroupProtocol.HTTP,
         };
 
-        await _loadBalancerService.AddTargetGroup(tg);
+        tg = await _loadBalancerService.AddTargetGroup(tg);
 
         var t = new TargetDTO()
         {

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-using Tilework.CertificateManagement.Enums;
+using Tilework.Core.CertificateManagement.Enums;
 
 namespace Tilework.CertificateManagement.Persistence.Models;
 
