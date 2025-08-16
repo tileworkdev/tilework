@@ -1,0 +1,46 @@
+@using Tilework.Core.CertificateManagement.Models
+
+@namespace Tilework.Ui.Components.Dialogs
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" />
+            Add certificate
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudSelect T="Guid" @bind-Value="SelectedCertificate" Label="Certificate" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                @foreach (var cert in Certificates)
+                {
+                    <MudSelectItem T="Guid" Value="@cert.Id">@cert.Name (@cert.Fqdn)</MudSelectItem>
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public List<CertificateDTO> Certificates { get; set; } = new();
+
+    private MudForm form;
+    public Guid SelectedCertificate { get; set; }
+
+    async Task Submit()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            MudDialog.Close(DialogResult.Ok(SelectedCertificate));
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

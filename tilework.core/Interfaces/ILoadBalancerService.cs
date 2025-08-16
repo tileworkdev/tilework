@@ -1,4 +1,5 @@
 using Tilework.Core.LoadBalancing.Models;
+using Tilework.Core.CertificateManagement.Models;
 
 namespace Tilework.Core.Interfaces;
 
@@ -13,6 +14,11 @@ public interface ILoadBalancerService
     public Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer);
     public Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
     public Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
+
+
+    public Task<List<CertificateDTO>> GetCertificates(BaseLoadBalancerDTO balancer);
+    public Task AddCertificate(BaseLoadBalancerDTO balancer, Guid certificateId);
+    public Task RemoveCertificate(BaseLoadBalancerDTO balancer, Guid certificateId);
 
 
     public Task<List<TargetGroupDTO>> GetTargetGroups();
