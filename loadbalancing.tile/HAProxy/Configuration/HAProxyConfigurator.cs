@@ -143,7 +143,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                 var certificate = await _certificateManagementService.GetCertificate(certId);
                 if (certificate == null)
                 {
-                    _logger.LogError($"Ignoring LB certificate {certificate.Id}: certificate not found");
+                    _logger.LogError($"Ignoring LB certificate {certId}: certificate not found");
                     continue;
                 }
 
