@@ -73,7 +73,7 @@
                                 }
                             </CellTemplate>
                         </TemplateColumn>
-                        <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup)" Title="Target group" />
+                        <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup).Result.Name" Title="Target group" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
                                 <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
