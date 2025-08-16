@@ -253,6 +253,18 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task UpdateTarget(TargetGroupDTO group, TargetDTO target)
+    {
+        var entity = await _dbContext.TargetGroups.FindAsync(group.Id);
+        var t = entity.Targets.FirstOrDefault(t => t.Id == target.Id);
+        if (t != null)
+        {
+            _mapper.Map(target, t);
+            _dbContext.TargetGroups.Update(entity);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
     public async Task RemoveTarget(TargetGroupDTO group, TargetDTO target)
     {
         var entity = await _dbContext.TargetGroups.FindAsync(group.Id);

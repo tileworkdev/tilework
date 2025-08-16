@@ -27,7 +27,7 @@
                     <PropertyColumn Property="t => t.Port" Title="Port" />
                     <TemplateColumn CellClass="d-flex justify-end">
                         <CellTemplate>
-                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditTarget(context.Item))" />
                             <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteTarget(context.Item))" />
                         </CellTemplate>
                     </TemplateColumn>
@@ -105,6 +105,33 @@
         if (!result.Canceled)
         {
             await _loadBalancerService.AddTarget(_item, target);
+            await GetTargets();
+            await _loadBalancerService.ApplyConfiguration();
+        }
+    }
+
+    private async Task EditTarget(TargetDTO target)
+    {
+        var targetEdit = new TargetDTO
+        {
+            Id = target.Id,
+            Host = target.Host,
+            Port = target.Port
+        };
+
+        var parameters = new DialogParameters<TargetDialog>();
+        parameters.Add(x => x.Target, targetEdit);
+        parameters.Add(x => x.Title, "Edit target");
+        parameters.Add(x => x.ButtonText, "Save");
+        parameters.Add(x => x.Icon, Icons.Material.Filled.Edit);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<TargetDialog>("Edit target", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await _loadBalancerService.UpdateTarget(_item, targetEdit);
             await GetTargets();
             await _loadBalancerService.ApplyConfiguration();
         }
