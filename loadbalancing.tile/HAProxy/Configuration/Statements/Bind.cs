@@ -4,8 +4,10 @@ public class Bind
 {
     public string Address { get; set; }
     public int Port { get; set; }
+    
+    public bool EnableTls { get; set; }
 
-    public Bind() {}
+    public Bind() { }
 
     public Bind(string [] parameters)
     {
@@ -14,6 +16,9 @@ public class Bind
 
     public override string ToString()
     {
-        return $"{Address}:{Port}";
+        if(EnableTls)
+            return $"{Address}:{Port} ssl crt /usr/local/etc/haproxy/certs";
+        else
+            return $"{Address}:{Port}";
     }
 }

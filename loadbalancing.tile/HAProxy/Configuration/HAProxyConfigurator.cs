@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
@@ -18,16 +21,19 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerSettings _settings;
+    private readonly ICertificateManagementService _certificateManagementService;
     private readonly ILogger<HAProxyConfigurator> _logger;
     private readonly IMapper _mapper;
 
     public HAProxyConfigurator(IOptions<LoadBalancerSettings> settings,
                                IContainerManager containerManager,
+                               ICertificateManagementService certificateManagementService,
                                ILogger<HAProxyConfigurator> logger,
                                IMapper mapper)
     {
         _logger = logger;
         _settings = settings.Value;
+        _certificateManagementService = certificateManagementService;
         _containerManager = containerManager;
         _mapper = mapper;
     }
@@ -131,28 +137,75 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     File.Delete(localConfigPath);
             }
 
+            foreach (var certId in lb.CertificateIds)
+            {
+                var certificate = await _certificateManagementService.GetCertificate(certId);
+                if (certificate == null)
+                {
+                    _logger.LogError($"Ignoring LB certificate {certificate.Id}: certificate not found");
+                    continue;
+                }
+
+                if (certificate.Status != Core.CertificateManagement.Enums.CertificateStatus.ACTIVE)
+                {
+                    _logger.LogError($"Ignoring LB certificate {certificate.Id}: Invalid status {certificate.Status}");
+                    continue;
+                }
+
+                var privatekey = await _certificateManagementService.GetPrivateKey(certificate.PrivateKey);
+
+                if (privatekey == null)
+                {
+                    _logger.LogError($"Ignoring LB certificate {certificate.Id}: Cannot find private key");
+                    continue;
+                }
+
+                var certData = GetCertPem(certificate.CertificateData!);
+                var keyData = GetPrivateKeyPem(privatekey.KeyData);
+
+                var keyType = privatekey.KeyData is RSA ? "rsa" : "ecdsa";
+
+                var certFilePath = Path.GetTempFileName();
+
+                try
+                {
+                    File.WriteAllText(certFilePath, $"{certData}\n{keyData}");
+                    await _containerManager.CopyFileToContainer(
+                        container.Id,
+                        certFilePath,
+                        $"/usr/local/etc/haproxy/certs/{certificate.Fqdn}.{keyType}.pem"
+                    );
+                }
+                finally
+                {
+                    if (File.Exists(certFilePath))
+                        File.Delete(certFilePath);
+                }
+
+            }
+
 
             if (container.State != ContainerState.Running)
-            {
-                if (lb.Enabled == true)
                 {
-                    _logger.LogInformation($"Starting container for load balancer {lb.Name}");
-                    await _containerManager.StartContainer(container.Id);
-                }
-            }
-            else
-            {
-                if (lb.Enabled == true)
-                {
-                    _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
-                    await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
+                    if (lb.Enabled == true)
+                    {
+                        _logger.LogInformation($"Starting container for load balancer {lb.Name}");
+                        await _containerManager.StartContainer(container.Id);
+                    }
                 }
                 else
                 {
-                    _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
-                    await _containerManager.StopContainer(container.Id);
+                    if (lb.Enabled == true)
+                    {
+                        _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
+                        await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
+                        await _containerManager.StopContainer(container.Id);
+                    }
                 }
-            }
         }
 
         var containersToDelete = containers.Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
@@ -164,6 +217,21 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             await _containerManager.DeleteContainer(cnt.Id);
         }
     }
+
+    private static string GetPrivateKeyPem(AsymmetricAlgorithm key)
+    {
+        var pkcs8 = key.ExportPkcs8PrivateKey();
+        var pem = PemEncoding.Write("PRIVATE KEY", pkcs8);
+        return new string(pem);
+    }
+
+    private static string GetCertPem(X509Certificate2 cert)
+    {
+        var der = cert.Export(X509ContentType.Cert);
+        var pem = PemEncoding.Write("CERTIFICATE", der);
+        return new string(pem);
+    }
+
 
     public async Task<bool> CheckLoadBalancerStatus(BaseLoadBalancer balancer)
     {

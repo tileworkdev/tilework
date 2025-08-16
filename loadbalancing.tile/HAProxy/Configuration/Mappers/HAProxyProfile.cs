@@ -18,6 +18,9 @@ public class HAProxyProfile : Profile
             {
                 if (src is ApplicationLoadBalancer alb)
                 {
+                    if (alb.Protocol == AlbProtocol.HTTPS)
+                        dest.Bind.EnableTls = true;
+
                     dest.Mode = Mode.HTTP;
                     if (alb.Rules != null)
                     {
@@ -51,6 +54,9 @@ public class HAProxyProfile : Profile
                 }
                 else if (src is NetworkLoadBalancer nlb)
                 {
+                    if (nlb.Protocol == NlbProtocol.TLS)
+                        dest.Bind.EnableTls = true;
+
                     dest.Mode = Mode.TCP;
                     dest.DefaultBackend = nlb.TargetGroup.Id.ToString();
                 }
