@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -6,7 +7,7 @@ using Tilework.Core.CertificateManagement.Enums;
 
 namespace Tilework.CertificateManagement.Persistence.Models;
 
-
+[Index(nameof(Name), IsUnique = true)]
 public class Certificate
 {
     public Guid Id { get; set; }

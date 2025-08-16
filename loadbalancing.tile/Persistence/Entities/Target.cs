@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using Tilework.Core.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tilework.LoadBalancing.Persistence.Models;
 
 
+[Index(nameof(TargetGroupId), nameof(Host), nameof(Port), IsUnique = true)]
 public class Target
 {
     public Guid Id { get; set; }

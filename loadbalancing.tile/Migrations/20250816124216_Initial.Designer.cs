@@ -11,7 +11,7 @@ using Tilework.LoadBalancing.Persistence;
 namespace loadbalancing.tile.Migrations
 {
     [DbContext(typeof(LoadBalancerContext))]
-    [Migration("20250816091503_Initial")]
+    [Migration("20250816124216_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -107,7 +107,8 @@ namespace loadbalancing.tile.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TargetGroupId");
+                    b.HasIndex("TargetGroupId", "Host", "Port")
+                        .IsUnique();
 
                     b.ToTable("Targets");
                 });

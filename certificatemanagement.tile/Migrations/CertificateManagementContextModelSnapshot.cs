@@ -54,6 +54,9 @@ namespace certificatemanagement.tile.Migrations
 
                     b.HasIndex("AuthorityId");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.HasIndex("PrivateKeyId");
 
                     b.ToTable("Certificates");
@@ -77,6 +80,9 @@ namespace certificatemanagement.tile.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("CertificateAuthorities");
                 });

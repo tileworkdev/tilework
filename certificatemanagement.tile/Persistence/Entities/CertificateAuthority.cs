@@ -1,8 +1,9 @@
 using Tilework.Core.CertificateManagement.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tilework.CertificateManagement.Persistence.Models;
 
-
+[Index(nameof(Name), IsUnique = true)]
 public class CertificateAuthority
 {
     public Guid Id { get; set; }

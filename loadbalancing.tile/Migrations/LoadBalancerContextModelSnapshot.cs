@@ -104,7 +104,8 @@ namespace loadbalancing.tile.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TargetGroupId");
+                    b.HasIndex("TargetGroupId", "Host", "Port")
+                        .IsUnique();
 
                     b.ToTable("Targets");
                 });

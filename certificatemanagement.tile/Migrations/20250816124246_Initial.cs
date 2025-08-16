@@ -69,9 +69,21 @@ namespace certificatemanagement.tile.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CertificateAuthorities_Name",
+                table: "CertificateAuthorities",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Certificates_AuthorityId",
                 table: "Certificates",
                 column: "AuthorityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Certificates_Name",
+                table: "Certificates",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Certificates_PrivateKeyId",

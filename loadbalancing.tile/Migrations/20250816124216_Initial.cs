@@ -130,9 +130,10 @@ namespace loadbalancing.tile.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Targets_TargetGroupId",
+                name: "IX_Targets_TargetGroupId_Host_Port",
                 table: "Targets",
-                column: "TargetGroupId");
+                columns: new[] { "TargetGroupId", "Host", "Port" },
+                unique: true);
         }
 
         /// <inheritdoc />
