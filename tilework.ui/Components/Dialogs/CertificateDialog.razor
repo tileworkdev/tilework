@@ -11,7 +11,7 @@
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
-            <MudSelect T="Guid" @bind-Value="SelectedCertificate" Label="Certificate" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+            <MudSelect T="Guid?" @bind-Value="SelectedCertificate" Label="Certificate" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
                 @foreach (var cert in Certificates)
                 {
                     <MudSelectItem T="Guid" Value="@cert.Id">@cert.Name (@cert.Fqdn)</MudSelectItem>
@@ -31,7 +31,7 @@
     [Parameter] public List<CertificateDTO> Certificates { get; set; } = new();
 
     private MudForm form;
-    public Guid SelectedCertificate { get; set; }
+    public Guid? SelectedCertificate { get; set; }
 
     async Task Submit()
     {
