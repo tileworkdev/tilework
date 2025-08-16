@@ -150,10 +150,10 @@ public class CertificateManagementService : ICertificateManagementService
 
         var csr = GenerateCsr(certificate);
 
-        (var crt, config) = await provider.SignCertificateRequest(certificate.Fqdn, csr, config);
+        (var chain, config) = await provider.SignCertificateRequest(certificate.Fqdn, csr, config);
 
-        certificate.CertificateData = crt;
-        certificate.ExpiresAtUtc = new DateTimeOffset(crt.NotAfter.ToUniversalTime());
+        certificate.CertificateData = chain;
+        certificate.ExpiresAtUtc = new DateTimeOffset(certificate.CertificateData.First().NotAfter.ToUniversalTime());
         certificate.Status = CertificateStatus.ACTIVE;
 
         certificate.Authority.Parameters = DeserializeConfig(config);
@@ -170,7 +170,7 @@ public class CertificateManagementService : ICertificateManagementService
 
 
         (var provider, var config) = GetProvider(certificate.Authority);
-        config = await provider.RevokeCertificate(certificate.CertificateData!, config);
+        config = await provider.RevokeCertificate(certificate.CertificateData.First(), config);
         certificate.Authority.Parameters = DeserializeConfig(config);
         certificate.Status = CertificateStatus.REVOKED;
         await _dbContext.SaveChangesAsync();

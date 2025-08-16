@@ -137,6 +137,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     File.Delete(localConfigPath);
             }
 
+            // FIXME: If there are existing certificates in the container, they are not deleted
             foreach (var certId in lb.CertificateIds)
             {
                 var certificate = await _certificateManagementService.GetCertificate(certId);
@@ -160,7 +161,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     continue;
                 }
 
-                var certData = GetCertPem(certificate.CertificateData!);
+                var certData = string.Join("\n", certificate.CertificateData.Select(c => GetCertPem(c)));
                 var keyData = GetPrivateKeyPem(privatekey.KeyData);
 
                 var keyType = privatekey.KeyData is RSA ? "rsa" : "ecdsa";
@@ -169,7 +170,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
                 try
                 {
-                    File.WriteAllText(certFilePath, $"{certData}\n{keyData}");
+                    File.WriteAllText(certFilePath, $"{keyData}\n{certData}");
                     await _containerManager.CopyFileToContainer(
                         container.Id,
                         certFilePath,
@@ -181,31 +182,30 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     if (File.Exists(certFilePath))
                         File.Delete(certFilePath);
                 }
-
             }
 
 
             if (container.State != ContainerState.Running)
+            {
+                if (lb.Enabled == true)
                 {
-                    if (lb.Enabled == true)
-                    {
-                        _logger.LogInformation($"Starting container for load balancer {lb.Name}");
-                        await _containerManager.StartContainer(container.Id);
-                    }
+                    _logger.LogInformation($"Starting container for load balancer {lb.Name}");
+                    await _containerManager.StartContainer(container.Id);
+                }
+            }
+            else
+            {
+                if (lb.Enabled == true)
+                {
+                    _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
+                    await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
                 }
                 else
                 {
-                    if (lb.Enabled == true)
-                    {
-                        _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
-                        await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
-                        await _containerManager.StopContainer(container.Id);
-                    }
+                    _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
+                    await _containerManager.StopContainer(container.Id);
                 }
+            }
         }
 
         var containersToDelete = containers.Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();

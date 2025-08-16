@@ -1,6 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 
+
 using ACMESharp.Protocol;
 using ACMESharp.Authorizations;
 using ACMESharp.Protocol.Resources;
@@ -8,6 +9,7 @@ using ACMESharp.Protocol.Resources;
 using Tilework.CertificateManagement.Interfaces;
 using Tilework.Core.CertificateManagement.Models;
 
+using Tilework.Core.Utils;
 
 namespace Tilework.CertificateManagement.Services;
 
@@ -55,7 +57,7 @@ public class AcmeProvider : ICAProvider
     }
 
 
-    public async Task<(X509Certificate2, ICAConfiguration)> SignCertificateRequest(string fqdn, CertificateRequest request, ICAConfiguration configuration)
+    public async Task<(List<X509Certificate2>, ICAConfiguration)> SignCertificateRequest(string fqdn, CertificateRequest request, ICAConfiguration configuration)
     {
         var acmeConfig = configuration as AcmeConfiguration
                  ?? throw new ArgumentException("Expected AcmeConfiguration", nameof(configuration));
@@ -121,7 +123,7 @@ public class AcmeProvider : ICAProvider
             await _verificationService.StopVerification(verificationId.ToString());
         }
 
-        if(challenge.Status == "invalid")
+        if (challenge.Status == "invalid")
             throw new Exception($"ACME authentication failed: {challenge.Error}");
         else if (challenge.Status is "pending" or "processing")
             throw new Exception($"ACME authentication timed out. Please try again later");
@@ -147,10 +149,10 @@ public class AcmeProvider : ICAProvider
             throw new Exception($"ACME certificate issuing failed: {order.Payload.Status}");
         }
 
-        var cert = await acmeClient.GetOrderCertificateAsync(order);
+        var pemCerts = await acmeClient.GetOrderCertificateAsync(order);
+        var certs = CertificateUtils.LoadPemChain(pemCerts);
 
-
-        return (X509CertificateLoader.LoadCertificate(cert), acmeConfig);
+        return (certs, acmeConfig);
     }
 
 
@@ -182,7 +184,7 @@ public class AcmeProvider : ICAProvider
         {
             await acmeClient.RevokeCertificateAsync(certDer);
         }
-        catch(AcmeProtocolException ex)
+        catch (AcmeProtocolException ex)
         {
             if (ex.ProblemType == ProblemType.AlreadyRevoked)
             {
@@ -191,7 +193,7 @@ public class AcmeProvider : ICAProvider
             else
                 throw;
         }
-        
+
 
         return acmeConfig;
     }

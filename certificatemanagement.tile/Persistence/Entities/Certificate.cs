@@ -4,6 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 using Tilework.Core.CertificateManagement.Enums;
+using Tilework.Core.Utils;
 
 namespace Tilework.CertificateManagement.Persistence.Models;
 
@@ -29,19 +30,25 @@ public class Certificate
 
 
     [NotMapped]
-    public X509Certificate2? CertificateData
+    public List<X509Certificate2> CertificateData
     {
         get {
-            return string.IsNullOrEmpty(CertificateDataString) ? null : X509CertificateLoader.LoadCertificate(Encoding.ASCII.GetBytes(CertificateDataString));
+            return string.IsNullOrEmpty(CertificateDataString) ? new List<X509Certificate2>() : CertificateUtils.LoadPemChain(CertificateDataString);
         }
         set {
-            if(value != null)
+            if (value != null)
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine("-----BEGIN CERTIFICATE-----");
-                sb.AppendLine(Convert.ToBase64String(value.RawData, Base64FormattingOptions.InsertLineBreaks));
-                sb.AppendLine("-----END CERTIFICATE-----");
-                CertificateDataString = sb.ToString();
+                StringBuilder chain = new StringBuilder();
+                foreach (var cert in value)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("-----BEGIN CERTIFICATE-----");
+                    sb.AppendLine(Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
+                    sb.AppendLine("-----END CERTIFICATE-----");
+                    chain.Append(sb);
+                }
+                
+                CertificateDataString = chain.ToString();
             }
             else
                 CertificateDataString = null;

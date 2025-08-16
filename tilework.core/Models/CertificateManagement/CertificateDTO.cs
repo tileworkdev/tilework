@@ -20,5 +20,5 @@ public class CertificateDTO
 
     public CertificateStatus Status { get; set; }
 
-    public X509Certificate2? CertificateData { get; set; }
+    public List<X509Certificate2> CertificateData { get; set; } = new();
 }
