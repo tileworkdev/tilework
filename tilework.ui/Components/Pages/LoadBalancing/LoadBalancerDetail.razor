@@ -137,12 +137,8 @@
             return;
         }
 
-        if(_item is ApplicationLoadBalancerDTO appBalancer)
-        {
-            _rules = await _loadBalancerService.GetRules(appBalancer);
-        }
-
-        _certificates = await _loadBalancerService.GetCertificates(_item);
+        await GetRules();
+        await GetCertificates();
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
@@ -184,7 +180,8 @@
             if(_item is ApplicationLoadBalancerDTO appBalancer)
             {
                 await _loadBalancerService.AddRule(appBalancer, rule);
-                await _loadBalancerService.UpdateLoadBalancer(appBalancer);
+                await GetRules();
+                await _loadBalancerService.ApplyConfiguration();
             }
             else
             {
@@ -207,6 +204,7 @@
         if (!result.Canceled && _item is ApplicationLoadBalancerDTO appBalancer)
         {
             await _loadBalancerService.RemoveRule(appBalancer, rule);
+            await GetRules();
             await _loadBalancerService.ApplyConfiguration();
         }
     }
@@ -224,7 +222,7 @@
         {
             var certId = (Guid)result.Data;
             await _loadBalancerService.AddCertificate(_item, certId);
-            _certificates = await _loadBalancerService.GetCertificates(_item);
+            await GetCertificates();
             await _loadBalancerService.ApplyConfiguration();
         }
     }
@@ -243,7 +241,7 @@
         if (!result.Canceled)
         {
             await _loadBalancerService.RemoveCertificate(_item, certificate.Id);
-            _certificates = await _loadBalancerService.GetCertificates(_item);
+            await GetCertificates();
             await _loadBalancerService.ApplyConfiguration();
         }
     }
@@ -293,8 +291,16 @@
         };
     }
 
-    @* private async TargetGroupDTO GetTargetGroup()
+    private async Task GetRules()
     {
-        return await _loadBalancerService.
-    } *@
+        if(_item is ApplicationLoadBalancerDTO appBalancer)
+        {
+            _rules = await _loadBalancerService.GetRules(appBalancer);
+        }
+    }
+
+    private async Task GetCertificates()
+    {
+        _certificates = await _loadBalancerService.GetCertificates(_item);
+    }
 }
