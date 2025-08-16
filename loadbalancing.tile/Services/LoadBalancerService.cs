@@ -89,7 +89,7 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task<BaseLoadBalancerDTO?> GetLoadBalancer(Guid Id)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(Id);
-        return MapBalancerToDto(entity);
+        return entity != null ? MapBalancerToDto(entity) : null;
     }
 
     public async Task<BaseLoadBalancerDTO> AddLoadBalancer(BaseLoadBalancerDTO balancer)
