@@ -15,6 +15,7 @@ using Tilework.LoadBalancing.Haproxy;
 using Tilework.Core.Interfaces;
 using Tilework.Core.LoadBalancing.Models;
 using Tilework.Core.LoadBalancing.Enums;
+using Tilework.Core.CertificateManagement.Models;
 
 
 namespace Tilework.LoadBalancing.Services;
@@ -140,6 +141,43 @@ public class LoadBalancerService : ILoadBalancerService
         entity.Rules.Remove(r);
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<List<CertificateDTO>> GetCertificates(BaseLoadBalancerDTO balancer)
+    {
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var result = new List<CertificateDTO>();
+        foreach (var certId in entity.CertificateIds)
+        {
+            var cert = await _certificateManagementService.GetCertificate(certId);
+            if (cert != null)
+            {
+                result.Add(cert);
+            }
+        }
+        return result;
+    }
+
+    public async Task AddCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
+    {
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        if (!entity.CertificateIds.Contains(certificateId))
+        {
+            entity.CertificateIds.Add(certificateId);
+            _dbContext.LoadBalancers.Update(entity);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
+    public async Task RemoveCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
+    {
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        if (entity.CertificateIds.Contains(certificateId))
+        {
+            entity.CertificateIds.Remove(certificateId);
+            _dbContext.LoadBalancers.Update(entity);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 
 
