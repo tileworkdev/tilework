@@ -21,5 +21,7 @@ public class CertificateManagementMappingProfile : Profile
         CreateMap<Certificate, CertificateDTO>()
             .ForMember(dest => dest.Authority, opt => opt.MapFrom(src => src.AuthorityId))
             .ForMember(dest => dest.PrivateKey, opt => opt.MapFrom(src => src.PrivateKeyId));
+
+        CreateMap<PrivateKey, PrivateKeyDTO>();
     }
 }
