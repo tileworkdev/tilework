@@ -33,6 +33,7 @@ public interface ILoadBalancerService
 
     public Task<List<TargetDTO>> GetTargets(TargetGroupDTO group);
     public Task AddTarget(TargetGroupDTO group, TargetDTO target);
+    public Task UpdateTarget(TargetGroupDTO group, TargetDTO target);
     public Task RemoveTarget(TargetGroupDTO group, TargetDTO target);
 
     public Task ApplyConfiguration();
