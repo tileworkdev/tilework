@@ -34,7 +34,7 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        HostString = Target.Host.ToString();
+        HostString = Target.Host.Value;
     }
 
     async Task Submit()
