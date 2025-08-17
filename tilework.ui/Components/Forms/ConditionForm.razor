@@ -7,6 +7,9 @@
 @namespace Tilework.Ui.Components.Forms
 
 <MudPaper Class="mb-4 p-4">
+    <div class="d-flex justify-end mb-2">
+        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Outlined" OnClick="OnDelete" />
+    </div>
     <MudGrid>
         <MudItem xs="4">
             <MudSelect T="ConditionType" @bind-Value="Condition.Type" Label="Condition type" Variant="Variant.Outlined" Required="true">
@@ -16,7 +19,7 @@
                 }
             </MudSelect>
         </MudItem>
-        <MudItem xs="7">
+        <MudItem xs="8">
             <MudStack Spacing="2">
                 @for (var i = 0; i < Condition.Values.Count; i++)
                 {
@@ -32,9 +35,6 @@
                 }
                 <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddValue" />
             </MudStack>
-        </MudItem>
-        <MudItem xs="1" Class="d-flex align-center justify-end">
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Outlined" OnClick="OnDelete" />
         </MudItem>
     </MudGrid>
 </MudPaper>
