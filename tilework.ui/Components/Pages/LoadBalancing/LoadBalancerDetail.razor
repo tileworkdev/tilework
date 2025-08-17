@@ -76,7 +76,7 @@
                         <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup).Result.Name" Title="Target group" />
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditRule(context.Item))" />
                                 <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteRule(context.Item))" />
                             </CellTemplate>
                         </TemplateColumn>
@@ -186,6 +186,47 @@
             else
             {
                 _snackbar.Add("Can only add rules to application load balancers", Severity.Error);
+            }
+        }
+    }
+
+    private async Task EditRule(RuleDTO rule)
+    {
+        var ruleEdit = new RuleDTO
+        {
+            Id = rule.Id,
+            Priority = rule.Priority,
+            LoadBalancer = rule.LoadBalancer,
+            TargetGroup = rule.TargetGroup,
+            Conditions = rule.Conditions.Select(c => new Condition
+            {
+                Type = c.Type,
+                Values = c.Values.ToList()
+            }).ToList()
+        };
+
+        var parameters = new DialogParameters<RuleDialog>();
+        parameters.Add(x => x.Rule, ruleEdit);
+        parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
+        parameters.Add(x => x.Title, "Edit rule");
+        parameters.Add(x => x.ButtonText, "Save");
+        parameters.Add(x => x.Icon, Icons.Material.Filled.Edit);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<RuleDialog>("Edit rule", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            if (_item is ApplicationLoadBalancerDTO appBalancer)
+            {
+                await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
+                await GetRules();
+                await _loadBalancerService.ApplyConfiguration();
+            }
+            else
+            {
+                _snackbar.Add("Can only edit rules on application load balancers", Severity.Error);
             }
         }
     }

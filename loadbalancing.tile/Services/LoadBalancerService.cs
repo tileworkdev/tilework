@@ -134,6 +134,18 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
+    {
+        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
+        if (r != null)
+        {
+            _mapper.Map(rule, r);
+            _dbContext.LoadBalancers.Update(entity);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
     public async Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
         var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);

@@ -13,6 +13,7 @@ public interface ILoadBalancerService
 
     public Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer);
     public Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
+    public Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
     public Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
 
 
