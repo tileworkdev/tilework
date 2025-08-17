@@ -84,24 +84,27 @@
                 </MudDataGrid>
             </MudTabPanel>
         }
-        <MudTabPanel Text="Certificates">
-            <MudDataGrid T="CertificateDTO" Outlined="true" Items="_certificates" Hover="true">
-                <ToolBarContent>
-                    <MudText Typo="Typo.h6">Certificates</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddCertificate">Add certificate</MudButton>
-                </ToolBarContent>
-                <Columns>
-                    <PropertyColumn Property="t => t.Name" Title="Name" Editable="false" />
-                    <PropertyColumn Property="t => t.Fqdn" Title="FQDN" Editable="false" />
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteCertificate(context.Item))" />
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-            </MudDataGrid>
-        </MudTabPanel>
+        @if(_showCertificates)
+        {
+            <MudTabPanel Text="Certificates">
+                <MudDataGrid T="CertificateDTO" Outlined="true" Items="_certificates" Hover="true">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Certificates</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddCertificate">Add certificate</MudButton>
+                    </ToolBarContent>
+                    <Columns>
+                        <PropertyColumn Property="t => t.Name" Title="Name" Editable="false" />
+                        <PropertyColumn Property="t => t.Fqdn" Title="FQDN" Editable="false" />
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteCertificate(context.Item))" />
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudTabPanel>
+        }
         <MudTabPanel Text="Monitoring">
             <MudText>TODO</MudText>
         </MudTabPanel>
@@ -118,6 +121,7 @@
     private BaseLoadBalancerDTO _item;
     private List<RuleDTO> _rules = new();
     private List<CertificateDTO> _certificates = new();
+    private bool _showCertificates;
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -137,8 +141,15 @@
             return;
         }
 
+        _showCertificates =
+            (_item is ApplicationLoadBalancerDTO alb && alb.Protocol == AlbProtocol.HTTPS) ||
+            (_item is NetworkLoadBalancerDTO nlb && nlb.Protocol == NlbProtocol.TLS);
+
         await GetRules();
-        await GetCertificates();
+        if(_showCertificates)
+        {
+            await GetCertificates();
+        }
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
