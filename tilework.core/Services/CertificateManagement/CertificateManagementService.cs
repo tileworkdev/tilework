@@ -114,7 +114,11 @@ public class CertificateManagementService : ICertificateManagementService
             _ => throw new NotImplementedException(),
         };
 
-        return new PrivateKey() { KeyData = keyAlg };        
+        return new PrivateKey()
+        {
+            Algorithm = algorithm,
+            KeyData = keyAlg
+        };        
     }
 
     private CertificateRequest GenerateCsr(Certificate certificate)
