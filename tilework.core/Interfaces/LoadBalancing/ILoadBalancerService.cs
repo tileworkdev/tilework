@@ -11,6 +11,9 @@ public interface ILoadBalancerService
     public Task<BaseLoadBalancerDTO> UpdateLoadBalancer(BaseLoadBalancerDTO balancer);
     public Task DeleteLoadBalancer(Guid Id);
 
+    public Task EnableLoadBalancer(Guid Id);
+    public Task DisableLoadBalancer(Guid Id);
+
     public Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer);
     public Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
     public Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);

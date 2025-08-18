@@ -132,7 +132,7 @@ public class DockerServiceManager : IContainerManager
     {
         string[] imageParts = image.Split(':');
 
-        if((await ImageExists(image)) == false)
+        if ((await ImageExists(image)) == false)
         {
             _logger.LogInformation($"Cannot find image {image} locally. Pulling it");
 
@@ -239,7 +239,7 @@ public class DockerServiceManager : IContainerManager
                 );
             }
 
-            using(var tarStream = File.OpenRead(tempTarPath))
+            using (var tarStream = File.OpenRead(tempTarPath))
             {
                 await _client.Containers.ExtractArchiveToContainerAsync(
                     id,
@@ -255,7 +255,6 @@ public class DockerServiceManager : IContainerManager
                 File.Delete(tempTarPath);
         }
     }
-
 
     public async Task StartContainer(string id)
     {

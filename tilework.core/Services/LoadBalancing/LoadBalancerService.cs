@@ -120,10 +120,50 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task EnableLoadBalancer(Guid Id)
+    {
+        var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        entity.Enabled = true;
+        _dbContext.LoadBalancers.Update(entity);
+
+        await using var tx = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+            await ApplyConfiguration();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            _dbContext.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
+    public async Task DisableLoadBalancer(Guid Id)
+    {
+        var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        entity.Enabled = false;
+        _dbContext.LoadBalancers.Update(entity);
+
+        await using var tx = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+            await ApplyConfiguration();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            _dbContext.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
 
     public async Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         return _mapper.Map<List<RuleDTO>>(entity.Rules);
     }
 
