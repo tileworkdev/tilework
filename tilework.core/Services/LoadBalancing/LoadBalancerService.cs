@@ -162,18 +162,19 @@ public class LoadBalancerService : ILoadBalancerService
         return _mapper.Map<List<CertificateDTO>>(entity.Certificates);
     }
 
-    public async Task AddCertificate(BaseLoadBalancerDTO balancer, CertificateDTO certificate)
+    public async Task AddCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        entity.Certificates.Add(_mapper.Map<Certificate>(certificate));
+        var cert = await _dbContext.Certificates.FindAsync(certificateId);
+        entity.Certificates.Add(cert);
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task RemoveCertificate(BaseLoadBalancerDTO balancer, CertificateDTO certificate)
+    public async Task RemoveCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        var c = entity.Certificates.FirstOrDefault(t => t.Id == certificate.Id);
+        var c = entity.Certificates.FirstOrDefault(t => t.Id == certificateId);
         entity.Certificates.Remove(c);
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();

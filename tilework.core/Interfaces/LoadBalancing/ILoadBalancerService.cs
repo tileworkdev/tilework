@@ -18,8 +18,8 @@ public interface ILoadBalancerService
 
 
     public Task<List<CertificateDTO>> GetCertificates(BaseLoadBalancerDTO balancer);
-    public Task AddCertificate(BaseLoadBalancerDTO balancer, CertificateDTO certificate);
-    public Task RemoveCertificate(BaseLoadBalancerDTO balancer, CertificateDTO certificate);
+    public Task AddCertificate(BaseLoadBalancerDTO balancer, Guid certificateId);
+    public Task RemoveCertificate(BaseLoadBalancerDTO balancer, Guid certificateId);
 
 
     public Task<List<TargetGroupDTO>> GetTargetGroups();
