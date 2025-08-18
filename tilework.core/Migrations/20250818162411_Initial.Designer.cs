@@ -11,8 +11,8 @@ using Tilework.Core.Persistence;
 namespace tilework.core.Migrations
 {
     [DbContext(typeof(TileworkContext))]
-    [Migration("20250818161538_CertificateRestrict")]
-    partial class CertificateRestrict
+    [Migration("20250818162411_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

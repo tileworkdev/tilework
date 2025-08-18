@@ -72,7 +72,7 @@ namespace tilework.core.Migrations
                         column: x => x.AuthorityId,
                         principalTable: "CertificateAuthorities",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Certificates_PrivateKeys_PrivateKeyId",
                         column: x => x.PrivateKeyId,
