@@ -317,17 +317,32 @@
 
     private async Task Enable()
     {
-        _item.Enabled = true;
-        await _loadBalancerService.UpdateLoadBalancer(_item);
-        await _loadBalancerService.ApplyConfiguration();
+        try {
+            _item.Enabled = true;
+            await _loadBalancerService.UpdateLoadBalancer(_item);
+            await _loadBalancerService.ApplyConfiguration();
+            _snackbar.Add("Load balancer enabled successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            _snackbar.Add($"Failed to enable load balancer: {ex.Message}", Severity.Error);
+        }
         SetActions();
     }
 
     private async Task Disable()
     {
-        _item.Enabled = false;
-        await _loadBalancerService.UpdateLoadBalancer(_item);
-        await _loadBalancerService.ApplyConfiguration();
+        try {
+            _item.Enabled = false;
+            await _loadBalancerService.UpdateLoadBalancer(_item);
+            await _loadBalancerService.ApplyConfiguration();
+            _snackbar.Add("Load balancer disabled successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            _snackbar.Add($"Failed to disable load balancer: {ex.Message}", Severity.Error);
+        }
+
         SetActions();
     }
 
