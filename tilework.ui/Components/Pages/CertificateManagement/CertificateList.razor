@@ -26,7 +26,7 @@
         <MudTd DataLabel="Status">@context.Status</MudTd>
         <MudTd DataLabel="Key algorithm">@_certificateManagementService.GetPrivateKey(context.PrivateKey).Result?.Algorithm.GetDescription()</MudTd>
         <MudTd DataLabel="Expiration">@context.ExpiresAtUtc</MudTd>
-        <MudTd DataLabel="Intermediate certificates">@(context.CertificateData.Count - 1)</MudTd>
+        <MudTd DataLabel="Intermediate certificates">@(context.CertificateData.Count > 0 ? context.CertificateData.Count - 1 : 0)</MudTd>
         <MudTd DataLabel="CA">@_certificateManagementService.GeCertificateAuthority(context.Authority).Result?.Name</MudTd>
     </RowContent>
 </GenericListview>

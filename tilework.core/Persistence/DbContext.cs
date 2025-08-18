@@ -81,5 +81,10 @@ public class TileworkContext : DbContext
                 v => v.HasValue ? DateTimeOffset.FromUnixTimeSeconds(v.Value) : null
             )
             .HasColumnType("INTEGER");
+
+        modelBuilder.Entity<Certificate>()
+            .HasOne(o => o.Authority)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
