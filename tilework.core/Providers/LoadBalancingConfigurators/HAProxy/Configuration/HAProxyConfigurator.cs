@@ -141,33 +141,24 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             }
 
             // FIXME: If there are existing certificates in the container, they are not deleted
-            foreach (var certId in lb.CertificateIds)
+            foreach (var certificate in lb.Certificates)
             {
-                var certificate = await _certificateManagementService.GetCertificate(certId);
-                if (certificate == null)
-                {
-                    _logger.LogError($"Ignoring LB certificate {certId}: certificate not found");
-                    continue;
-                }
-
                 if (certificate.Status != CertificateStatus.ACTIVE)
                 {
                     _logger.LogError($"Ignoring LB certificate {certificate.Id}: Invalid status {certificate.Status}");
                     continue;
                 }
 
-                var privatekey = await _certificateManagementService.GetPrivateKey(certificate.PrivateKey);
-
-                if (privatekey == null)
+                if (certificate.PrivateKey == null)
                 {
                     _logger.LogError($"Ignoring LB certificate {certificate.Id}: Cannot find private key");
                     continue;
                 }
 
                 var certData = string.Join("\n", certificate.CertificateData.Select(c => GetCertPem(c)));
-                var keyData = GetPrivateKeyPem(privatekey.KeyData);
+                var keyData = GetPrivateKeyPem(certificate.PrivateKey.KeyData);
 
-                var keyType = privatekey.KeyData is RSA ? "rsa" : "ecdsa";
+                var keyType = certificate.PrivateKey.KeyData is RSA ? "rsa" : "ecdsa";
 
                 var certFilePath = Path.GetTempFileName();
 

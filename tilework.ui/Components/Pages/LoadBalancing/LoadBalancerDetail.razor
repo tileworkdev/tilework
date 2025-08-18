@@ -273,8 +273,8 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            var certId = (Guid)result.Data;
-            await _loadBalancerService.AddCertificate(_item, certId);
+            var cert = (CertificateDTO) result.Data;
+            await _loadBalancerService.AddCertificate(_item, cert);
             await GetCertificates();
             await _loadBalancerService.ApplyConfiguration();
         }
@@ -293,7 +293,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _loadBalancerService.RemoveCertificate(_item, certificate.Id);
+            await _loadBalancerService.RemoveCertificate(_item, certificate);
             await GetCertificates();
             await _loadBalancerService.ApplyConfiguration();
         }
@@ -302,7 +302,8 @@
     private async Task<List<CertificateDTO>> GetAvailableCertificates()
     {
         var all = await _certificateService.GetCertificates();
-        return all.Where(c => !_item.Certificates.Contains(c.Id)).ToList();
+        var installed = await _loadBalancerService.GetCertificates(_item);
+        return all.Where(c => !installed.Select(ic => ic.Id).Contains(c.Id)).ToList();
     }
 
     private async Task<List<TargetGroupDTO>> GetAlbTargetGroups()

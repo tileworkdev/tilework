@@ -13,8 +13,9 @@ using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.LoadBalancing.Haproxy;
 
 using Tilework.CertificateManagement.Interfaces;
-
+using Tilework.Persistence.CertificateManagement.Models;
 using Tilework.CertificateManagement.Models;
+
 using Tilework.Core.Persistence;
 
 
@@ -158,38 +159,24 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task<List<CertificateDTO>> GetCertificates(BaseLoadBalancerDTO balancer)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        var result = new List<CertificateDTO>();
-        foreach (var certId in entity.CertificateIds)
-        {
-            var cert = await _certificateManagementService.GetCertificate(certId);
-            if (cert != null)
-            {
-                result.Add(cert);
-            }
-        }
-        return result;
+        return _mapper.Map<List<CertificateDTO>>(entity.Certificates);
     }
 
-    public async Task AddCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
+    public async Task AddCertificate(BaseLoadBalancerDTO balancer, CertificateDTO certificate)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        if (!entity.CertificateIds.Contains(certificateId))
-        {
-            entity.CertificateIds.Add(certificateId);
-            _dbContext.LoadBalancers.Update(entity);
-            await _dbContext.SaveChangesAsync();
-        }
+        entity.Certificates.Add(_mapper.Map<Certificate>(certificate));
+        _dbContext.LoadBalancers.Update(entity);
+        await _dbContext.SaveChangesAsync();
     }
 
-    public async Task RemoveCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
+    public async Task RemoveCertificate(BaseLoadBalancerDTO balancer, CertificateDTO certificate)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        if (entity.CertificateIds.Contains(certificateId))
-        {
-            entity.CertificateIds.Remove(certificateId);
-            _dbContext.LoadBalancers.Update(entity);
-            await _dbContext.SaveChangesAsync();
-        }
+        var c = entity.Certificates.FirstOrDefault(t => t.Id == certificate.Id);
+        entity.Certificates.Remove(c);
+        _dbContext.LoadBalancers.Update(entity);
+        await _dbContext.SaveChangesAsync();
     }
 
 

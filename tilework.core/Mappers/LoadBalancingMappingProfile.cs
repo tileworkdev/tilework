@@ -10,17 +10,13 @@ public class LoadBalancingMappingProfile : Profile
 {
     public LoadBalancingMappingProfile()
     {
-        CreateMap<ApplicationLoadBalancer, ApplicationLoadBalancerDTO>()
-            .ForMember(dest => dest.Certificates, opt => opt.MapFrom(src => src.CertificateIds));
-        CreateMap<ApplicationLoadBalancerDTO, ApplicationLoadBalancer>()
-            .ForMember(dest => dest.CertificateIds, opt => opt.MapFrom(src => src.Certificates));
+        CreateMap<ApplicationLoadBalancer, ApplicationLoadBalancerDTO>();
+        CreateMap<ApplicationLoadBalancerDTO, ApplicationLoadBalancer>();
         
 
         CreateMap<NetworkLoadBalancer, NetworkLoadBalancerDTO>()
-            .ForMember(dest => dest.Certificates, opt => opt.MapFrom(src => src.CertificateIds))
             .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroupId));
         CreateMap<NetworkLoadBalancerDTO, NetworkLoadBalancer>()
-            .ForMember(dest => dest.CertificateIds, opt => opt.MapFrom(src => src.Certificates))
             .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
             .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
 

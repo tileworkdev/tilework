@@ -21,4 +21,10 @@
     <PackageReference Include="SharpCompress" Version="0.38.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Resources\haproxy.cfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

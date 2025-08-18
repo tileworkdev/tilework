@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.DependencyInjection;
 
-using Tilework.Core.Persistence;
+
 
 namespace Tilework.CertificateManagement.Services;
 public sealed class CertificateManagementInitializer : IHostedService
@@ -18,14 +18,7 @@ public sealed class CertificateManagementInitializer : IHostedService
         _serviceProvider = serviceProvider;
     }
 
-    public async Task StartAsync(CancellationToken ct)
-    {
-        await using var scope = _serviceProvider.CreateAsyncScope();
-
-        _logger.LogInformation($"Running migrations for context: CertificateManagementContext");
-        var dbContext = scope.ServiceProvider.GetRequiredService<TileworkContext>();
-        await dbContext.Database.MigrateAsync(ct);
-    }
+    public Task StartAsync(CancellationToken ct) => Task.CompletedTask;
 
     public async Task StopAsync(CancellationToken ct)
     {

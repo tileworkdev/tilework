@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
+using Tilework.Persistence.CertificateManagement.Models;
+
 namespace Tilework.Persistence.LoadBalancing.Models;
 
 [Index(nameof(Name), IsUnique = true)]
@@ -16,5 +18,5 @@ public abstract class BaseLoadBalancer
 
     public bool Enabled { get; set; }
 
-    public List<Guid> CertificateIds { get; set; } = new();
+    public List<Certificate> Certificates { get; set; } = new();
 }
