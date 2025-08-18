@@ -71,6 +71,7 @@
         {
             try {
                 await _certificateManagementService.RevokeCertificate(_item.Id);
+                SetActions();
                 _snackbar.Add("Certificate revoked successfully!", Severity.Success);
             }
             catch(Exception ex)
