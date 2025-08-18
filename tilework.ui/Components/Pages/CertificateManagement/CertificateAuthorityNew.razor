@@ -1,7 +1,9 @@
+@using AutoMapper
+
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
+@using Tilework.CertificateManagement.Enums
 @using Tilework.Ui.Models
-@using AutoMapper
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -12,12 +14,21 @@
 
 @page "/cm/authorities/new"
 
-<GenericEditview T="NewAcmeCertificateAuthorityForm" Model="@form" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
-                 OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
-                 OnValidSubmit="Submit" />
+@if(form is NewAcmeCertificateAuthorityForm acmeForm)
+{
+    <GenericEditview T="NewAcmeCertificateAuthorityForm" Model="@acmeForm" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
+                    OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
+                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
+}
+else if(form is NewPredefinedAcmeCertificateAuthorityForm pdAcmeForm)
+{
+    <GenericEditview T="NewPredefinedAcmeCertificateAuthorityForm" Model="@pdAcmeForm" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
+                    OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
+                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
+}
 
 @code {
-    NewAcmeCertificateAuthorityForm form = new();
+    NewCertificateAuthorityForm form = new NewPredefinedAcmeCertificateAuthorityForm(){ Type = CertificateAuthorityType.LETSENCRYPT };
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -26,7 +37,34 @@
         new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
     };
 
-    private async Task Submit()
+    private static Type GetFormType(CertificateAuthorityType type)
+    {
+        return type switch
+        {
+            CertificateAuthorityType.ACME => typeof(NewAcmeCertificateAuthorityForm),
+            CertificateAuthorityType.LETSENCRYPT => typeof(NewPredefinedAcmeCertificateAuthorityForm),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+
+    private async Task OnChange((string PropertyName, object? Value) change)
+    {
+        if(change.PropertyName == "Type")
+        {
+            CertificateAuthorityType? value = (CertificateAuthorityType?) change.Value;
+
+            if(value != null)
+            {
+                var newFormType = GetFormType((CertificateAuthorityType) value);
+                form = (NewCertificateAuthorityForm) Mapper.Map(form, form.GetType(), newFormType);
+            }
+   
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSubmit()
     {
         try
         {

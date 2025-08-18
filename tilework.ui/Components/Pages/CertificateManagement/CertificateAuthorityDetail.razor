@@ -1,5 +1,6 @@
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
+@using Tilework.Core.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -15,7 +16,7 @@
         <MudGrid Spacing="5">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@_item.Type</MudText>
+                <MudText Typo="Typo.body2">@_item.Type.GetDescription()</MudText>
             </MudItem>
             @* <MudItem>
                 <MudText Typo="Typo.subtitle2">Directory URL</MudText>

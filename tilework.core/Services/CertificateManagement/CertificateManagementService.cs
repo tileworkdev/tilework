@@ -41,10 +41,18 @@ public class CertificateManagementService : ICertificateManagementService
 
     private (ICAProvider, ICAConfiguration) GetProvider(CertificateAuthority certificateAuthority)
     {
-        return (
-            _serviceProvider.GetRequiredService<AcmeProvider>(),
-            JsonSerializer.Deserialize<AcmeConfiguration>(certificateAuthority.Parameters)!
-        );
+        return certificateAuthority.Type switch
+        {
+            CertificateAuthorityType.ACME => (
+                _serviceProvider.GetRequiredService<AcmeProvider>(),
+                JsonSerializer.Deserialize<AcmeConfiguration>(certificateAuthority.Parameters)!
+                ),
+            CertificateAuthorityType.LETSENCRYPT => (
+                _serviceProvider.GetRequiredService<AcmeProvider>(),
+                JsonSerializer.Deserialize<LetsEncryptConfiguration>(certificateAuthority.Parameters)!
+                ),
+            _ => throw new ArgumentException($"Invalid CA provider {certificateAuthority.Type}")
+        };
     }
 
     private string DeserializeConfig(ICAConfiguration config)

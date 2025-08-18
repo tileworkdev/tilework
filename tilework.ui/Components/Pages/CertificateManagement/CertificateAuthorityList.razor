@@ -1,5 +1,6 @@
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
+@using Tilework.Core.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -16,7 +17,7 @@
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/cm/authorities/{context.Id}")">@context.Name</MudLink></MudTd>
-        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Type">@context.Type.GetDescription()</MudTd>
     </RowContent>
 </GenericListview>
 

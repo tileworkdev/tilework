@@ -21,32 +21,48 @@ public class FormMappingProfile : Profile
         CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
         CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
             .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
-        CreateMap<NewNetworkLoadBalancerForm, NewApplicationLoadBalancerForm>();
-        CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
 
         CreateMap<EditApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
         CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
             .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
+
         CreateMap<ApplicationLoadBalancerDTO, EditApplicationLoadBalancerForm>();
         CreateMap<NetworkLoadBalancerDTO, EditNetworkLoadBalancerForm>()
             .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
+
+        CreateMap<NewNetworkLoadBalancerForm, NewApplicationLoadBalancerForm>();
+        CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
+
         CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
         CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
 
 
         // Certificate authorities
+        CreateMap<NewPredefinedAcmeCertificateAuthorityForm, CertificateAuthorityDTO>()
+            .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
+                JsonSerializer.Serialize(
+                    new LetsEncryptConfiguration()
+                    {
+                        Email = src.Email!,
+                        AcceptTos = src.AcceptTos
+                    },
+                    (JsonSerializerOptions?)null
+                )
+            ));
         CreateMap<NewAcmeCertificateAuthorityForm, CertificateAuthorityDTO>()
             .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
                 JsonSerializer.Serialize(
                     new AcmeConfiguration()
                     {
-                        DirectoryUrl = src.DirectoryUrl,
-                        Email = src.Email,
-                        AcceptTos = true
+                        DirectoryUrl = src.DirectoryUrl!,
+                        Email = src.Email!,
+                        AcceptTos = src.AcceptTos
                     },
                     (JsonSerializerOptions?)null
                 )
             ));
 
+        CreateMap<NewAcmeCertificateAuthorityForm, NewPredefinedAcmeCertificateAuthorityForm>();
+        CreateMap<NewPredefinedAcmeCertificateAuthorityForm, NewAcmeCertificateAuthorityForm>();
     }
 }
