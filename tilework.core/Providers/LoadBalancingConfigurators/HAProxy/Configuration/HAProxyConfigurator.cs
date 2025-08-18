@@ -205,7 +205,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         var containersToDelete = containers.Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
         foreach (var cnt in containersToDelete)
         {
-            _logger.LogInformation($"Deleting defunct load balancer {cnt.Name}");
+            _logger.LogInformation($"Deleting load balancer {cnt.Name}");
             if (cnt.State == ContainerState.Running)
                 await _containerManager.StopContainer(cnt.Id);
             await _containerManager.DeleteContainer(cnt.Id);

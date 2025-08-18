@@ -76,7 +76,7 @@
                     else if (underlyingType == typeof(bool))
                     {
                         <MudCheckBox T="bool" Label="@label"
-                            Checked="@(Convert.ToBoolean(prop.GetValue(Model)))" Indeterminate="false"
+                            Value="@(Convert.ToBoolean(prop.GetValue(Model)))"
                             ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
                     }
                 }
