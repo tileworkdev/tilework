@@ -14,14 +14,21 @@ public class NewPredefinedAcmeCertificateAuthorityForm : NewCertificateAuthority
 {
     [Required, EmailAddress]
     public string? Email { get; set; }
+
+    [Display(Name = "I accept the ToS")]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the ToS.")]
     public bool AcceptTos { get; set; } = false;
 }
 
 public class NewAcmeCertificateAuthorityForm : NewCertificateAuthorityForm
 {
     [Required]
+    [Display(Name = "Directory URL")]
     public string? DirectoryUrl { get; set; }
     [Required, EmailAddress]
     public string? Email { get; set; }
+
+    [Display(Name = "I accept the ToS")]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the ToS.")]
     public bool AcceptTos { get; set; } = false;
 }

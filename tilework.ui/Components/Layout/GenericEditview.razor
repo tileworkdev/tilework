@@ -1,3 +1,4 @@
+@using System.ComponentModel.DataAnnotations
 @using System.Reflection
 @using Tilework.Core.Enums
 @using System.Linq
@@ -47,9 +48,11 @@
                         ).ToList();
                     }
 
+                    var label = prop.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? prop.Name;
+
                     if (options != null)
                     {
-                        <MudSelect T="object" Label="@prop.Name" Variant="Variant.Outlined"
+                        <MudSelect T="object" Label="@label" Variant="Variant.Outlined"
                                 Value="@(prop.GetValue(Model))"
                                 ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })">
                             @foreach (var option in options)
@@ -60,19 +63,19 @@
                     }
                     else if (underlyingType == typeof(string))
                     {
-                        <MudTextField T="string" Label="@prop.Name" Variant="Variant.Outlined"
+                        <MudTextField T="string" Label="@label" Variant="Variant.Outlined"
                             Value="@(prop.GetValue(Model) as string)"
                             ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
                     }
                     else if (underlyingType == typeof(int))
                     {
-                        <MudNumericField HideSpinButtons="true" T="int?" Label="@prop.Name" Variant="Variant.Outlined"
+                        <MudNumericField HideSpinButtons="true" T="int?" Label="@label" Variant="Variant.Outlined"
                             Value="@((int?) prop.GetValue(Model))"
                             ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
                     }
                     else if (underlyingType == typeof(bool))
                     {
-                        <MudCheckBox T="bool?" Label="@prop.Name"
+                        <MudCheckBox T="bool?" Label="@label"
                             Checked="@(Convert.ToBoolean(prop.GetValue(Model)))"
                             ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
                     }

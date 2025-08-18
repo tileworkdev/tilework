@@ -22,6 +22,8 @@ public class EditNetworkLoadBalancerForm : EditBaseLoadBalancerForm
         Type = LoadBalancerType.NETWORK;
     }
     public NlbProtocol Protocol { get; set; }
+
+    [Display(Name = "Target group")]
     public Guid TargetGroup { get; set; }
 }
 

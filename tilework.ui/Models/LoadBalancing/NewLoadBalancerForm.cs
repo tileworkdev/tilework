@@ -24,6 +24,7 @@ public class NewNetworkLoadBalancerForm : NewBaseLoadBalancerForm
     public NlbProtocol Protocol { get; set; }
 
     [Required]
+    [Display(Name = "Target group")]
     public Guid? TargetGroup { get; set; }
 }
 
