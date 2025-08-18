@@ -5,14 +5,16 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
 
-using Tilework.Persistence.LoadBalancing.Models;
-
 using Tilework.LoadBalancing.Interfaces;
 using Tilework.LoadBalancing.Models;
 
 using Tilework.Core.Interfaces;
 using Tilework.Core.Enums;
 using Tilework.Core.Models;
+
+using Tilework.CertificateManagement.Interfaces;
+using Tilework.CertificateManagement.Enums;
+using Tilework.Persistence.LoadBalancing.Models;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
@@ -148,7 +150,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     continue;
                 }
 
-                if (certificate.Status != Core.CertificateManagement.Enums.CertificateStatus.ACTIVE)
+                if (certificate.Status != CertificateStatus.ACTIVE)
                 {
                     _logger.LogError($"Ignoring LB certificate {certificate.Id}: Invalid status {certificate.Status}");
                     continue;

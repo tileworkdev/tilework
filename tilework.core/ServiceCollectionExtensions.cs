@@ -7,6 +7,15 @@ using Tilework.LoadBalancing.Interfaces;
 using Tilework.CertificateManagement.Interfaces;
 
 using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Services;
+using Tilework.LoadBalancing.Mappers;
+using Tilework.LoadBalancing.Haproxy;
+
+using Tilework.CertificateManagement.Services;
+using Tilework.CertificateManagement.Mappers;
+using Tilework.CertificateManagement.Models;
+
+using Tilework.Core.Persistence;
 
 namespace Tilework.Core.Services;
 
@@ -32,7 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILoadBalancerService, LoadBalancerService>();
         services.AddScoped<HAProxyConfigurator>();
 
-        services.AddDbContext<LoadBalancerContext>(dbContextOptions);
+        services.AddDbContext<TileworkContext>(dbContextOptions);
 
         services.AddHostedService<LoadBalancingInitializer>();
 
@@ -46,14 +55,14 @@ public static class ServiceCollectionExtensions
                                                               IConfiguration configuration,
                                                               Action<DbContextOptionsBuilder> dbContextOptions)
     {
-        services.Configure<CertificateManagementSettings>(configuration);
+        services.Configure<CertificateManagementConfiguration>(configuration);
 
         services.AddScoped<ICertificateManagementService, CertificateManagementService>();
 
         services.AddScoped<AcmeProvider>();
         services.AddScoped<AcmeVerificationService>();
 
-        services.AddDbContext<CertificateManagementContext>(dbContextOptions);
+        services.AddDbContext<TileworkContext>(dbContextOptions);
 
         services.AddHostedService<CertificateManagementInitializer>();
 

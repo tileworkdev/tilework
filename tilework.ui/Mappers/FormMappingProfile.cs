@@ -1,8 +1,8 @@
 using AutoMapper;
 
 using Tilework.Ui.Models;
-using Tilework.Core.CertificateManagement.Models;
-using Tilework.Core.LoadBalancing.Models;
+using Tilework.CertificateManagement.Models;
+using Tilework.LoadBalancing.Models;
 
 using System.Text.Json;
 

@@ -1,4 +1,4 @@
-using Tilework.Core.LoadBalancing.Enums;
+using Tilework.LoadBalancing.Enums;
 
 namespace Tilework.Ui.Models;
 
