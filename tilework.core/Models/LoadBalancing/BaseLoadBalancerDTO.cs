@@ -1,4 +1,4 @@
-namespace Tilework.Core.LoadBalancing.Models;
+namespace Tilework.LoadBalancing.Models;
 
 
 public class BaseLoadBalancerDTO
@@ -10,5 +10,4 @@ public class BaseLoadBalancerDTO
     public int Port { get; set; }
 
     public bool Enabled { get; set; }
-    public List<Guid> Certificates { get; set; } = new();
 }

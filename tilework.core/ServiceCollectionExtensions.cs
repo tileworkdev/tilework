@@ -1,6 +1,21 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 using Tilework.Core.Interfaces;
+using Tilework.LoadBalancing.Interfaces;
+using Tilework.CertificateManagement.Interfaces;
+
+using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Services;
+using Tilework.LoadBalancing.Mappers;
+using Tilework.LoadBalancing.Haproxy;
+
+using Tilework.CertificateManagement.Services;
+using Tilework.CertificateManagement.Mappers;
+using Tilework.CertificateManagement.Models;
+
+using Tilework.Core.Persistence;
 
 namespace Tilework.Core.Services;
 
@@ -12,6 +27,47 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IContainerManager, DockerServiceManager>();
         services.AddHostedService<CoreInitializer>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddLoadBalancing(this IServiceCollection services,
+                                                      IConfiguration configuration,
+                                                      Action<DbContextOptionsBuilder> dbContextOptions)
+    {
+        services.Configure<LoadBalancerConfiguration>(configuration);
+
+        services.AddAutoMapper(typeof(HAProxyProfile));
+
+        services.AddScoped<ILoadBalancerService, LoadBalancerService>();
+        services.AddScoped<HAProxyConfigurator>();
+
+        services.AddDbContext<TileworkContext>(dbContextOptions);
+
+        services.AddHostedService<LoadBalancingInitializer>();
+
+        services.AddAutoMapper(typeof(LoadBalancingMappingProfile));
+
+        return services;
+    }
+
+
+    public static IServiceCollection AddCertificateManagement(this IServiceCollection services,
+                                                              IConfiguration configuration,
+                                                              Action<DbContextOptionsBuilder> dbContextOptions)
+    {
+        services.Configure<CertificateManagementConfiguration>(configuration);
+
+        services.AddScoped<ICertificateManagementService, CertificateManagementService>();
+
+        services.AddScoped<AcmeProvider>();
+        services.AddScoped<AcmeVerificationService>();
+
+        services.AddDbContext<TileworkContext>(dbContextOptions);
+
+        services.AddHostedService<CertificateManagementInitializer>();
+
+        services.AddAutoMapper(typeof(CertificateManagementMappingProfile));
+        
         return services;
     }
 }

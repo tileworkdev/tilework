@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-using Tilework.Core.CertificateManagement.Enums;
+using Tilework.CertificateManagement.Enums;
 
 namespace Tilework.Ui.Models;
 
