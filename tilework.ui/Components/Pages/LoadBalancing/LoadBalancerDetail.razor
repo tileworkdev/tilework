@@ -319,6 +319,7 @@
     {
         try {
             await _loadBalancerService.EnableLoadBalancer(_item.Id);
+            _item = await _loadBalancerService.GetLoadBalancer(Id);
             _snackbar.Add("Load balancer enabled successfully!", Severity.Success);
         }
         catch(Exception ex)
@@ -332,6 +333,7 @@
     {
         try {
             await _loadBalancerService.DisableLoadBalancer(_item.Id);
+            _item = await _loadBalancerService.GetLoadBalancer(Id);
             _snackbar.Add("Load balancer disabled successfully!", Severity.Success);
         }
         catch(Exception ex)
