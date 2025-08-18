@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using Tilework.Persistence.LoadBalancing;
-using Tilework.Core.Interfaces;
+using Tilework.LoadBalancing.Interfaces;
 using Tilework.Core.Persistence;
 
 namespace Tilework.LoadBalancing.Services;
