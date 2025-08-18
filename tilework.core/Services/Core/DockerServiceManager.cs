@@ -1,5 +1,3 @@
-using System;
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 using Docker.DotNet;
@@ -10,7 +8,7 @@ using SharpCompress.Writers;
 using Tilework.Core.Enums;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
-using System.Runtime.InteropServices;
+using Tilework.Exceptions.Core;
 
 namespace Tilework.Core.Services;
 
@@ -258,7 +256,15 @@ public class DockerServiceManager : IContainerManager
 
     public async Task StartContainer(string id)
     {
-        await _client.Containers.StartContainerAsync(id, new ContainerStartParameters());
+        try
+        {
+            await _client.Containers.StartContainerAsync(id, new ContainerStartParameters());
+        }
+        catch (DockerApiException ex)
+        {
+            throw new DockerException(ex.ResponseBody);
+        }
+
     }
 
     public async Task StopContainer(string id)
