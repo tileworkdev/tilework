@@ -15,8 +15,8 @@ public class NewPredefinedAcmeCertificateAuthorityForm : NewCertificateAuthority
     [Required, EmailAddress]
     public string? Email { get; set; }
 
-    [Display(Name = "I accept the ToS")]
-    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the ToS.")]
+    [Display(Name = "I accept CA terms of service")]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms of service to continue.")]
     public bool AcceptTos { get; set; } = false;
 }
 
@@ -28,7 +28,7 @@ public class NewAcmeCertificateAuthorityForm : NewCertificateAuthorityForm
     [Required, EmailAddress]
     public string? Email { get; set; }
 
-    [Display(Name = "I accept the ToS")]
-    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the ToS.")]
+    [Display(Name = "I accept CA terms of service")]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms of service to continue.")]
     public bool AcceptTos { get; set; } = false;
 }
