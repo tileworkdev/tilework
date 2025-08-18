@@ -166,7 +166,7 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer)
     {
         var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        return _mapper.Map<List<RuleDTO>>(entity.Rules);
+        return _mapper.Map<List<RuleDTO>>(entity.Rules.OrderByDescending(r => r.Priority));
     }
 
     public async Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
