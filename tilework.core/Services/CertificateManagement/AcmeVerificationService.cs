@@ -80,10 +80,10 @@ public class AcmeVerificationService
         {
             Name = "AcmeVerification",
             Protocol = AlbProtocol.HTTP,
-            Port = 80,
-            Enabled = true
+            Port = 80
         };
         lb = (ApplicationLoadBalancerDTO) await _loadBalancerService.AddLoadBalancer(lb);
+        await _loadBalancerService.EnableLoadBalancer(lb.Id);
         return lb;
     }
 

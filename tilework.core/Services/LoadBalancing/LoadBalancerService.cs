@@ -131,6 +131,7 @@ public class LoadBalancerService : ILoadBalancerService
         {
             await _dbContext.SaveChangesAsync();
             await ApplyConfiguration();
+            await tx.CommitAsync();
         }
         catch
         {
@@ -151,6 +152,7 @@ public class LoadBalancerService : ILoadBalancerService
         {
             await _dbContext.SaveChangesAsync();
             await ApplyConfiguration();
+            await tx.CommitAsync();
         }
         catch
         {
