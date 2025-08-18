@@ -13,6 +13,11 @@ public class TileworkContext : DbContext
 {
     public TileworkContext(DbContextOptions<TileworkContext> options) : base(options) { }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseLazyLoadingProxies();
+    }
+
     // Load balancing
     public DbSet<BaseLoadBalancer> LoadBalancers { get; set; }
     public DbSet<ApplicationLoadBalancer> ApplicationLoadBalancers { get; set; }
