@@ -1,6 +1,6 @@
 using Tilework.Core.Models;
 
-namespace Tilework.Core.LoadBalancing.Models;
+namespace Tilework.LoadBalancing.Models;
 
 
 public class RuleDTO

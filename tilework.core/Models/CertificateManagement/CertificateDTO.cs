@@ -1,9 +1,9 @@
 using System.Security.Cryptography.X509Certificates;
 
-using Tilework.Core.CertificateManagement.Enums;
+using Tilework.CertificateManagement.Enums;
 
 
-namespace Tilework.Core.CertificateManagement.Models;
+namespace Tilework.CertificateManagement.Models;
 
 public class CertificateDTO
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Tilework.Core.LoadBalancing.Enums;
+namespace Tilework.LoadBalancing.Enums;
 
 public enum TargetGroupProtocol
 {
