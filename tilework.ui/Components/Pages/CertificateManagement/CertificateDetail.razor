@@ -52,16 +52,8 @@
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
-        _actions = new List<ActionItem>
-        {
-            new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
-        };
 
-        if(_item.Status == CertificateStatus.ACTIVE)
-        {
-            _actions.Add(new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke });
-        }
-
+        SetActions();
     }
 
     private async Task ConfirmRevoke()
@@ -103,6 +95,19 @@
         {
             await _certificateManagementService.DeleteCertificate(_item.Id);
             _navigationManager.NavigateTo("/cm/certificates");
+        }
+    }
+
+    private void SetActions()
+    {
+        _actions = new List<ActionItem>
+        {
+            new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
+        };
+
+        if(_item.Status == CertificateStatus.ACTIVE)
+        {
+            _actions.Add(new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke });
         }
     }
 }
