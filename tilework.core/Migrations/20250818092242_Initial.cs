@@ -52,6 +52,36 @@ namespace tilework.core.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Certificates",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Fqdn = table.Column<string>(type: "TEXT", nullable: false),
+                    AuthorityId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    PrivateKeyId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ExpiresAtUtc = table.Column<long>(type: "INTEGER", nullable: true),
+                    CertificateDataString = table.Column<string>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Certificates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Certificates_CertificateAuthorities_AuthorityId",
+                        column: x => x.AuthorityId,
+                        principalTable: "CertificateAuthorities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Certificates_PrivateKeys_PrivateKeyId",
+                        column: x => x.PrivateKeyId,
+                        principalTable: "PrivateKeys",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LoadBalancers",
                 columns: table => new
                 {
@@ -96,37 +126,25 @@ namespace tilework.core.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Certificates",
+                name: "LoadBalancerCertificates",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Fqdn = table.Column<string>(type: "TEXT", nullable: false),
-                    AuthorityId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    PrivateKeyId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExpiresAtUtc = table.Column<long>(type: "INTEGER", nullable: true),
-                    CertificateDataString = table.Column<string>(type: "TEXT", nullable: true),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    BaseLoadBalancerId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    BalancerId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CertificateId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Certificates", x => x.Id);
+                    table.PrimaryKey("PK_LoadBalancerCertificates", x => new { x.BalancerId, x.CertificateId });
                     table.ForeignKey(
-                        name: "FK_Certificates_CertificateAuthorities_AuthorityId",
-                        column: x => x.AuthorityId,
-                        principalTable: "CertificateAuthorities",
+                        name: "FK_LoadBalancerCertificates_Certificates_CertificateId",
+                        column: x => x.CertificateId,
+                        principalTable: "Certificates",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Certificates_LoadBalancers_BaseLoadBalancerId",
-                        column: x => x.BaseLoadBalancerId,
+                        name: "FK_LoadBalancerCertificates_LoadBalancers_BalancerId",
+                        column: x => x.BalancerId,
                         principalTable: "LoadBalancers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Certificates_PrivateKeys_PrivateKeyId",
-                        column: x => x.PrivateKeyId,
-                        principalTable: "PrivateKeys",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -170,11 +188,6 @@ namespace tilework.core.Migrations
                 column: "AuthorityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Certificates_BaseLoadBalancerId",
-                table: "Certificates",
-                column: "BaseLoadBalancerId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Certificates_Name",
                 table: "Certificates",
                 column: "Name",
@@ -184,6 +197,11 @@ namespace tilework.core.Migrations
                 name: "IX_Certificates_PrivateKeyId",
                 table: "Certificates",
                 column: "PrivateKeyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoadBalancerCertificates_CertificateId",
+                table: "LoadBalancerCertificates",
+                column: "CertificateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LoadBalancers_Name",
@@ -229,7 +247,7 @@ namespace tilework.core.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Certificates");
+                name: "LoadBalancerCertificates");
 
             migrationBuilder.DropTable(
                 name: "Rules");
@@ -238,13 +256,16 @@ namespace tilework.core.Migrations
                 name: "Targets");
 
             migrationBuilder.DropTable(
+                name: "Certificates");
+
+            migrationBuilder.DropTable(
+                name: "LoadBalancers");
+
+            migrationBuilder.DropTable(
                 name: "CertificateAuthorities");
 
             migrationBuilder.DropTable(
                 name: "PrivateKeys");
-
-            migrationBuilder.DropTable(
-                name: "LoadBalancers");
 
             migrationBuilder.DropTable(
                 name: "TargetGroups");

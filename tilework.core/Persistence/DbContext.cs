@@ -57,6 +57,21 @@ public class TileworkContext : DbContext
                 v => v.Value.GetHashCode(),
                 v => new Host(v.Value)));
 
+        modelBuilder.Entity<BaseLoadBalancer>()
+            .HasMany(s => s.Certificates)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "LoadBalancerCertificates",
+                r => r.HasOne<Certificate>()
+                    .WithMany()
+                    .HasForeignKey("CertificateId")
+                    .OnDelete(DeleteBehavior.Restrict),
+
+                l => l.HasOne<BaseLoadBalancer>()
+                    .WithMany()
+                    .HasForeignKey("BalancerId")
+                    .OnDelete(DeleteBehavior.Cascade)
+            );
 
         // Certificate management
         modelBuilder.Entity<Certificate>()

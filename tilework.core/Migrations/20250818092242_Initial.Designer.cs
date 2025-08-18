@@ -11,7 +11,7 @@ using Tilework.Core.Persistence;
 namespace tilework.core.Migrations
 {
     [DbContext(typeof(TileworkContext))]
-    [Migration("20250818085358_Initial")]
+    [Migration("20250818092242_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -24,6 +24,21 @@ namespace tilework.core.Migrations
                 .HasAnnotation("Proxies:CheckEquality", false)
                 .HasAnnotation("Proxies:LazyLoading", true);
 
+            modelBuilder.Entity("LoadBalancerCertificates", b =>
+                {
+                    b.Property<Guid>("BalancerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CertificateId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("BalancerId", "CertificateId");
+
+                    b.HasIndex("CertificateId");
+
+                    b.ToTable("LoadBalancerCertificates");
+                });
+
             modelBuilder.Entity("Tilework.Persistence.CertificateManagement.Models.Certificate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -31,9 +46,6 @@ namespace tilework.core.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("AuthorityId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("BaseLoadBalancerId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CertificateDataString")
@@ -59,8 +71,6 @@ namespace tilework.core.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorityId");
-
-                    b.HasIndex("BaseLoadBalancerId");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -250,6 +260,21 @@ namespace tilework.core.Migrations
                     b.HasDiscriminator().HasValue("NetworkLoadBalancer");
                 });
 
+            modelBuilder.Entity("LoadBalancerCertificates", b =>
+                {
+                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", null)
+                        .WithMany()
+                        .HasForeignKey("BalancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tilework.Persistence.CertificateManagement.Models.Certificate", null)
+                        .WithMany()
+                        .HasForeignKey("CertificateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Tilework.Persistence.CertificateManagement.Models.Certificate", b =>
                 {
                     b.HasOne("Tilework.Persistence.CertificateManagement.Models.CertificateAuthority", "Authority")
@@ -257,10 +282,6 @@ namespace tilework.core.Migrations
                         .HasForeignKey("AuthorityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", null)
-                        .WithMany("Certificates")
-                        .HasForeignKey("BaseLoadBalancerId");
 
                     b.HasOne("Tilework.Persistence.CertificateManagement.Models.PrivateKey", "PrivateKey")
                         .WithMany()
@@ -340,11 +361,6 @@ namespace tilework.core.Migrations
                         .IsRequired();
 
                     b.Navigation("TargetGroup");
-                });
-
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", b =>
-                {
-                    b.Navigation("Certificates");
                 });
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.TargetGroup", b =>
