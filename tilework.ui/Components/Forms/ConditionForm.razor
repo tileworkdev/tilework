@@ -1,50 +1,35 @@
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Models
 @using Tilework.Core.Enums
-@using System.Linq
 @using System.Collections.Generic
 
 @namespace Tilework.Ui.Components.Forms
 
 <MudPaper Class="mb-4 p-4">
-    <div class="d-flex justify-end mb-2">
+    <div class="d-flex justify-space-between mb-2">
+        <MudText Typo="Typo.subtitle1">@Condition.Type.GetDescription()</MudText>
         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Outlined" OnClick="OnDelete" />
     </div>
-    <MudGrid>
-        <MudItem xs="4">
-            <MudSelect T="ConditionType" @bind-Value="Condition.Type" Label="Condition type" Variant="Variant.Outlined" Required="true">
-                @foreach (var type in AvailableTypes)
-                {
-                    <MudSelectItem Value="@type">@type.GetDescription()</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="8">
-            <MudStack Spacing="2">
-                @for (var i = 0; i < Condition.Values.Count; i++)
-                {
-                    var index = i;
-                    <MudGrid>
-                        <MudItem xs="10">
-                            <MudTextField @bind-Value="Condition.Values[index]" Label="Value" Variant="Variant.Outlined" Required="true" />
-                        </MudItem>
-                        <MudItem xs="2" Class="d-flex align-center">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => RemoveValue(index))" />
-                        </MudItem>
-                    </MudGrid>
-                }
-                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddValue" />
-            </MudStack>
-        </MudItem>
-    </MudGrid>
+    <MudStack Spacing="2">
+        @for (var i = 0; i < Condition.Values.Count; i++)
+        {
+            var index = i;
+            <MudGrid>
+                <MudItem xs="10">
+                    <MudTextField @bind-Value="Condition.Values[index]" Label="Value" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="2" Class="d-flex align-center">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => RemoveValue(index))" />
+                </MudItem>
+            </MudGrid>
+        }
+        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddValue" />
+    </MudStack>
 </MudPaper>
 
 @code {
     [Parameter] public Condition Condition { get; set; }
-    [Parameter] public IEnumerable<ConditionType> UsedTypes { get; set; } = Enumerable.Empty<ConditionType>();
     [Parameter] public EventCallback OnDelete { get; set; }
-
-    private IEnumerable<ConditionType> AvailableTypes => Enum.GetValues<ConditionType>().Except(UsedTypes);
 
     protected override void OnParametersSet()
     {
