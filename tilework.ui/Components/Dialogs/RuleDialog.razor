@@ -27,10 +27,12 @@
                         Add condition
                     </MudButton>
                 </ActivatorContent>
-                @foreach (var type in AvailableConditionTypes)
-                {
-                    <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
-                }
+                <ChildContent>
+                    @foreach (var type in AvailableConditionTypes)
+                    {
+                        <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
+                    }
+                </ChildContent>
             </MudMenu>
 
             <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
