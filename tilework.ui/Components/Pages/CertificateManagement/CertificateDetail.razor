@@ -96,8 +96,15 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _certificateManagementService.DeleteCertificate(_item.Id);
-            _navigationManager.NavigateTo("/cm/certificates");
+            try {
+                await _certificateManagementService.DeleteCertificate(_item.Id);
+                _navigationManager.NavigateTo("/cm/certificates");
+                _snackbar.Add($"Certificate deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete certificate: {ex.Message}", Severity.Error);
+            }
         }
     }
 

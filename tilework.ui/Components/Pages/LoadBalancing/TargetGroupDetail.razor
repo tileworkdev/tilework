@@ -87,9 +87,16 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _loadBalancerService.DeleteTargetGroup(_item.Id);
-            await _loadBalancerService.ApplyConfiguration();
-            _navigationManager.NavigateTo("/lb/targetgroups");
+            try {
+                await _loadBalancerService.DeleteTargetGroup(_item.Id);
+                await _loadBalancerService.ApplyConfiguration();
+                _navigationManager.NavigateTo("/lb/targetgroups");
+                _snackbar.Add($"Target group deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete target group: {ex.Message}", Severity.Error);
+            }
         }
     }
 

@@ -172,9 +172,16 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _loadBalancerService.DeleteLoadBalancer(_item.Id);
-            await _loadBalancerService.ApplyConfiguration();
-            _navigationManager.NavigateTo("/lb/loadbalancers");
+            try {
+                await _loadBalancerService.DeleteLoadBalancer(_item.Id);
+                await _loadBalancerService.ApplyConfiguration();
+                _navigationManager.NavigateTo("/lb/loadbalancers");
+                _snackbar.Add($"Load balancer deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete load balancer: {ex.Message}", Severity.Error);
+            }
         }
     }
 

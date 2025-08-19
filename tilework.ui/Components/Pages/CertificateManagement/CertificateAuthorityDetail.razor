@@ -73,8 +73,15 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _certificateManagementService.DeleteCertificateAuthority(_item.Id);
-            _navigationManager.NavigateTo("/cm/authorities");
+            try {
+                await _certificateManagementService.DeleteCertificateAuthority(_item.Id);
+                _navigationManager.NavigateTo("/cm/authorities");
+                _snackbar.Add($"Certificate authority deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete certificate authority: {ex.Message}", Severity.Error);
+            }
         }
     }
 }
