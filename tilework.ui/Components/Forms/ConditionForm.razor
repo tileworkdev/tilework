@@ -5,25 +5,26 @@
 
 @namespace Tilework.Ui.Components.Forms
 
-<MudPaper Class="mb-4 p-4">
-    <div class="d-flex justify-space-between mb-2">
-        <MudText Typo="Typo.subtitle1">@Condition.Type.GetDescription()</MudText>
-        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Outlined" OnClick="OnDelete" />
-    </div>
-    <MudStack Spacing="2">
+<MudPaper Class="mb-4 p-4" Outlined="true">
+    <MudStack Spacing="1" Class="ma-1" StretchItems="StretchItems.Start" Row>
+        <MudText Typo="Typo.subtitle2">@Condition.Type.GetDescription()</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="OnDelete" />
+    </MudStack>
+    <MudDivider/>
+    <MudStack Spacing="1" Class="ma-2">
         @for (var i = 0; i < Condition.Values.Count; i++)
         {
             var index = i;
-            <MudGrid>
-                <MudItem xs="10">
-                    <MudTextField @bind-Value="Condition.Values[index]" Label="Value" Variant="Variant.Outlined" Required="true" />
-                </MudItem>
-                <MudItem xs="2" Class="d-flex align-center">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => RemoveValue(index))" />
-                </MudItem>
-            </MudGrid>
+            <MudStack StretchItems="StretchItems.Start" Row>
+                <MudTextField @bind-Value="Condition.Values[index]" Label="Value" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Text" Size="Size.Small" OnClick="@(() => RemoveValue(index))" />
+            </MudStack>
         }
-        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddValue" />
+        <MudStack AlignItems="AlignItems.Start" Row>
+            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddValue">
+                Add OR condition value
+            </MudButton>
+        </MudStack>
     </MudStack>
 </MudPaper>
 

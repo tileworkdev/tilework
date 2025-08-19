@@ -21,19 +21,21 @@
                                OnDelete="@(() => RemoveCondition(condition))" />
             }
 
-            <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
-                <ActivatorContent>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-                        Add condition
-                    </MudButton>
-                </ActivatorContent>
-                <ChildContent>
-                    @foreach (var type in AvailableConditionTypes)
-                    {
-                        <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
-                    }
-                </ChildContent>
-            </MudMenu>
+            <MudStack AlignItems="AlignItems.Start" Row>
+                <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+                            Add condition
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        @foreach (var type in AvailableConditionTypes)
+                        {
+                            <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
+                        }
+                    </ChildContent>
+                </MudMenu>
+            </MudStack>
 
             <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
 
@@ -66,11 +68,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (Rule.Conditions == null || !Rule.Conditions.Any())
-        {
-            Rule.Conditions = new List<Condition> { new Condition() };
-        }
-
         if (Rule.TargetGroup != Guid.Empty)
         {
             SelectedTargetGroup = Rule.TargetGroup;
