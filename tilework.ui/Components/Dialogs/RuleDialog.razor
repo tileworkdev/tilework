@@ -1,5 +1,6 @@
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Models
+@using Tilework.Core.Enums
 @using System.Linq
 @using System.Collections.Generic
 
@@ -17,13 +18,22 @@
             @foreach (var condition in Rule.Conditions)
             {
                 <ConditionForm Condition="condition"
-                               UsedTypes="@Rule.Conditions.Where(c => c != condition).Select(c => c.Type)"
                                OnDelete="@(() => RemoveCondition(condition))" />
             }
 
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Disabled="@(!CanAddCondition)" OnClick="AddCondition" Class="mb-4">
-                Add condition
-            </MudButton>
+            <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+                        Add condition
+                    </MudButton>
+                </ActivatorContent>
+                <ChildContent>
+                    @foreach (var type in AvailableConditionTypes)
+                    {
+                        <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
+                    }
+                </ChildContent>
+            </MudMenu>
 
             <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
 
@@ -82,15 +92,13 @@
 
     void Cancel() => MudDialog.Cancel();
 
-    bool CanAddCondition => Enum.GetValues<ConditionType>().Except(Rule.Conditions.Select(c => c.Type)).Any();
+    IEnumerable<ConditionType> AvailableConditionTypes => Enum.GetValues<ConditionType>().Except(Rule.Conditions.Select(c => c.Type));
 
-    void AddCondition()
+    bool CanAddCondition => AvailableConditionTypes.Any();
+
+    void AddCondition(ConditionType type)
     {
-        var availableType = Enum.GetValues<ConditionType>().Except(Rule.Conditions.Select(c => c.Type)).FirstOrDefault();
-        if (!EqualityComparer<ConditionType>.Default.Equals(availableType, default))
-        {
-            Rule.Conditions.Add(new Condition { Type = availableType });
-        }
+        Rule.Conditions.Add(new Condition { Type = type });
     }
 
     void RemoveCondition(Condition condition)
