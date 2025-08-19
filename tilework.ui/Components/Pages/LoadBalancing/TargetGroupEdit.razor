@@ -14,6 +14,8 @@
 
 @page "/lb/targetgroups/{Id:guid}/edit"
 
+<PageTitle>Edit target group</PageTitle>
+
 <GenericEditview T="EditTargetGroupForm" Model="@form" Title="@_item.Name" 
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/targetgroups"))"
                  OnValidSubmit="Submit" />

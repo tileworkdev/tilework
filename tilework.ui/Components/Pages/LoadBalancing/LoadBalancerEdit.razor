@@ -12,6 +12,8 @@
 @inject ISnackbar Snackbar
 @page "/lb/loadbalancers/{Id:guid}/edit"
 
+<PageTitle>Edit load balancer</PageTitle>
+
 @if(form is EditApplicationLoadBalancerForm albForm)
 {
     <GenericEditview T="EditApplicationLoadBalancerForm" Model="@albForm" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
