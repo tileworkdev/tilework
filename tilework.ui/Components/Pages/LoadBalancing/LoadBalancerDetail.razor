@@ -18,7 +18,7 @@
 
 <PageTitle>Load balancer details</PageTitle>
 
-<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
+<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions" OnTabChanged="OnTabChanged">
     <DetailContent>
         <MudGrid Spacing="5">
             <MudItem>
@@ -109,7 +109,7 @@
             </MudTabPanel>
         }
         <MudTabPanel Text="Monitoring">
-            <MudText>TODO</MudText>
+
         </MudTabPanel>
 
     </TabContent>
@@ -378,5 +378,13 @@
     private async Task GetCertificates()
     {
         _certificates = await _loadBalancerService.GetCertificates(_item);
+    }
+
+    private async Task OnTabChanged(int index)
+    {
+        if(index == 1 && _item != null && _item.Enabled == true)
+        {
+            var stats = await _loadBalancerService.GetStatistics(_item.Id, DateTimeOffset.UtcNow - TimeSpan.FromHours(1), DateTimeOffset.UtcNow);
+        }
     }
 }

@@ -9,6 +9,7 @@ using Tilework.Core.Enums;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
 using Tilework.Exceptions.Core;
+using System.Net;
 
 namespace Tilework.Core.Services;
 
@@ -48,7 +49,7 @@ public class DockerServiceManager : IContainerManager
     {
         var labelFilters = new Dictionary<string, bool>
         {
-            { "TileworkManaged=true", true }
+            { "dev.tilework.managed=true", true }
         };
 
         var networks = await _client.Networks.ListNetworksAsync(
@@ -71,7 +72,7 @@ public class DockerServiceManager : IContainerManager
     public async Task<ContainerNetwork> CreateNetwork(string name)
     {
         var tags = new Dictionary<string, string> {
-            {"TileworkManaged", "true"}
+            {"dev.tilework.managed", "true"}
         };
 
         var response = await _client.Networks.CreateNetworkAsync(
@@ -91,16 +92,32 @@ public class DockerServiceManager : IContainerManager
         await _client.Networks.DeleteNetworkAsync(id);
     }
 
+    public async Task<IPAddress?> GetContainerAddress(string id)
+    {
+
+        var info = await _client.Containers.InspectContainerAsync(id);
+
+        if (info.NetworkSettings.Networks.Count == 0)
+            return null;
+
+        if (info.NetworkSettings.Networks.Count > 1)
+            _logger.LogWarning("Container is attached on multiple networks. Getting address on first");
+
+        var network = info.NetworkSettings.Networks.First();
+
+        return IPAddress.Parse(network.Value.IPAddress);
+    }
+
 
     public async Task<List<Container>> ListContainers(string? module = null)
     {
         var labelFilters = new Dictionary<string, bool>
         {
-            { "TileworkManaged=true", true }
+            { "dev.tilework.managed=true", true }
         };
 
         if (!string.IsNullOrEmpty(module))
-            labelFilters.Add($"Module={module}", true);
+            labelFilters.Add($"dev.tilework.module={module}", true);
 
 
         var containers = await _client.Containers.ListContainersAsync(
@@ -148,8 +165,8 @@ public class DockerServiceManager : IContainerManager
 
 
         var tags = new Dictionary<string, string> {
-            {"TileworkManaged", "true"},
-            {"Module", module}
+            {"dev.tilework.managed", "true"},
+            {"dev.tilework.module", module}
         };
 
         var exposedPorts = new Dictionary<string, EmptyStruct>();

@@ -13,7 +13,6 @@ using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.LoadBalancing.Haproxy;
 
 using Tilework.CertificateManagement.Interfaces;
-using Tilework.Persistence.CertificateManagement.Models;
 using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
@@ -27,15 +26,14 @@ public class LoadBalancerService : ILoadBalancerService
     private readonly TileworkContext _dbContext;
     private readonly LoadBalancerConfiguration _settings;
     private readonly ILoadBalancingConfigurator _configurator;
+    private readonly ILoadBalancingMonitor _monitor;
     private readonly ILogger<LoadBalancerService> _logger;
     private readonly IMapper _mapper;
-    private readonly ICertificateManagementService _certificateManagementService;
 
 
     public LoadBalancerService(IServiceProvider serviceProvider,
                                TileworkContext dbContext,
                                IMapper mapper,
-                               ICertificateManagementService certificateManagementService,
                                IOptions<LoadBalancerConfiguration> settings,
                                ILogger<LoadBalancerService> logger)
     {
@@ -43,8 +41,8 @@ public class LoadBalancerService : ILoadBalancerService
         _logger = logger;
         _settings = settings.Value;
         _configurator = LoadConfigurator(serviceProvider, _settings);
+        _monitor = LoadMonitor(serviceProvider, _settings);
 
-        _certificateManagementService = certificateManagementService;
         _mapper = mapper;
     }
 
@@ -54,6 +52,15 @@ public class LoadBalancerService : ILoadBalancerService
         {
             "haproxy" => serviceProvider.GetRequiredService<HAProxyConfigurator>(),
             _ => throw new ArgumentException($"Invalid configurator in load balancing tile: {_settings.Backend}")
+        };
+    }
+
+    private ILoadBalancingMonitor LoadMonitor(IServiceProvider serviceProvider, LoadBalancerConfiguration settings)
+    {
+        return settings.Backend switch
+        {
+            "haproxy" => serviceProvider.GetRequiredService<HAProxyMonitor>(),
+            _ => throw new ArgumentException($"Invalid monitor in load balancing tile: {_settings.Backend}")
         };
     }
 
@@ -72,10 +79,10 @@ public class LoadBalancerService : ILoadBalancerService
         return dto switch
         {
             ApplicationLoadBalancerDTO appBalancer =>
-                entity == null ? _mapper.Map<ApplicationLoadBalancer>(appBalancer) : _mapper.Map(appBalancer, (ApplicationLoadBalancer) entity),
+                entity == null ? _mapper.Map<ApplicationLoadBalancer>(appBalancer) : _mapper.Map(appBalancer, (ApplicationLoadBalancer)entity),
 
             NetworkLoadBalancerDTO netBalancer =>
-                entity == null ? _mapper.Map<NetworkLoadBalancer>(netBalancer) : _mapper.Map(netBalancer, (NetworkLoadBalancer) entity),
+                entity == null ? _mapper.Map<NetworkLoadBalancer>(netBalancer) : _mapper.Map(netBalancer, (NetworkLoadBalancer)entity),
 
             _ => throw new InvalidOperationException("Invalid balancer type")
         };
@@ -109,7 +116,7 @@ public class LoadBalancerService : ILoadBalancerService
 
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
-        
+
         return MapBalancerToDto(entity);
     }
 
@@ -171,7 +178,7 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         entity.Rules.Add(_mapper.Map<Rule>(rule));
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
@@ -179,7 +186,7 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
         if (r != null)
         {
@@ -191,7 +198,7 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
         entity.Rules.Remove(r);
         _dbContext.LoadBalancers.Update(entity);
@@ -270,7 +277,7 @@ public class LoadBalancerService : ILoadBalancerService
 
         _dbContext.TargetGroups.Update(entity);
         await _dbContext.SaveChangesAsync();
-        
+
         return _mapper.Map<TargetGroupDTO>(entity);
     }
 
@@ -326,5 +333,33 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task Shutdown()
     {
         await _configurator.Shutdown();
+    }
+
+    public async Task<List<LoadBalancingStatistics>> GetStatistics(Guid Id, DateTimeOffset start, DateTimeOffset end)
+    {
+        return await _dbContext.LoadBalancerStatistics
+            .AsNoTracking()
+            .Where(lbs => lbs.LoadBalancerId == Id && lbs.Timestamp >= start && lbs.Timestamp <= end)
+            .Select(s => s.Statistics)
+            .ToListAsync();
+    }
+
+    public async Task FetchStatistics(Guid Id)
+    {
+        var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        if (entity == null)
+            throw new ArgumentNullException("Non-existent load balancer");
+
+        var statistics = await _monitor.GetRealtimeStatistics(entity);
+
+        var statisticsPoint = new LoadBalancerStatistics()
+        {
+            LoadBalancer = entity,
+            Timestamp = DateTimeOffset.UtcNow,
+            Statistics = statistics
+        };
+
+        await _dbContext.LoadBalancerStatistics.AddAsync(statisticsPoint);
+        await _dbContext.SaveChangesAsync();
     }
 }

@@ -226,11 +226,25 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         return new string(pem);
     }
 
+    private async Task<Container> GetContainer(BaseLoadBalancer balancer)
+    {
+        var containers = await GetLoadBalancerContainers();
+        var container = containers.FirstOrDefault(cnt => cnt.Name == balancer.Id.ToString());
+        if (container == null)
+            throw new ArgumentException($"Container for balancer {balancer.Id} not found");
+        return container;
+    }
+
+    public async Task<string> GetLoadBalancerHostname(BaseLoadBalancer balancer)
+    {
+        var container = await GetContainer(balancer);
+        return (await _containerManager.GetContainerAddress(container.Id)).ToString();
+    }
+
 
     public async Task<bool> CheckLoadBalancerStatus(BaseLoadBalancer balancer)
     {
-        var containers = await GetLoadBalancerContainers();
-        var container = containers.First(cnt => cnt.Name == balancer.Id.ToString());
+        var container = await GetContainer(balancer);
         return container.State == ContainerState.Running;
     }
 

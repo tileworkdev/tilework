@@ -2,7 +2,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
+using Coravel;
+
 using Tilework.LoadBalancing.Interfaces;
+using Tilework.Core.Jobs.LoadBalancing;
 
 namespace Tilework.LoadBalancing.Services;
 
@@ -25,6 +28,13 @@ public sealed class LoadBalancingInitializer : IHostedService
 
         var loadBalancerService = scope.ServiceProvider.GetRequiredService<ILoadBalancerService>();
         await loadBalancerService.ApplyConfiguration();
+
+        scope.ServiceProvider.UseScheduler(s =>
+        {
+            s.Schedule<LoadBalancerMonitoringJob>()
+             .EveryMinute()
+             .PreventOverlapping("LoadBalancerMonitoringJob");
+        });
     }
 
     public async Task StopAsync(CancellationToken ct)

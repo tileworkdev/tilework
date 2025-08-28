@@ -34,7 +34,7 @@
 </MudCard>
 @if(TabContent != null)
 {
-    <MudTabs Outlined="true" Class="mb-4">
+    <MudTabs Outlined="true" Class="mb-4" ActivePanelIndexChanged="TabChanged">
         @TabContent
     </MudTabs>
 }
@@ -48,4 +48,12 @@
     [Parameter] public RenderFragment? ActionContent { get; set; }
     [Parameter] public RenderFragment? DetailContent { get; set; }
     [Parameter] public RenderFragment? TabContent { get; set; }
+
+    [Parameter] public EventCallback<int> OnTabChanged { get; set; }
+
+
+    private async Task TabChanged(int index)
+    {
+        await OnTabChanged.InvokeAsync(index);
+    }
 }

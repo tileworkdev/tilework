@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 
+using Coravel;
+
 using Tilework.Core.Interfaces;
 using Tilework.LoadBalancing.Interfaces;
 using Tilework.CertificateManagement.Interfaces;
@@ -16,6 +18,7 @@ using Tilework.CertificateManagement.Mappers;
 using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
+using Tilework.Core.Jobs.LoadBalancing;
 
 namespace Tilework.Core.Services;
 
@@ -27,6 +30,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IContainerManager, DockerServiceManager>();
         services.AddHostedService<CoreInitializer>();
 
+
+        services.AddScheduler();
+        services.AddQueue();
+        services.AddEvents();
+
         return services;
     }
 
@@ -36,16 +44,20 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<LoadBalancerConfiguration>(configuration);
 
-        services.AddAutoMapper(typeof(HAProxyProfile));
+        services.AddAutoMapper(typeof(HAProxyConfigurationProfile));
+        services.AddAutoMapper(typeof(HAProxyMonitoringProfile));
 
         services.AddScoped<ILoadBalancerService, LoadBalancerService>();
         services.AddScoped<HAProxyConfigurator>();
+        services.AddScoped<HAProxyMonitor>();
 
         services.AddDbContext<TileworkContext>(dbContextOptions);
 
         services.AddHostedService<LoadBalancingInitializer>();
 
         services.AddAutoMapper(typeof(LoadBalancingMappingProfile));
+
+        services.AddTransient<LoadBalancerMonitoringJob>();
 
         return services;
     }

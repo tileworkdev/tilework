@@ -6,9 +6,9 @@ using Tilework.Persistence.LoadBalancing.Models;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
-public class HAProxyProfile : Profile
+public class HAProxyConfigurationProfile : Profile
 {
-    public HAProxyProfile()
+    public HAProxyConfigurationProfile()
     {
         CreateMap<BaseLoadBalancer, FrontendSection>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Id.ToString()))
