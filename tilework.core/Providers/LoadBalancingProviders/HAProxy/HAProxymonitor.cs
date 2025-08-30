@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using System.Net.Sockets;
 using System.Text;
 using System.Globalization;
+using System.Text.Json;
 
 using AutoMapper;
 using CsvHelper;
@@ -32,8 +33,11 @@ public class HAProxyMonitor : ILoadBalancingMonitor
         _mapper = mapper;
     }
 
-    public async Task<List<T>> SendReceiveCommand<T>(NetworkStream stream, string command)
+    private async Task<List<T>> SendReceiveCommandCsv<T>(string hostname, int port, string command)
     {
+        using var client = new TcpClient(hostname, port);
+        using var stream = client.GetStream();
+        
         var cmd = Encoding.ASCII.GetBytes($"{command}\n");
         stream.Write(cmd, 0, cmd.Length);
 
@@ -73,6 +77,35 @@ public class HAProxyMonitor : ILoadBalancingMonitor
     }
 
 
+    private async Task<T> SendReceiveCommandKv<T>(string hostname, int port, string command)
+    {
+        using var client = new TcpClient(hostname, port);
+        using var stream = client.GetStream();
+
+        var cmd = Encoding.ASCII.GetBytes($"{command}\n");
+        stream.Write(cmd, 0, cmd.Length);
+
+        var buffer = new byte[65535];
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        var response = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+        var raw = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in response.Split('\n'))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var idx = line.IndexOf(':');
+            if (idx <= 0) continue;
+            var key = line.Substring(0, idx).Trim();
+            var value = line[(idx + 1)..].Trim();
+            if (key.Length == 0) continue;
+            raw[key] = value;
+        }
+
+
+        var jsonString = JsonSerializer.Serialize(raw);
+        return JsonSerializer.Deserialize<T>(jsonString);
+    }
+
     public async Task<LoadBalancingStatistics> GetRealtimeStatistics(BaseLoadBalancer balancer)
     {
         if (await _configurator.CheckLoadBalancerStatus(balancer) == false)
@@ -80,13 +113,12 @@ public class HAProxyMonitor : ILoadBalancingMonitor
 
         var hostname = await _configurator.GetLoadBalancerHostname(balancer);
 
-        using var client = new TcpClient(hostname, 4380);
-        using var stream = client.GetStream();
+        var info = await SendReceiveCommandKv<HAProxyInfo>(hostname, 4380, "show info");
 
-        var response = await SendReceiveCommand<HAProxyStatisticsRow>(stream, "show stat");
+        var stats = await SendReceiveCommandCsv<HAProxyStatisticsRow>(hostname, 4380, "show stat");
 
-        var balancerStats = response.First(r => r.svname == "FRONTEND" && r.pxname == balancer.Id.ToString());
+        var balancerStats = stats.First(r => r.svname == "FRONTEND" && r.pxname == balancer.Id.ToString());
 
-        return _mapper.Map<LoadBalancingStatistics>(balancerStats);
+        return _mapper.Map<LoadBalancingStatistics>((info, balancerStats));
     }
 }

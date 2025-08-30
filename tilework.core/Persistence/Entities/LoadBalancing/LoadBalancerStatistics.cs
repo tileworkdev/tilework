@@ -13,6 +13,7 @@ public class LoadBalancerStatistics
     public virtual BaseLoadBalancer LoadBalancer { get; set; }
 
     public DateTimeOffset Timestamp { get; set; }
+    public TimeSpan Duration { get; set; }
 
     public LoadBalancingStatistics Statistics { get; set; }
 }

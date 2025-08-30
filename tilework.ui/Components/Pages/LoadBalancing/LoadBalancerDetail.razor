@@ -16,6 +16,7 @@
 
 @page "/lb/loadbalancers/{Id:guid}"
 
+
 <PageTitle>Load balancer details</PageTitle>
 
 <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions" OnTabChanged="OnTabChanged">
@@ -109,7 +110,29 @@
             </MudTabPanel>
         }
         <MudTabPanel Text="Monitoring">
-
+            @if (_statsLoading)
+            {
+                <MudProgressCircular Class="my-4" Color="Color.Primary" />
+            }
+            else if (_series?.Any() == true)
+            {
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Current Sessions (last hour)</MudText>
+                    <MudGrid>
+                        <MudItem xs="4">
+                            <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
+                                <MudChart ChartType="ChartType.Line" width="100%" Height="100%"
+                                    XAxisLabels="@_chartLabels" ChartSeries="@_series"
+                                    ChartOptions="@_options" AxisChartOptions="_axisChartOptions" />
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Class="my-4">No statistics available.</MudText>
+            }
         </MudTabPanel>
 
     </TabContent>
@@ -133,6 +156,17 @@
     };
 
     private List<ActionItem> _actions = new List<ActionItem>();
+
+
+    private ChartOptions _options = new ChartOptions()
+    {
+        ShowLegend=false
+    };
+    private AxisChartOptions _axisChartOptions = new AxisChartOptions();
+
+    private string[] _chartLabels = Array.Empty<string>();
+    private List<ChartSeries> _series = new();
+    private bool _statsLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -380,11 +414,49 @@
         _certificates = await _loadBalancerService.GetCertificates(_item);
     }
 
+    private int GetMonitoringTabIndex()
+    {
+        // Count how many tabs are before Monitoring
+        var before = 0;
+        if (_item is ApplicationLoadBalancerDTO)
+            before += 1; // Rules
+        if (_showCertificates)
+            before += 1; // Certificates
+        return before; // Monitoring index
+    }
+
     private async Task OnTabChanged(int index)
     {
-        if(index == 1 && _item != null && _item.Enabled == true)
+        if(_item != null && _item.Enabled == true && index == GetMonitoringTabIndex())
         {
+            _statsLoading = true;
+            StateHasChanged();
+
             var stats = await _loadBalancerService.GetStatistics(_item.Id, DateTimeOffset.UtcNow - TimeSpan.FromHours(1), DateTimeOffset.UtcNow);
+
+            // Order by timestamp to ensure correct sequence
+            var statistics = stats.OrderBy(s => s.Timestamp).ToList();
+
+            _chartLabels = statistics
+                .Select(s =>
+                {
+                    var t = s.Timestamp.ToLocalTime();
+                    return t.Minute % 5 == 0 ? t.ToString("HH:mm") : "";
+                })
+                .ToArray();
+
+            var dataset = statistics.Select(s => (double)(s.Statistics?.TotalSessions ?? 0)).ToArray();
+
+            _series = new List<ChartSeries>() 
+            {
+                new ChartSeries() {
+                    Name = "Sessions",
+                    Data = dataset
+                }
+            };
+
+            _statsLoading = false;
+            StateHasChanged();
         }
     }
 }

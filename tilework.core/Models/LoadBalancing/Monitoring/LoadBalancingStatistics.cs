@@ -2,8 +2,9 @@ namespace Tilework.LoadBalancing.Models;
 
 public class LoadBalancingStatistics
 {
-    public int? CurrentSessions { get; init; }
-    public int? CurrentQueue { get; init; }
+    public TimeSpan Uptime { get; init; }
+    // public int? CurrentSessions { get; init; }
+    // public int? CurrentQueue { get; init; }
 
 
 
@@ -16,7 +17,7 @@ public class LoadBalancingStatistics
 
     // public int? MaxSessions { get; init; }
     // public int? SessionLimit { get; init; }
-    // public long? TotalSessions { get; init; }
+    public long? TotalSessions { get; init; }
 
     // // Traffic
     // public long? BytesIn { get; init; }
