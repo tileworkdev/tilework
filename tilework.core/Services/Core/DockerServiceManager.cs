@@ -104,7 +104,6 @@ public class DockerServiceManager : IContainerManager
             _logger.LogWarning("Container is attached on multiple networks. Getting address on first");
 
         var network = info.NetworkSettings.Networks.First();
-        _logger.LogInformation($"Read address -> {network.Value.IPAddress}");
 
         return IPAddress.Parse(network.Value.IPAddress);
     }

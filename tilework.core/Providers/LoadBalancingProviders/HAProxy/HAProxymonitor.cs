@@ -35,6 +35,7 @@ public class HAProxyMonitor : ILoadBalancingMonitor
 
     private async Task<List<T>> SendReceiveCommandCsv<T>(string hostname, int port, string command)
     {
+        _logger.LogDebug($"Connecting to haproxy stats: {hostname}:{port}");
         using var client = new TcpClient(hostname, port);
         using var stream = client.GetStream();
         
@@ -79,6 +80,7 @@ public class HAProxyMonitor : ILoadBalancingMonitor
 
     private async Task<T> SendReceiveCommandKv<T>(string hostname, int port, string command)
     {
+        _logger.LogDebug($"Connecting to haproxy stats: {hostname}:{port}");
         using var client = new TcpClient(hostname, port);
         using var stream = client.GetStream();
 
