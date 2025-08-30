@@ -14,7 +14,7 @@ public interface ILoadBalancerService
     public Task EnableLoadBalancer(Guid Id);
     public Task DisableLoadBalancer(Guid Id);
 
-    public Task<List<LoadBalancingStatistics>> GetStatistics(Guid Id, DateTimeOffset start, DateTimeOffset end);
+    public Task<List<LoadBalancerStatisticsDTO>> GetStatistics(Guid Id, DateTimeOffset start, DateTimeOffset end);
     public Task FetchStatistics(Guid Id);
 
     public Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer);

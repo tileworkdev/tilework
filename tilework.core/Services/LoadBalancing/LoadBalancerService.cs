@@ -335,13 +335,16 @@ public class LoadBalancerService : ILoadBalancerService
         await _configurator.Shutdown();
     }
 
-    public async Task<List<LoadBalancingStatistics>> GetStatistics(Guid Id, DateTimeOffset start, DateTimeOffset end)
+    public async Task<List<LoadBalancerStatisticsDTO>> GetStatistics(Guid Id, DateTimeOffset start, DateTimeOffset end)
     {
         return await _dbContext.LoadBalancerStatistics
             .AsNoTracking()
             .Where(lbs => lbs.LoadBalancerId == Id && lbs.Timestamp >= start && lbs.Timestamp <= end)
-            .Select(s => s.Statistics)
-            .ToListAsync();
+            .Select(s => new LoadBalancerStatisticsDTO()
+            {
+                Timestamp = s.Timestamp,
+                Statistics = s.Statistics
+            }).ToListAsync();
     }
 
     public async Task FetchStatistics(Guid Id)
