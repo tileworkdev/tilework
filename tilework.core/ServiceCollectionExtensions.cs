@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         services.AddAutoMapper(typeof(HAProxyMonitoringProfile));
 
         services.AddScoped<ILoadBalancerService, LoadBalancerService>();
+        services.AddScoped<ILoadBalancerStatisticsService, LoadBalancerStatisticsService>();
         services.AddScoped<HAProxyConfigurator>();
         services.AddScoped<HAProxyMonitor>();
 

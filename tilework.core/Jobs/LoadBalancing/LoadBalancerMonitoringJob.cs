@@ -7,11 +7,14 @@ namespace Tilework.Core.Jobs.LoadBalancing;
 public class LoadBalancerMonitoringJob : IInvocable
 {
     private readonly ILoadBalancerService _loadBalancerService;
+    private readonly ILoadBalancerStatisticsService _statisticsService;
     private readonly ILogger<LoadBalancerMonitoringJob> _logger;
     public LoadBalancerMonitoringJob(ILoadBalancerService loadBalancerService,
+                                     ILoadBalancerStatisticsService statisticsService,
                                      ILogger<LoadBalancerMonitoringJob> logger)
     {
         _loadBalancerService = loadBalancerService;
+        _statisticsService = statisticsService;
         _logger = logger;
     }
 
@@ -24,7 +27,7 @@ public class LoadBalancerMonitoringJob : IInvocable
         {
             try
             {
-                await _loadBalancerService.FetchStatistics(balancer.Id);
+                await _statisticsService.FetchStatistics(balancer.Id);
             }
             catch(Exception ex)
             {

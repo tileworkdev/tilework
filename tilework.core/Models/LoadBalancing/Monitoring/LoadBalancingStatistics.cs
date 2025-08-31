@@ -1,8 +1,11 @@
+using System.Reflection;
+using Tilework.Core.Attributes;
+
 namespace Tilework.LoadBalancing.Models;
 
 public class LoadBalancingStatistics
 {
-    public TimeSpan Uptime { get; init; }
+    public TimeSpan Uptime { get; set; }
     // public int? CurrentSessions { get; init; }
     // public int? CurrentQueue { get; init; }
 
@@ -17,34 +20,46 @@ public class LoadBalancingStatistics
 
     // public int? MaxSessions { get; init; }
     // public int? SessionLimit { get; init; }
-    public long? TotalSessions { get; init; }
+    [Cumulative]
+    public long? TotalSessions { get; set; }
 
-    // // Traffic
-    // public long? BytesIn { get; init; }
-    // public long? BytesOut { get; init; }
+    [Cumulative]
+    public long? BytesIn { get; set; }
+    [Cumulative]
+    public long? BytesOut { get; set; }
 
-    // // Errors / retries
-    // public long? DeniedRequests { get; init; }
-    // public long? DeniedResponses { get; init; }
-    // public long? RequestErrors { get; init; }
-    // public long? ConnectionErrors { get; init; }
-    // public long? ResponseErrors { get; init; }
+
+    [Cumulative]
+    public long? DeniedRequests { get; init; }
+    [Cumulative]
+    public long? DeniedResponses { get; init; }
+    [Cumulative]
+    public long? RequestErrors { get; init; }
+    [Cumulative]
+    public long? ConnectionErrors { get; init; }
+    [Cumulative]
+    public long? ResponseErrors { get; init; }
     // public long? Retries { get; init; }
     // public long? Redispatches { get; init; }
 
     // // HTTP responses
-    // public long? Responses1xx { get; init; }
-    // public long? Responses2xx { get; init; }
-    // public long? Responses3xx { get; init; }
-    // public long? Responses4xx { get; init; }
-    // public long? Responses5xx { get; init; }
+    [Cumulative]
+    public long? Responses1xx { get; set; }
+    [Cumulative]
+    public long? Responses2xx { get; set; }
+    [Cumulative]
+    public long? Responses3xx { get; set; }
+    [Cumulative]
+    public long? Responses4xx { get; set; }
+    [Cumulative]
+    public long? Responses5xx { get; set; }
     // public long? ResponsesOther { get; init; }
 
-    // // Timings
-    // public int? AvgQueueTimeMs { get; init; }
-    // public int? AvgConnectTimeMs { get; init; }
-    // public int? AvgResponseTimeMs { get; init; }
-    // public int? AvgTotalTimeMs { get; init; }
+
+    public int? AvgQueueTimeMs { get; set; }
+    public int? AvgConnectTimeMs { get; set; }
+    public int? AvgResponseTimeMs { get; set; }
+    public int? AvgTotalTimeMs { get; set; }
 
     // // Status / health
     // public string? Status { get; init; }
@@ -64,4 +79,43 @@ public class LoadBalancingStatistics
     // // Cache
     // public long? CacheHits { get; init; }
     // public long? CacheMisses { get; init; }
+
+    public static LoadBalancingStatistics operator -(LoadBalancingStatistics a, LoadBalancingStatistics b)
+    {
+        var result = new LoadBalancingStatistics();
+
+        foreach (var prop in typeof(LoadBalancingStatistics).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (!prop.CanRead || !prop.CanWrite) continue;
+
+            var aVal = prop.GetValue(a);
+            var bVal = prop.GetValue(b);
+
+            if (prop.IsDefined(typeof(CumulativeAttribute), inherit: true))
+            {
+                object? diff = null;
+
+                if (prop.PropertyType == typeof(TimeSpan))
+                    diff = (TimeSpan)aVal - (TimeSpan)bVal;
+                else if (prop.PropertyType == typeof(long?))
+                    diff = (aVal is long la && bVal is long lb) ? la - lb : null;
+                else if (prop.PropertyType == typeof(int?))
+                    diff = (aVal is int ia && bVal is int ib) ? ia - ib : null;
+                else if (prop.PropertyType == typeof(double?))
+                    diff = (aVal is double da && bVal is double db) ? da - db : null;
+                else if (prop.PropertyType == typeof(decimal?))
+                    diff = (aVal is decimal dca && bVal is decimal dcb) ? dca - dcb : null;
+                else
+                    throw new InvalidOperationException($"Cannot process data type {prop.PropertyType}");
+
+                prop.SetValue(result, diff);
+            }
+            else
+            {
+                prop.SetValue(result, aVal);
+            }
+        }
+
+        return result;
+    }
 }

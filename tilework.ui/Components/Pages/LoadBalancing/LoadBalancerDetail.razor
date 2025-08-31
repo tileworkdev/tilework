@@ -9,6 +9,7 @@
 @namespace Tilework.Ui.Components.Pages
 
 @inject ILoadBalancerService _loadBalancerService
+@inject ILoadBalancerStatisticsService _statisticsService
 @inject IDialogService _dialogService
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
@@ -450,7 +451,7 @@
             _statsLoading = true;
             StateHasChanged();
 
-            var stats = await _loadBalancerService.GetStatistics(_item.Id, DateTimeOffset.UtcNow - TimeSpan.FromHours(1), DateTimeOffset.UtcNow);
+            var stats = await _statisticsService.GetStatistics(_item.Id, DateTimeOffset.UtcNow - TimeSpan.FromHours(1), DateTimeOffset.UtcNow);
 
             // Order by timestamp to ensure correct sequence
             var statistics = stats.OrderBy(s => s.Timestamp).ToList();
