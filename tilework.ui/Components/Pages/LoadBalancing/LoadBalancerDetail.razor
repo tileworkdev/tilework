@@ -116,18 +116,36 @@
             }
             else if (_series?.Any() == true)
             {
-                <MudPaper Class="pa-4" Outlined="true">
-                    <MudText Typo="Typo.subtitle1" Class="mb-2">Current Sessions (last hour)</MudText>
-                    <MudGrid>
-                        <MudItem xs="4">
-                            <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
-                                <MudChart ChartType="ChartType.Line" width="100%" Height="100%"
-                                    XAxisLabels="@_chartLabels" ChartSeries="@_series"
-                                    ChartOptions="@_options" AxisChartOptions="_axisChartOptions" />
-                            </MudPaper>
-                        </MudItem>
-                    </MudGrid>
-                </MudPaper>
+                <MudCard Outlined="true" Class="mb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Monitoring</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="Icons.Material.Filled.Home" Color="Color.Inherit" />
+                            <MudIconButton Icon="Icons.Material.Filled.Settings" Color="Color.Inherit" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="4">
+                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
+                                    <MudChart ChartType="ChartType.Line" width="100%" Height="100%"
+                                        XAxisLabels="@_chartLabels" ChartSeries="@_series"
+                                        ChartOptions="@_options" AxisChartOptions="_axisChartOptions" />
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
             }
             else
             {
