@@ -19,6 +19,9 @@ using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
 using Tilework.Core.Jobs.LoadBalancing;
+using Tilework.Monitoring.Interfaces;
+using Tilework.Monitoring.Collectd;
+using Tilework.Monitoring.Models;
 
 namespace Tilework.Core.Services;
 
@@ -34,6 +37,20 @@ public static class ServiceCollectionExtensions
         services.AddScheduler();
         services.AddQueue();
         services.AddEvents();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMonitoring(this IServiceCollection services,
+                                                   IConfiguration configuration,
+                                                   Action<DbContextOptionsBuilder> dbContextOptions)
+    {
+        services.Configure<DataCollectorConfiguration>(configuration);
+
+        services.AddScoped<IDataCollectorConfigurator, CollectdConfigurator>();
+        services.AddScoped<DataCollectorService>();
+
+        services.AddHostedService<MonitoringInitializer>();
 
         return services;
     }
@@ -83,4 +100,5 @@ public static class ServiceCollectionExtensions
         
         return services;
     }
+    
 }

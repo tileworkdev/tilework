@@ -27,6 +27,7 @@ var dbContextOptions = DbContextOptionsHelper.Configure(connectionString);
 
 
 builder.Services.AddCoreServices();
+builder.Services.AddMonitoring(builder.Configuration.GetSection("Monitoring"), dbContextOptions);
 builder.Services.AddLoadBalancing(builder.Configuration.GetSection("LoadBalancing"), dbContextOptions);
 builder.Services.AddCertificateManagement(builder.Configuration.GetSection("CertificateManagement"), dbContextOptions);
 

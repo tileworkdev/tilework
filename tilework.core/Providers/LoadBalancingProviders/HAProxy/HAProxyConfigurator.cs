@@ -14,7 +14,9 @@ using Tilework.Core.Models;
 
 using Tilework.CertificateManagement.Interfaces;
 using Tilework.CertificateManagement.Enums;
+using Tilework.Monitoring.Enums;
 using Tilework.Persistence.LoadBalancing.Models;
+using Tilework.LoadBalancing.Services;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
@@ -25,18 +27,21 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerConfiguration _settings;
     private readonly ICertificateManagementService _certificateManagementService;
+    private readonly DataCollectorService _dataCollectorService;
     private readonly ILogger<HAProxyConfigurator> _logger;
     private readonly IMapper _mapper;
 
     public HAProxyConfigurator(IOptions<LoadBalancerConfiguration> settings,
                                IContainerManager containerManager,
                                ICertificateManagementService certificateManagementService,
+                               DataCollectorService dataCollectorService,
                                ILogger<HAProxyConfigurator> logger,
                                IMapper mapper)
     {
         _logger = logger;
         _settings = settings.Value;
         _certificateManagementService = certificateManagementService;
+        _dataCollectorService = dataCollectorService;
         _containerManager = containerManager;
         _mapper = mapper;
     }
@@ -199,6 +204,22 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
                     await _containerManager.StopContainer(container.Id);
                 }
+            }
+
+
+            if (lb.Enabled == true && _dataCollectorService.IsMonitored(lb.Id.ToString()) == false)
+            {
+                var monitoringSource = new MonitoringSource()
+                {
+                    Type = MonitoringSourceType.HAPROXY,
+                    Host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString()),
+                    Port = 4380
+                };
+                await _dataCollectorService.StartMonitoring(monitoringSource);
+            }
+            else if (lb.Enabled == false && _dataCollectorService.IsMonitored(lb.Id.ToString()) == true)
+            {
+                await _dataCollectorService.StopMonitoring(lb.Id.ToString());
             }
         }
 
