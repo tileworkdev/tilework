@@ -7,6 +7,7 @@ using Tilework.Core.Models;
 using Tilework.Core.Enums;
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Models;
+using Tilework.Monitoring.Enums;
 
 namespace Tilework.Monitoring.Collectd;
 
@@ -59,6 +60,26 @@ public class CollectdConfigurator : IDataCollectorConfigurator
 
     private void UpdateConfigFile(string path, List<MonitoringSource> sources)
     {
+        var config = new Configuration(path);
+        config.Load();
+
+        var plugin = new PluginSection()
+        {
+            Name = "python",
+            Imports = ["collectd_haproxy"],
+            Modules = sources.Where(s => s.Type == MonitoringSourceType.HAPROXY)
+                             .Select(s => (ModuleSection) new HaproxyModuleSection()
+                             {
+                                Name = "haproxy",
+                                Instance = s.Name,
+                                Endpoint = $"{s.Host.Value}:{s.Port}"
+                             }).ToList()
+        };
+
+        config.Plugins.Clear();
+        config.Plugins.Add(plugin);
+
+        config.Save();
     }
 
 
@@ -94,8 +115,9 @@ public class CollectdConfigurator : IDataCollectorConfigurator
         }
         else
         {
-            _logger.LogInformation($"Signaling container for data collector of configuration changes");
-            await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
+            _logger.LogInformation($"Restarting container for data collector");
+            await _containerManager.StopContainer(container.Id);
+            await _containerManager.StartContainer(container.Id);
         }
     }
 
