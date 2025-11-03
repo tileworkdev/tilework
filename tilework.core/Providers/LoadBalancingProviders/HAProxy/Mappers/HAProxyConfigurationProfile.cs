@@ -19,7 +19,22 @@ public class HAProxyConfigurationProfile : Profile
                 if (src is ApplicationLoadBalancer alb)
                 {
                     if (alb.Protocol == AlbProtocol.HTTPS)
+                    {
                         dest.Bind.EnableTls = true;
+                    }
+
+                    dest.AddHeaders.Add(new HttpHeader()
+                    {
+                        Name = "X-Forwarded-Proto",
+                        Value = alb.Protocol == AlbProtocol.HTTPS ? "https" : "http"
+                    });
+
+                    dest.AddHeaders.Add(new HttpHeader()
+                    {
+                        Name = "X-Forwarded-Port",
+                        Value = src.Port.ToString()
+                    });
+                        
 
                     dest.Mode = Mode.HTTP;
                     if (alb.Rules != null)

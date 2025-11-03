@@ -17,6 +17,9 @@ public class FrontendSection : ConfigSection
     [Statement("default_backend")]
     public string DefaultBackend { get; set; }
 
+    [Statement("http-request add-header")]
+    public List<HttpHeader> AddHeaders { get; set; } = new List<HttpHeader>();
+
     public FrontendSection() : base("frontend")
     {
     }
