@@ -21,4 +21,6 @@ public interface IContainerManager
     public Task StartContainer(string id);
     public Task StopContainer(string id);
     public Task KillContainer(string id, UnixSignal signal);
+
+    public Task<ContainerCommandResult> ExecuteContainerCommand(string id, string command);
 }

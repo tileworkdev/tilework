@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 namespace Tilework.Monitoring.Collectd;
 
-public class Configuration
+public class CollectdConfiguration
 {
     public RootSection Root { get; set; } = new RootSection();
     public List<PluginSection> Plugins { get; set; } = new();
 
     private readonly string _filename;
 
-    public Configuration(string filename)
+    public CollectdConfiguration(string filename)
     {
         _filename = filename;
     }

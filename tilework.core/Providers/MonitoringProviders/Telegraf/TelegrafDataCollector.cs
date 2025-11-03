@@ -2,6 +2,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
 
+using Tomlyn;
+using Tomlyn.Model;
+
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
 using Tilework.Core.Enums;
@@ -9,22 +12,22 @@ using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Models;
 using Tilework.Monitoring.Enums;
 
-namespace Tilework.Monitoring.Collectd;
+namespace Tilework.Monitoring.Telegraf;
 
-public class CollectdConfigurator : IDataCollectorConfigurator
+public class TelegrafConfigurator : IDataCollectorConfigurator
 {
-    public string ServiceName => "Collectd";
+    public string ServiceName => "Telegraf";
 
     private string ContainerName => $"DataCollector-{ServiceName}";
 
     private readonly IContainerManager _containerManager;
     private readonly DataCollectorConfiguration _settings;
-    private readonly ILogger<CollectdConfigurator> _logger;
+    private readonly ILogger<TelegrafConfigurator> _logger;
     private readonly IMapper _mapper;
 
-    public CollectdConfigurator(IOptions<DataCollectorConfiguration> settings,
+    public TelegrafConfigurator(IOptions<DataCollectorConfiguration> settings,
                                IContainerManager containerManager,
-                               ILogger<CollectdConfigurator> logger,
+                               ILogger<TelegrafConfigurator> logger,
                                IMapper mapper)
     {
         _logger = logger;
@@ -55,36 +58,72 @@ public class CollectdConfigurator : IDataCollectorConfigurator
         }
         catch (Exception ex)
         {
-            _logger.LogCritical($"Failed to create container for collectd data collector: {ex.ToString()}");
+            _logger.LogCritical($"Failed to create container for telegraf data collector: {ex.ToString()}");
             throw;
         }
     }
 
+    private static T GetOrCreate<T>(TomlTable parent, string name)
+        where T : class, new()
+    {
+        if (parent.TryGetValue(name, out var obj) && obj is T t)
+            return t;
+
+        var created = new T();
+        parent[name] = created;
+        return created;
+    }
+
     private void UpdateConfigFile(string path, List<Monitoring.Models.Monitor> monitors)
     {
-        var config = new CollectdConfiguration(path);
-        config.Load();
+        var text = File.ReadAllText(path);
+        var config = Toml.ToModel(text);
 
-        var sources = monitors.Select(m => m.Source).ToList();
-
-        var plugin = new PluginSection()
+        if (monitors.Count() > 0)
         {
-            Name = "python",
-            Imports = ["collectd_haproxy"],
-            Modules = sources.Where(s => s.Type == MonitoringSourceType.HAPROXY)
-                             .Select(s => (ModuleSection) new HaproxyModuleSection()
-                             {
-                                Name = "haproxy",
-                                Instance = s.Name,
-                                Endpoint = $"{s.Host.Value}:{s.Port}"
-                             }).ToList()
-        };
+            var inputs = GetOrCreate<TomlTable>(config, "inputs");
 
-        config.Plugins.Clear();
-        config.Plugins.Add(plugin);
+            foreach (var monitor in monitors)
+            {
+                var source = monitor.Source;
 
-        config.Save();
+                switch (source.Type)
+                {
+                    case MonitoringSourceType.HAPROXY:
+                    {
+                        var array = GetOrCreate<TomlTableArray>(inputs, "inputs");
+
+                        array.Add(new TomlTable
+                        {
+                            ["servers"] = new TomlArray { $"tcp://{source.Host}:{source.Port}" },
+                            ["interval"] = "60s",
+                            ["tags"] = new TomlTable { ["instance"] = source.Name }
+                        });
+
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+
+        text = Toml.FromModel(config);
+        File.WriteAllText(path, text);
     }
+    
+    TomlTableArray EnsureArray(TomlTable parent, string key)
+    {
+        if (!parent.TryGetValue(key, out var obj) || obj is not TomlTableArray arr)
+        {
+            arr = new TomlTableArray();
+            parent[key] = arr;
+        }
+        return arr;
+    }
+
 
 
 
@@ -95,16 +134,16 @@ public class CollectdConfigurator : IDataCollectorConfigurator
             container = await CreateContainer();
 
         var localConfigPath = Path.GetTempFileName();
-        var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "collectd.conf");
+        var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "telegraf.conf");
 
         if (!File.Exists(configPath))
-            throw new InvalidOperationException($"No default collectd configuration file found at {configPath}");
+            throw new InvalidOperationException($"No default telegraf configuration file found at {configPath}");
 
         try
         {
             File.Copy(configPath, localConfigPath, overwrite: true);
             UpdateConfigFile(localConfigPath, monitors);
-            await _containerManager.CopyFileToContainer(container.Id, localConfigPath, "/etc/collectd/collectd.conf");
+            await _containerManager.CopyFileToContainer(container.Id, localConfigPath, "/etc/telegraf/telegraf.conf");
         }
         finally
         {
@@ -130,7 +169,7 @@ public class CollectdConfigurator : IDataCollectorConfigurator
         var container = await GetContainer();
         if (container != null)
         {
-            _logger.LogInformation($"Stopping and deleting collectd data collector");
+            _logger.LogInformation($"Stopping and deleting telegraf data collector");
             if (container.State == ContainerState.Running)
                 await _containerManager.StopContainer(container.Id);
             await _containerManager.DeleteContainer(container.Id);

@@ -21,7 +21,9 @@ using Tilework.Core.Persistence;
 using Tilework.Core.Jobs.LoadBalancing;
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Collectd;
+using Tilework.Monitoring.Telegraf;
 using Tilework.Monitoring.Models;
+using Tilework.Monitoring.Influxdb;
 
 namespace Tilework.Core.Services;
 
@@ -45,9 +47,11 @@ public static class ServiceCollectionExtensions
                                                    IConfiguration configuration,
                                                    Action<DbContextOptionsBuilder> dbContextOptions)
     {
-        services.Configure<DataCollectorConfiguration>(configuration);
+        services.Configure<DataCollectorConfiguration>(configuration.GetSection("DataCollector"));
+        services.Configure<DataPersistenceConfiguration>(configuration.GetSection("DataPersistence"));
 
-        services.AddScoped<IDataCollectorConfigurator, CollectdConfigurator>();
+        services.AddScoped<IDataCollectorConfigurator, TelegrafConfigurator>();
+        services.AddScoped<IDataPersistenceConfigurator, InfluxdbConfigurator>();
         services.AddScoped<DataCollectorService>();
 
         services.AddHostedService<MonitoringInitializer>();

@@ -1,3 +1,6 @@
+using System.Net;
+using System.Text;
+
 using Microsoft.Extensions.Logging;
 
 using Docker.DotNet;
@@ -9,7 +12,7 @@ using Tilework.Core.Enums;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
 using Tilework.Exceptions.Core;
-using System.Net;
+
 
 namespace Tilework.Core.Services;
 
@@ -295,5 +298,46 @@ public class DockerServiceManager : IContainerManager
         {
             Signal = DockerSignalMapper.MapUnixSignalToDockerSignal(signal)
         });
+    }
+
+
+    public async Task<ContainerCommandResult> ExecuteContainerCommand(string id, string command)
+    {
+        var execCreate = await _client.Exec.ExecCreateContainerAsync(id, new ContainerExecCreateParameters
+        {
+            AttachStdout = true,
+            AttachStderr = true,
+            Cmd = ["sh", "-c", command]
+        });
+
+
+        using var stream = await _client.Exec.StartAndAttachContainerExecAsync(execCreate.ID, false);
+
+
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+        var buffer = new byte[8192];
+        MultiplexedStream.ReadResult result;
+        do
+        {
+            result = await stream.ReadOutputAsync(buffer, 0, buffer.Length, default);
+            if (result.EOF) break;
+
+            var text = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            if (result.Target == MultiplexedStream.TargetStream.StandardOut)
+                stdout.Append(text);
+            else
+                stderr.Append(text);
+        }
+        while (!result.EOF);
+
+        var execInspect = await _client.Exec.InspectContainerExecAsync(execCreate.ID);
+
+        return new ContainerCommandResult()
+        {
+            ExitCode = (int)execInspect.ExitCode,
+            Stdout = stdout.ToString(),
+            Stderr = stderr.ToString()
+        };
     }
 }

@@ -10,19 +10,22 @@ namespace Tilework.LoadBalancing.Services;
 
 public class DataCollectorService
 {
-    private readonly IDataCollectorConfigurator _configurator;
+    private readonly IDataCollectorConfigurator _collectorConfigurator;
+    private readonly IDataPersistenceConfigurator _persistenceConfigurator;
     private readonly TileworkContext _dbContext;
     private readonly DataCollectorConfiguration _settings;
     private readonly ILogger<DataCollectorService> _logger;
 
     private List<MonitoringSource> _sources = new();
 
-    public DataCollectorService(IDataCollectorConfigurator configurator,
+    public DataCollectorService(IDataCollectorConfigurator collectorConfigurator,
+                                IDataPersistenceConfigurator persistenceConfigurator,
                                 TileworkContext dbContext,
                                 IOptions<DataCollectorConfiguration> settings,
                                 ILogger<DataCollectorService> logger)
     {
-        _configurator = configurator;
+        _collectorConfigurator = collectorConfigurator;
+        _persistenceConfigurator = persistenceConfigurator;
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
@@ -59,11 +62,21 @@ public class DataCollectorService
 
     public async Task ApplyConfiguration()
     {
-        await _configurator.ApplyConfiguration(_sources);
+        await _persistenceConfigurator.ApplyConfiguration();
+
+        var monitors = (await Task.WhenAll(
+            _sources.Select(async s => new Monitoring.Models.Monitor
+            {
+                Source = s,
+                Target = await _persistenceConfigurator.GetTarget(s)
+            })
+        )).ToList();
+
+        await _collectorConfigurator.ApplyConfiguration(monitors);
     }
 
     public async Task Shutdown()
     {
-        await _configurator.Shutdown();
+        await _collectorConfigurator.Shutdown();
     }
 }

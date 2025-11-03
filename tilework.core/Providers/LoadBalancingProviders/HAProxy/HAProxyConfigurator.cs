@@ -15,6 +15,7 @@ using Tilework.Core.Models;
 using Tilework.CertificateManagement.Interfaces;
 using Tilework.CertificateManagement.Enums;
 using Tilework.Monitoring.Enums;
+using Tilework.Monitoring.Models;
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.LoadBalancing.Services;
 
@@ -211,6 +212,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             {
                 var monitoringSource = new MonitoringSource()
                 {
+                    Name = lb.Name,
                     Type = MonitoringSourceType.HAPROXY,
                     Host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString()),
                     Port = 4380
