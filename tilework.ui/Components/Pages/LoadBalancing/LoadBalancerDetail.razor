@@ -253,9 +253,17 @@
         {
             if(_item is ApplicationLoadBalancerDTO appBalancer)
             {
-                await _loadBalancerService.AddRule(appBalancer, rule);
-                await GetRules();
-                await _loadBalancerService.ApplyConfiguration();
+                try
+                {
+                    await _loadBalancerService.AddRule(appBalancer, rule);
+                    await GetRules();
+                    await _loadBalancerService.ApplyConfiguration();
+                    _snackbar.Add("Rule added successfully!", Severity.Success);
+                }
+                catch(Exception ex)
+                {
+                    _snackbar.Add($"Failed to add rule: {ex.Message}", Severity.Error);
+                }
             }
             else
             {
