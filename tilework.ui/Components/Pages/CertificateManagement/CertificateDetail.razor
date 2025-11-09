@@ -24,6 +24,10 @@
                 <MudText Typo="Typo.subtitle2">Authority</MudText>
                 <MudText Typo="Typo.body2">@_certificateManagementService.GeCertificateAuthority(_item.Authority).Result?.Name</MudText>
             </MudItem>
+            <MudItem>
+                <MudText Typo="Typo.subtitle2">Status</MudText>
+                <MudText Typo="Typo.body2">@_item.Status</MudText>
+            </MudItem>
         </MudGrid>
     </DetailContent>
 </GenericDetailview>
