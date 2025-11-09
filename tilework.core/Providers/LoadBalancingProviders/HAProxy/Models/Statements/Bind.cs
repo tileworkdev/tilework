@@ -6,7 +6,6 @@ public class Bind
     public int Port { get; set; }
     
     public bool EnableTls { get; set; }
-    public string CertFile { get; set; }
 
     public Bind() { }
 
@@ -18,7 +17,7 @@ public class Bind
     public override string ToString()
     {
         if(EnableTls)
-            return $"{Address}:{Port} ssl crt /usr/local/etc/haproxy/certs/{CertFile}";
+            return $"{Address}:{Port} ssl crt-list /usr/local/etc/haproxy/certs/certlist.txt";
         else
             return $"{Address}:{Port}";
     }

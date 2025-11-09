@@ -86,6 +86,61 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         haproxyConfig.Save();
     }
 
+    private async Task SaveCertificates(Container container, BaseLoadBalancer loadBalancer)
+    {
+        var certlist = new StringBuilder();
+
+        var activeCertificates = loadBalancer.Certificates.Where(
+            c => c.Status == CertificateStatus.ACTIVE &&
+            c.PrivateKey != null);
+
+        foreach (var cert in activeCertificates)
+        {
+            var certData = string.Join("\n", cert.CertificateData.Select(c => GetCertPem(c)));
+            var keyData = GetPrivateKeyPem(cert.PrivateKey.KeyData);
+
+            var keyType = cert.PrivateKey.KeyData is RSA ? "rsa" : "ecdsa";
+
+            var certFilePath = Path.GetTempFileName();
+
+            var containerFilePath = $"/usr/local/etc/haproxy/certs/{cert.Fqdn}.{keyType}.pem";
+
+            try
+            {
+                File.WriteAllText(certFilePath, $"{keyData}\n{certData}");
+                await _containerManager.CopyFileToContainer(
+                    container.Id,
+                    certFilePath,
+                    containerFilePath
+                );
+            }
+            finally
+            {
+                if (File.Exists(certFilePath))
+                    File.Delete(certFilePath);
+            }
+
+            certlist.Append($"{containerFilePath}\n");
+        }
+
+        var certListFilePath = Path.GetTempFileName();
+        
+        try
+        {
+            File.WriteAllText(certListFilePath, certlist.ToString());
+            await _containerManager.CopyFileToContainer(
+                container.Id,
+                certListFilePath,
+                "/usr/local/etc/haproxy/certs/certlist.txt"
+            );
+        }
+        finally
+        {
+            if (File.Exists(certListFilePath))
+                File.Delete(certListFilePath);
+        }
+    }
+
     public async Task ApplyConfiguration(List<BaseLoadBalancer> config)
     {
         if (string.IsNullOrEmpty(_settings.BackendImage))
@@ -141,41 +196,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     File.Delete(localConfigPath);
             }
 
-
-
-            var certs = lb.Certificates.Where(c => c.Status == CertificateStatus.ACTIVE && c.PrivateKey != null);
-
-            var sb = new StringBuilder();
-
-            foreach (var certificate in lb.Certificates)
-            {
-                var certData = string.Join("\n", certificate.CertificateData.Select(c => GetCertPem(c)));
-                var keyData = GetPrivateKeyPem(certificate.PrivateKey.KeyData);
-
-                sb.Append(certData);
-                sb.Append("\n");
-                sb.Append(keyData);
-                sb.Append("\n");
-            }
-            
-            var certFilePath = Path.GetTempFileName();
-
-            try
-            {
-                File.WriteAllText(certFilePath, sb.ToString());
-                await _containerManager.CopyFileToContainer(
-                    container.Id,
-                    certFilePath,
-                    $"/usr/local/etc/haproxy/certs/{name}.pem"
-                );
-            }
-            finally
-            {
-                if (File.Exists(certFilePath))
-                    File.Delete(certFilePath);
-            }
-
-
+            await SaveCertificates(container, lb);
 
 
             if (container.State != ContainerState.Running)
