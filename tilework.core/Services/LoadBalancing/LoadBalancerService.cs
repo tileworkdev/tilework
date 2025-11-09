@@ -67,6 +67,24 @@ public class LoadBalancerService : ILoadBalancerService
         }
     }
 
+    private static bool RequiresCertificate(BaseLoadBalancer balancer)
+    {
+        return balancer switch
+        {
+            ApplicationLoadBalancer appBalancer => appBalancer.Protocol == AlbProtocol.HTTPS,
+            NetworkLoadBalancer netBalancer => netBalancer.Protocol == NlbProtocol.TLS,
+            _ => false
+        };
+    }
+
+    private static void EnsureCertificatesPresentIfRequired(BaseLoadBalancer balancer)
+    {
+        if (RequiresCertificate(balancer) && (balancer.Certificates == null || balancer.Certificates.Count == 0))
+        {
+            throw new InvalidOperationException($"Load balancer {balancer.Name} requires at least one certificate before it can be enabled.");
+        }
+    }
+
     
 
     private BaseLoadBalancerDTO MapBalancerToDto(BaseLoadBalancer entity)
@@ -134,7 +152,14 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task EnableLoadBalancer(Guid Id)
     {
-        var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        var entity = await _dbContext.LoadBalancers
+                                     .Include(lb => lb.Certificates)
+                                     .FirstOrDefaultAsync(lb => lb.Id == Id);
+
+        if (entity == null)
+            throw new ArgumentException($"Load balancer {Id} not found.");
+
+        EnsureCertificatesPresentIfRequired(entity);
         entity.Enabled = true;
         _dbContext.LoadBalancers.Update(entity);
 
