@@ -187,6 +187,8 @@
     private List<ChartSeries> _series = new();
     private bool _statsLoading = false;
 
+    private int GetMaxRulePriority() => _rules.Count() > 0 ? _rules.Max(p => p.Priority) + 1 : 0;
+
     protected override async Task OnInitializedAsync()
     {
         _item = await _loadBalancerService.GetLoadBalancer(Id);
@@ -243,10 +245,10 @@
         var rule = new RuleDTO();
         var parameters = new DialogParameters<RuleDialog>();
 
-        var maxPriorty = _rules.Max(p => p.Priority) + 1;
+        var maxPriorty = GetMaxRulePriority();
 
         // By default the new rule should have the last priority
-        rule.Priority = maxPriorty;
+        rule.Priority = GetMaxRulePriority();
 
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
@@ -285,7 +287,7 @@
 
     private async Task EditRule(RuleDTO rule)
     {
-        var maxPriorty = _rules.Max(p => p.Priority) + 1;
+        var maxPriorty = GetMaxRulePriority();
 
         var ruleEdit = new RuleDTO
         {
