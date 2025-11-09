@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
@@ -140,43 +141,41 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                     File.Delete(localConfigPath);
             }
 
-            // FIXME: If there are existing certificates in the container, they are not deleted
+
+
+            var certs = lb.Certificates.Where(c => c.Status == CertificateStatus.ACTIVE && c.PrivateKey != null);
+
+            var sb = new StringBuilder();
+
             foreach (var certificate in lb.Certificates)
             {
-                if (certificate.Status != CertificateStatus.ACTIVE)
-                {
-                    _logger.LogError($"Ignoring LB certificate {certificate.Id}: Invalid status {certificate.Status}");
-                    continue;
-                }
-
-                if (certificate.PrivateKey == null)
-                {
-                    _logger.LogError($"Ignoring LB certificate {certificate.Id}: Cannot find private key");
-                    continue;
-                }
-
                 var certData = string.Join("\n", certificate.CertificateData.Select(c => GetCertPem(c)));
                 var keyData = GetPrivateKeyPem(certificate.PrivateKey.KeyData);
 
-                var keyType = certificate.PrivateKey.KeyData is RSA ? "rsa" : "ecdsa";
-
-                var certFilePath = Path.GetTempFileName();
-
-                try
-                {
-                    File.WriteAllText(certFilePath, $"{keyData}\n{certData}");
-                    await _containerManager.CopyFileToContainer(
-                        container.Id,
-                        certFilePath,
-                        $"/usr/local/etc/haproxy/certs/{certificate.Fqdn}.{keyType}.pem"
-                    );
-                }
-                finally
-                {
-                    if (File.Exists(certFilePath))
-                        File.Delete(certFilePath);
-                }
+                sb.Append(certData);
+                sb.Append("\n");
+                sb.Append(keyData);
+                sb.Append("\n");
             }
+            
+            var certFilePath = Path.GetTempFileName();
+
+            try
+            {
+                File.WriteAllText(certFilePath, sb.ToString());
+                await _containerManager.CopyFileToContainer(
+                    container.Id,
+                    certFilePath,
+                    $"/usr/local/etc/haproxy/certs/{name}.pem"
+                );
+            }
+            finally
+            {
+                if (File.Exists(certFilePath))
+                    File.Delete(certFilePath);
+            }
+
+
 
 
             if (container.State != ContainerState.Running)

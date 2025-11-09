@@ -21,6 +21,7 @@ public class HAProxyConfigurationProfile : Profile
                     if (alb.Protocol == AlbProtocol.HTTPS)
                     {
                         dest.Bind.EnableTls = true;
+                        dest.Bind.CertFile = $"{src.Id}.pem";
                     }
 
                     dest.AddHeaders.Add(new HttpHeader()
@@ -70,7 +71,10 @@ public class HAProxyConfigurationProfile : Profile
                 else if (src is NetworkLoadBalancer nlb)
                 {
                     if (nlb.Protocol == NlbProtocol.TLS)
+                    {
                         dest.Bind.EnableTls = true;
+                        dest.Bind.CertFile = $"{src.Id}.pem";
+                    }
 
                     dest.Mode = Mode.TCP;
                     dest.DefaultBackend = nlb.TargetGroup.Id.ToString();
