@@ -191,7 +191,7 @@ public class CertificateManagementService : ICertificateManagementService
     public async Task RevokeCertificate(Guid Id)
     {
         var certificate = await _dbContext.Certificates.FindAsync(Id);
-        RevokeCertificate(certificate);
+        await RevokeCertificate(certificate);
     }
 
     public async Task DeleteCertificate(Guid Id)
