@@ -115,7 +115,7 @@ public class AcmeVerificationService
         var rule = new RuleDTO()
         {
             TargetGroup = tg.Id,
-            Priority = lowestPriority <= 0 ? lowestPriority - 1 : -1,
+            Priority = 0,
             Conditions = new List<Condition>()
             {
                 new Condition() {
