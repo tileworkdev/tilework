@@ -17,7 +17,7 @@ public class Bind
     public override string ToString()
     {
         if(EnableTls)
-            return $"{Address}:{Port} ssl crt /usr/local/etc/haproxy/certs";
+            return $"{Address}:{Port} ssl crt-list /usr/local/etc/haproxy/certs/certlist.txt";
         else
             return $"{Address}:{Port}";
     }

@@ -187,6 +187,8 @@
     private List<ChartSeries> _series = new();
     private bool _statsLoading = false;
 
+    private int GetMaxRulePriority() => _rules.Count() > 0 ? _rules.Max(p => p.Priority) + 1 : 0;
+
     protected override async Task OnInitializedAsync()
     {
         _item = await _loadBalancerService.GetLoadBalancer(Id);
@@ -242,6 +244,12 @@
     {
         var rule = new RuleDTO();
         var parameters = new DialogParameters<RuleDialog>();
+
+        var maxPriorty = GetMaxRulePriority();
+
+        // By default the new rule should have the last priority
+        rule.Priority = GetMaxRulePriority();
+
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
 
@@ -253,9 +261,22 @@
         {
             if(_item is ApplicationLoadBalancerDTO appBalancer)
             {
-                await _loadBalancerService.AddRule(appBalancer, rule);
-                await GetRules();
-                await _loadBalancerService.ApplyConfiguration();
+                try
+                {
+                    if(rule.Priority < 0)
+                        rule.Priority = 0;
+                    if(rule.Priority > maxPriorty)
+                        rule.Priority = maxPriorty;
+
+                    await _loadBalancerService.AddRule(appBalancer, rule);
+                    await GetRules();
+                    await _loadBalancerService.ApplyConfiguration();
+                    _snackbar.Add("Rule added successfully!", Severity.Success);
+                }
+                catch(Exception ex)
+                {
+                    _snackbar.Add($"Failed to add rule: {ex.Message}", Severity.Error);
+                }
             }
             else
             {
@@ -266,6 +287,8 @@
 
     private async Task EditRule(RuleDTO rule)
     {
+        var maxPriorty = GetMaxRulePriority();
+
         var ruleEdit = new RuleDTO
         {
             Id = rule.Id,
@@ -294,9 +317,22 @@
         {
             if (_item is ApplicationLoadBalancerDTO appBalancer)
             {
-                await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
-                await GetRules();
-                await _loadBalancerService.ApplyConfiguration();
+                try
+                {
+                    if(ruleEdit.Priority < 0)
+                        ruleEdit.Priority = 0;
+                    if(ruleEdit.Priority > maxPriorty)
+                        ruleEdit.Priority = maxPriorty;
+
+                    await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
+                    await GetRules();
+                    await _loadBalancerService.ApplyConfiguration();
+                    _snackbar.Add("Rule updated successfully!", Severity.Success);
+                }
+                catch(Exception ex)
+                {
+                    _snackbar.Add($"Failed to update rule: {ex.Message}", Severity.Error);
+                }
             }
             else
             {

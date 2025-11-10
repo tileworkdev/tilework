@@ -53,6 +53,38 @@ public class LoadBalancerService : ILoadBalancerService
         };
     }
 
+    private static void ValidateRulePriority(ICollection<Rule> rules, int newPriority)
+    {
+        if (newPriority < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(newPriority), newPriority, "Rule priority cannot be negative.");
+        }
+
+        var maxPriority = rules.Count == 0 ? -1 : rules.Max(r => r.Priority);
+        if (newPriority > maxPriority + 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(newPriority), newPriority, $"Rule priority cannot be greater than {maxPriority + 1}.");
+        }
+    }
+
+    private static bool RequiresCertificate(BaseLoadBalancer balancer)
+    {
+        return balancer switch
+        {
+            ApplicationLoadBalancer appBalancer => appBalancer.Protocol == AlbProtocol.HTTPS,
+            NetworkLoadBalancer netBalancer => netBalancer.Protocol == NlbProtocol.TLS,
+            _ => false
+        };
+    }
+
+    private static void EnsureCertificatesPresentIfRequired(BaseLoadBalancer balancer)
+    {
+        if (RequiresCertificate(balancer) && (balancer.Certificates == null || balancer.Certificates.Count == 0))
+        {
+            throw new InvalidOperationException($"Load balancer {balancer.Name} requires at least one certificate before it can be enabled.");
+        }
+    }
+
     
 
     private BaseLoadBalancerDTO MapBalancerToDto(BaseLoadBalancer entity)
@@ -120,7 +152,14 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task EnableLoadBalancer(Guid Id)
     {
-        var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        var entity = await _dbContext.LoadBalancers
+                                     .Include(lb => lb.Certificates)
+                                     .FirstOrDefaultAsync(lb => lb.Id == Id);
+
+        if (entity == null)
+            throw new ArgumentException($"Load balancer {Id} not found.");
+
+        EnsureCertificatesPresentIfRequired(entity);
         entity.Enabled = true;
         _dbContext.LoadBalancers.Update(entity);
 
@@ -142,6 +181,7 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task DisableLoadBalancer(Guid Id)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        
         entity.Enabled = false;
         _dbContext.LoadBalancers.Update(entity);
 
@@ -170,6 +210,16 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
         var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        if (entity == null)
+            throw new ArgumentNullException(nameof(balancer));
+
+        ValidateRulePriority(entity.Rules, rule.Priority);
+        
+        foreach (var existingRule in entity.Rules.Where(r => r.Priority >= rule.Priority))
+        {
+            existingRule.Priority += 1;
+        }
+
         entity.Rules.Add(_mapper.Map<Rule>(rule));
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
@@ -178,20 +228,95 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
         var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
-        if (r != null)
+        if (entity == null)
+            throw new ArgumentNullException(nameof(balancer));
+
+        var ruleEntity = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
+        if (ruleEntity == null)
+            return;
+
+        ValidateRulePriority(entity.Rules, rule.Priority);
+
+        await using var tx = await _dbContext.Database.BeginTransactionAsync();
+
+        try
         {
-            _mapper.Map(rule, r);
-            _dbContext.LoadBalancers.Update(entity);
+            var newPriority = rule.Priority;
+            var originalPriority = ruleEntity.Priority;
+                
+            if (newPriority != originalPriority)
+            {
+                // first move the original rule out of the way in order to not trip a constraint error
+                ruleEntity.Priority = -1;
+                _dbContext.Entry(ruleEntity).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+
+
+                if (newPriority < originalPriority)
+                {
+                    // rule moved up. Bump down rules from new priority to old priority
+                    var rulesToAdjust = entity.Rules.Where(r => r.Id != rule.Id &&
+                                                                r.Priority >= newPriority &&
+                                                                r.Priority < originalPriority)
+                                                    .OrderByDescending(r => r.Priority);
+
+                    foreach (var ruleToAdjust in rulesToAdjust)
+                    {
+                        ruleToAdjust.Priority += 1;
+                        _dbContext.Entry(ruleToAdjust).State = EntityState.Modified;
+                        await _dbContext.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    // rule moved down. Bump up rules from new priority to old priority
+                    var rulesToAdjust = entity.Rules.Where(r => r.Id != rule.Id &&
+                                                                r.Priority <= newPriority &&
+                                                                r.Priority > originalPriority)
+                                                    .OrderBy(r => r.Priority);
+
+                    foreach (var ruleToAdjust in rulesToAdjust)
+                    {
+                        ruleToAdjust.Priority -= 1;
+                        _dbContext.Entry(ruleToAdjust).State = EntityState.Modified;
+                        await _dbContext.SaveChangesAsync();
+                    }
+                }
+            }
+
+            var moddedRules = entity.Rules.OrderBy(r => r.Priority);
+
+            _mapper.Map(rule, ruleEntity);
+            _dbContext.Entry(ruleEntity).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            _dbContext.ChangeTracker.Clear();
+            throw;
         }
     }
 
     public async Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
         var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
-        entity.Rules.Remove(r);
+        if (entity == null)
+            throw new ArgumentNullException();
+
+        var ruleEntity = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
+        if (ruleEntity == null)
+            return;
+
+        var pri = ruleEntity.Priority;
+        entity.Rules.Remove(ruleEntity);
+
+        // bump up lower rules
+        foreach (var lowerRule in entity.Rules.Where(r => r.Priority > pri))
+        {
+            lowerRule.Priority -= 1;
+        }
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
     }

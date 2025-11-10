@@ -24,6 +24,10 @@
                 <MudText Typo="Typo.subtitle2">Authority</MudText>
                 <MudText Typo="Typo.body2">@_certificateManagementService.GeCertificateAuthority(_item.Authority).Result?.Name</MudText>
             </MudItem>
+            <MudItem>
+                <MudText Typo="Typo.subtitle2">Status</MudText>
+                <MudText Typo="Typo.body2">@_item.Status</MudText>
+            </MudItem>
         </MudGrid>
     </DetailContent>
 </GenericDetailview>
@@ -42,10 +46,23 @@
 
     private List<ActionItem> _actions = new List<ActionItem>();
 
-    protected override async Task OnInitializedAsync()
+    private async Task RefreshItem()
     {
         _item = await _certificateManagementService.GetCertificate(Id);
-        if (_item == null)
+        if(_item == null)
+            throw new InvalidOperationException();
+
+        SetActions();
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await RefreshItem();
+        }
+        catch(InvalidOperationException)
         {
             _navigationManager.NavigateTo("/cm/certificates");
             _snackbar.Add($"Certificate {Id} not found", Severity.Error);
@@ -53,9 +70,6 @@
         }
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
-
-
-        SetActions();
     }
 
     private async Task ConfirmRevoke()
@@ -73,7 +87,7 @@
         {
             try {
                 await _certificateManagementService.RevokeCertificate(_item.Id);
-                SetActions();
+                await RefreshItem();
                 _snackbar.Add("Certificate revoked successfully!", Severity.Success);
             }
             catch(Exception ex)

@@ -1,3 +1,5 @@
+using Tilework.Core.Utils;
+
 namespace Tilework.Core.Models;
 
 public readonly record struct Host(string Value)
@@ -11,8 +13,8 @@ public readonly record struct Host(string Value)
         { result = new Host(NormalizeIp(input)); return true; }
 
         // DNS name?
-        var normalized = NormalizeHost(input);
-        if (IsValidHostname(normalized))
+        var normalized = HostnameUtils.NormalizeHost(input);
+        if (HostnameUtils.IsValidHostname(normalized))
         { result = new Host(normalized); return true; }
 
         result = default; return false;
@@ -22,25 +24,4 @@ public readonly record struct Host(string Value)
         TryParse(input, out var v) ? v : throw new FormatException("Invalid host/IP.");
 
     static string NormalizeIp(string s) => s;
-    static string NormalizeHost(string s)
-    {
-        s = s.Trim().TrimEnd('.').ToLowerInvariant();
-        // IDN -> punycode
-        var idn = new System.Globalization.IdnMapping();
-        var labels = s.Split('.');
-        for (int i = 0; i < labels.Length; i++) labels[i] = idn.GetAscii(labels[i]);
-        return string.Join('.', labels);
-    }
-    static bool IsValidHostname(string h)
-    {
-        if (h.Length is 0 or > 253) return false;
-        foreach (var label in h.Split('.'))
-        {
-            if (label.Length is 0 or > 63) return false;
-            if (label.StartsWith('-') || label.EndsWith('-')) return false;
-            foreach (var ch in label)
-                if (!(ch is >= 'a' and <= 'z' || ch is >= '0' and <= '9' || ch == '-')) return false;
-        }
-        return true;
-    }
 }

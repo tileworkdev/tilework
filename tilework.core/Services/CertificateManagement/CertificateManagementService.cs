@@ -90,14 +90,21 @@ public class CertificateManagementService : ICertificateManagementService
             PrivateKey = key
         };
 
-         _dbContext.Certificates.Add(certificate);
+        try
+        {
+            _dbContext.Certificates.Add(certificate);
+            // TODO: Currently, the process is synchronous so either everything succeeds or nothing.
+            // Eventually, the signing process should be done in the background and we could save the
+            // thing here
+            // await _dbContext.SaveChangesAsync();
 
-        // TODO: Currently, the process is synchronous so either everything succeeds or nothing.
-        // Eventually, the signing process should be done in the background and we could save the
-        // thing here
-        // await _dbContext.SaveChangesAsync();
-
-        await SignCertificate(certificate);
+            await SignCertificate(certificate);
+        }
+        catch
+        {
+            _dbContext.ChangeTracker.Clear();
+            throw;
+        }
 
         return _mapper.Map<CertificateDTO>(certificate);
     }
@@ -118,7 +125,7 @@ public class CertificateManagementService : ICertificateManagementService
         {
             Algorithm = algorithm,
             KeyData = keyAlg
-        };        
+        };
     }
 
     private CertificateRequest GenerateCsr(Certificate certificate)
@@ -191,7 +198,7 @@ public class CertificateManagementService : ICertificateManagementService
     public async Task RevokeCertificate(Guid Id)
     {
         var certificate = await _dbContext.Certificates.FindAsync(Id);
-        RevokeCertificate(certificate);
+        await RevokeCertificate(certificate);
     }
 
     public async Task DeleteCertificate(Guid Id)
