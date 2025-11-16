@@ -77,6 +77,7 @@ public class DataCollectorService
 
     public async Task Shutdown()
     {
+        await _persistenceConfigurator.Shutdown();
         await _collectorConfigurator.Shutdown();
     }
 }

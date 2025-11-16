@@ -11,7 +11,6 @@ using Tilework.Core.Enums;
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Models;
 using Tilework.Core.Services;
-using Tilework.Monitoring.Influxdb.Models;
 
 namespace Tilework.Monitoring.Influxdb;
 
