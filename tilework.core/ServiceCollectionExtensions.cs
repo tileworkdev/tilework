@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IServiceManager, SystemdServiceManager>();
         services.AddSingleton<IContainerManager, DockerServiceManager>();
+        services.AddSingleton<HttpApiFactoryService>();
         services.AddHostedService<CoreInitializer>();
 
 
