@@ -82,6 +82,7 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
         if (monitors.Count() > 0)
         {
             var inputs = GetOrCreate<TomlTable>(config, "inputs");
+            var outputs = GetOrCreate<TomlTable>(config, "outputs");
 
             foreach (var monitor in monitors)
             {
@@ -106,6 +107,32 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
                     default:
                         break;
                 }
+
+                var target = monitor.Target;
+
+                switch(target.Type)
+                {
+                    case MonitoringPersistenceType.INFLUXDB:
+                    {
+                        var array = GetOrCreate<TomlTableArray>(outputs, "influxdb_v2");
+
+                        array.Add(new TomlTable
+                        {
+                            ["urls"] = new TomlArray { $"http://{target.Host.Value}:{target.Port}" },
+                            ["token"] = target.Password,
+                            ["bucket"] = source.Name,
+                            ["tagpass"] = new TomlTable
+                            {
+                                ["instance"] = new TomlArray { source.Name }
+                            }
+                        });
+
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
             }
         }
 
@@ -113,18 +140,6 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
         text = Toml.FromModel(config);
         File.WriteAllText(path, text);
     }
-    
-    TomlTableArray EnsureArray(TomlTable parent, string key)
-    {
-        if (!parent.TryGetValue(key, out var obj) || obj is not TomlTableArray arr)
-        {
-            arr = new TomlTableArray();
-            parent[key] = arr;
-        }
-        return arr;
-    }
-
-
 
 
     public async Task ApplyConfiguration(List<Monitoring.Models.Monitor> monitors)

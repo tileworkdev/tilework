@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
@@ -8,6 +10,8 @@ using Tilework.Core.Enums;
 
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Models;
+using Tilework.Core.Services;
+using Tilework.Monitoring.Influxdb.Models;
 
 namespace Tilework.Monitoring.Influxdb;
 
@@ -21,16 +25,21 @@ public class InfluxdbConfigurator : IDataPersistenceConfigurator
     private readonly DataPersistenceConfiguration _settings;
     private readonly ILogger<InfluxdbConfigurator> _logger;
     private readonly IMapper _mapper;
+    private readonly HttpApiFactoryService _apiFactory;
+
+    private string? _adminToken = null;
 
     public InfluxdbConfigurator(IOptions<DataPersistenceConfiguration> settings,
                                IContainerManager containerManager,
                                ILogger<InfluxdbConfigurator> logger,
+                               HttpApiFactoryService httpApiFactoryService,
                                IMapper mapper)
     {
         _logger = logger;
         _settings = settings.Value;
         _containerManager = containerManager;
         _mapper = mapper;
+        _apiFactory = httpApiFactoryService;
     }
 
     private async Task<Container?> GetContainer()
@@ -77,7 +86,8 @@ public class InfluxdbConfigurator : IDataPersistenceConfigurator
             Name = ServiceName,
             Type = Enums.MonitoringPersistenceType.INFLUXDB,
             Host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString()),
-            Port = 8181
+            Port = 8181,
+            Password = await GetAdminToken()
         };
     }
 
@@ -93,7 +103,7 @@ public class InfluxdbConfigurator : IDataPersistenceConfigurator
 
             await _containerManager.ExecuteContainerCommand(container.Id, "influxdb3 show tokens --format json");    
         }
-            
+
 
         if (container.State != ContainerState.Running)
         {
@@ -106,6 +116,8 @@ public class InfluxdbConfigurator : IDataPersistenceConfigurator
             await _containerManager.StopContainer(container.Id);
             await _containerManager.StartContainer(container.Id);
         }
+
+        await GetAdminToken();
     }
 
     public async Task Shutdown()
@@ -120,5 +132,24 @@ public class InfluxdbConfigurator : IDataPersistenceConfigurator
         }
     }
 
-    // private 
+    private async Task<HttpApiService> GetApiService()
+    {
+        var container = await GetContainer();
+        var host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString());
+
+        return _apiFactory.GetApiService($"http://{host.Value}:8181/api/v3/");
+    }
+
+    private async Task<string> GetAdminToken()
+    {
+        if (_adminToken != null)
+            return _adminToken;
+
+        var container = await GetContainer();
+
+        var result = await _containerManager.ExecuteContainerCommand(container.Id, "get_token.sh");
+
+        _adminToken = result.Stdout;
+        return _adminToken;
+    }
 }
