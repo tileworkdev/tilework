@@ -91,11 +91,11 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
                 {
                     case MonitoringSourceType.HAPROXY:
                     {
-                        var array = GetOrCreate<TomlTableArray>(inputs, "inputs");
+                        var array = GetOrCreate<TomlTableArray>(inputs, "haproxy");
 
                         array.Add(new TomlTable
                         {
-                            ["servers"] = new TomlArray { $"tcp://{source.Host}:{source.Port}" },
+                            ["servers"] = new TomlArray { $"tcp://{source.Host.Value}:{source.Port}" },
                             ["interval"] = "60s",
                             ["tags"] = new TomlTable { ["instance"] = source.Name }
                         });
@@ -130,6 +130,19 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
     public async Task ApplyConfiguration(List<Monitoring.Models.Monitor> monitors)
     {
         var container = await GetContainer();
+
+        if (monitors.Count() == 0)
+        {
+            _logger.LogInformation("No active monitors found. Deferring configuration for data collector");
+            if (container != null)
+            {
+                _logger.LogInformation($"Stopping container for data collector");
+                await _containerManager.StopContainer(container.Id);
+            }
+            return;
+        }
+
+        
         if (container == null)
             container = await CreateContainer();
 
