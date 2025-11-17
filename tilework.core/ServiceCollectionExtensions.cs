@@ -19,6 +19,9 @@ using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
 using Tilework.Core.Jobs.LoadBalancing;
+using Tilework.Core.Jobs.CertificateManagement;
+
+using Tilework.Events;
 
 namespace Tilework.Core.Services;
 
@@ -59,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddAutoMapper(typeof(LoadBalancingMappingProfile));
 
         services.AddTransient<LoadBalancerMonitoringJob>();
+        services.AddTransient<LoadBalancerCertificateListener>();
 
         return services;
     }
@@ -80,6 +84,8 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<CertificateManagementInitializer>();
 
         services.AddAutoMapper(typeof(CertificateManagementMappingProfile));
+
+        services.AddTransient<CertificateRenewalJob>();
         
         return services;
     }
