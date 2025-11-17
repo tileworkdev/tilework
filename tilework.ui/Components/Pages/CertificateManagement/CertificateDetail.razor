@@ -122,16 +122,45 @@
         }
     }
 
+    private async Task ConfirmRenew()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you want to renew the certificate?");
+        parameters.Add(x => x.ButtonText, "Renew");
+        parameters.Add(x => x.Color, Color.Primary);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<ConfirmDialog>("Renew", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            try {
+                await _certificateManagementService.RenewCertificate(_item.Id);
+                await RefreshItem();
+                _snackbar.Add("Certificate renewed successfully!", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to renew certificate: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
     private void SetActions()
     {
-        _actions = new List<ActionItem>
+        _actions = new List<ActionItem>();
+
+        if(_item.Status != CertificateStatus.REVOKED)
         {
-            new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
-        };
+            _actions.Add(new ActionItem() { Name = "Renew", OnClick = ConfirmRenew });
+        }
 
         if(_item.Status == CertificateStatus.ACTIVE)
         {
             _actions.Add(new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke });
         }
+
+        _actions.Add(new ActionItem() { Name = "Delete", OnClick = ConfirmDelete });
     }
 }
