@@ -64,16 +64,52 @@ public class CertificateManagementService : ICertificateManagementService
         };
     }
 
+    private bool TryMarkCertificateExpired(Certificate? certificate)
+    {
+        if (certificate == null)
+            return false;
+
+        var expiresAt = certificate.ExpiresAtUtc;
+
+        if (!expiresAt.HasValue || certificate.Status == CertificateStatus.EXPIRED)
+            return false;
+
+        if (expiresAt.Value > DateTimeOffset.UtcNow)
+            return false;
+
+        certificate.Status = CertificateStatus.EXPIRED;
+        return true;
+    }
+
 
     public async Task<List<CertificateDTO>> GetCertificates()
     {
         var entities = await _dbContext.Certificates.ToListAsync();
+        var changed = false;
+
+        foreach (var certificate in entities)
+        {
+            changed |= TryMarkCertificateExpired(certificate);
+        }
+
+        if (changed)
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+
         return _mapper.Map<List<CertificateDTO>>(entities);
     }
 
     public async Task<CertificateDTO?> GetCertificate(Guid Id)
     {
         var entity = await _dbContext.Certificates.FindAsync(Id);
+
+        if (entity == null)
+            return null;
+
+        if (TryMarkCertificateExpired(entity))
+            await _dbContext.SaveChangesAsync();
+
         return _mapper.Map<CertificateDTO>(entity);
     }
 
