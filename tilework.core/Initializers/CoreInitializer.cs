@@ -3,6 +3,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
+using Coravel;
+
 using Tilework.Core.Persistence;
 
 namespace Tilework.Core.Services;
@@ -27,6 +29,8 @@ public sealed class CoreInitializer : IHostedService
         _logger.LogInformation($"Running migrations for context: TileworkContext");
         var dbContext = scope.ServiceProvider.GetRequiredService<TileworkContext>();
         await dbContext.Database.MigrateAsync(ct);
+
+        scope.ServiceProvider.ConfigureEvents();
     }
 
 

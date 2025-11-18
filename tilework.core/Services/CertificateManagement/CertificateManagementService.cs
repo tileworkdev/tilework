@@ -7,12 +7,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
 using AutoMapper;
+using Coravel.Events.Interfaces;
 
-
+using Tilework.Events;
 using Tilework.Persistence.CertificateManagement.Models;
 using Tilework.CertificateManagement.Models;
 using Tilework.CertificateManagement.Interfaces;
-using Tilework.Core.Interfaces;
 using Tilework.CertificateManagement.Enums;
 using Tilework.Core.Persistence;
 
@@ -25,8 +25,10 @@ public class CertificateManagementService : ICertificateManagementService
     private readonly ILogger<CertificateManagementService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
+    private readonly IDispatcher _dispatcher;
 
     public CertificateManagementService(TileworkContext dbContext,
+                                        IDispatcher dispatcher,
                                         IMapper mapper,
                                         IOptions<CertificateManagementConfiguration> settings,
                                         ILogger<CertificateManagementService> logger,
@@ -36,6 +38,7 @@ public class CertificateManagementService : ICertificateManagementService
         _logger = logger;
         _settings = settings.Value;
         _serviceProvider = serviceProvider;
+        _dispatcher = dispatcher;
         _mapper = mapper;
     }
 
@@ -64,16 +67,52 @@ public class CertificateManagementService : ICertificateManagementService
         };
     }
 
+    private bool TryMarkCertificateExpired(Certificate? certificate)
+    {
+        if (certificate == null)
+            return false;
+
+        var expiresAt = certificate.ExpiresAtUtc;
+
+        if (!expiresAt.HasValue || certificate.Status == CertificateStatus.EXPIRED)
+            return false;
+
+        if (expiresAt.Value > DateTimeOffset.UtcNow)
+            return false;
+
+        certificate.Status = CertificateStatus.EXPIRED;
+        return true;
+    }
+
 
     public async Task<List<CertificateDTO>> GetCertificates()
     {
         var entities = await _dbContext.Certificates.ToListAsync();
+        var changed = false;
+
+        foreach (var certificate in entities)
+        {
+            changed |= TryMarkCertificateExpired(certificate);
+        }
+
+        if (changed)
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+
         return _mapper.Map<List<CertificateDTO>>(entities);
     }
 
     public async Task<CertificateDTO?> GetCertificate(Guid Id)
     {
         var entity = await _dbContext.Certificates.FindAsync(Id);
+
+        if (entity == null)
+            return null;
+
+        if (TryMarkCertificateExpired(entity))
+            await _dbContext.SaveChangesAsync();
+
         return _mapper.Map<CertificateDTO>(entity);
     }
 
@@ -198,7 +237,56 @@ public class CertificateManagementService : ICertificateManagementService
     public async Task RevokeCertificate(Guid Id)
     {
         var certificate = await _dbContext.Certificates.FindAsync(Id);
+        if(certificate == null)
+            throw new ArgumentException($"Certificate {Id} not found");
+
         await RevokeCertificate(certificate);
+    }
+
+    private async Task<CertificateDTO> RenewCertificate(Certificate certificate)
+    {
+        try
+        {
+            certificate.Status = CertificateStatus.NEW;
+            certificate.PrivateKey = GenerateKey(certificate.PrivateKey.Algorithm);
+            await SignCertificate(certificate);            
+        }
+        catch
+        {
+            _dbContext.ChangeTracker.Clear();
+            throw;
+        }
+
+        var cert = _mapper.Map<CertificateDTO>(certificate);
+
+        var evt = new CertificateRenewed(cert);
+        await _dispatcher.Broadcast(evt);
+
+        return cert;
+    }
+
+    public async Task<CertificateDTO> RenewCertificate(Guid Id)
+    {
+        var certificate = await _dbContext.Certificates.FindAsync(Id);
+        if(certificate == null)
+            throw new ArgumentException($"Certificate {Id} not found");
+
+        return await RenewCertificate(certificate);
+    }
+
+    public async Task RenewExpiringCertificates()
+    {
+        var renewalThreshold = DateTimeOffset.UtcNow.Add(_settings.CertRenewalLeadTime);
+
+        var certs = await _dbContext.Certificates
+            .Where(c => c.ExpiresAtUtc.HasValue && c.ExpiresAtUtc <= renewalThreshold)
+            .ToListAsync();
+
+        foreach(var cert in certs)
+        {
+            _logger.LogInformation($"Certificate [{cert.Name}] needs renewal. Renewing");
+            await RenewCertificate(cert.Id);
+        }
     }
 
     public async Task DeleteCertificate(Guid Id)
