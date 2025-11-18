@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Coravel;
 
 using Tilework.LoadBalancing.Interfaces;
-using Tilework.Core.Jobs.LoadBalancing;
 using Tilework.Events;
 
 namespace Tilework.LoadBalancing.Services;
@@ -29,13 +28,6 @@ public sealed class LoadBalancingInitializer : IHostedService
 
         var loadBalancerService = scope.ServiceProvider.GetRequiredService<ILoadBalancerService>();
         await loadBalancerService.ApplyConfiguration();
-
-        scope.ServiceProvider.UseScheduler(s =>
-        {
-            s.Schedule<LoadBalancerMonitoringJob>()
-             .EveryMinute()
-             .PreventOverlapping("LoadBalancerMonitoringJob");
-        });
 
         var events = scope.ServiceProvider.ConfigureEvents();
         events.Register<CertificateRenewed>()

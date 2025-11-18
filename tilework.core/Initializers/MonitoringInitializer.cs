@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Coravel;
 
 using Tilework.LoadBalancing.Interfaces;
-using Tilework.Core.Jobs.LoadBalancing;
 
 namespace Tilework.LoadBalancing.Services;
 

@@ -18,7 +18,6 @@ using Tilework.CertificateManagement.Mappers;
 using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
-using Tilework.Core.Jobs.LoadBalancing;
 
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Telegraf;
@@ -83,7 +82,6 @@ public static class ServiceCollectionExtensions
 
         services.AddAutoMapper(typeof(LoadBalancingMappingProfile));
 
-        services.AddTransient<LoadBalancerMonitoringJob>();
         services.AddTransient<LoadBalancerCertificateListener>();
 
         return services;
