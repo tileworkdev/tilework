@@ -11,8 +11,8 @@ using Tilework.Core.Persistence;
 namespace tilework.core.Migrations
 {
     [DbContext(typeof(TileworkContext))]
-    [Migration("20250830103524_LbStatisticsDuration")]
-    partial class LbStatisticsDuration
+    [Migration("20251118184947_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -156,28 +156,6 @@ namespace tilework.core.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.LoadBalancerStatistics", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<TimeSpan>("Duration")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("LoadBalancerId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("Timestamp")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LoadBalancerId");
-
-                    b.ToTable("LoadBalancerStatistics");
-                });
-
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.Rule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -314,47 +292,6 @@ namespace tilework.core.Migrations
                     b.Navigation("Authority");
 
                     b.Navigation("PrivateKey");
-                });
-
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.LoadBalancerStatistics", b =>
-                {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", "LoadBalancer")
-                        .WithMany()
-                        .HasForeignKey("LoadBalancerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("Tilework.LoadBalancing.Models.LoadBalancingStatistics", "Statistics", b1 =>
-                        {
-                            b1.Property<Guid>("LoadBalancerStatisticsId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int?>("CurrentQueue")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int?>("CurrentSessions")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<long?>("TotalSessions")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<TimeSpan>("Uptime")
-                                .HasColumnType("TEXT");
-
-                            b1.HasKey("LoadBalancerStatisticsId");
-
-                            b1.ToTable("LoadBalancerStatistics");
-
-                            b1.ToJson("Statistics");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LoadBalancerStatisticsId");
-                        });
-
-                    b.Navigation("LoadBalancer");
-
-                    b.Navigation("Statistics")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.Rule", b =>

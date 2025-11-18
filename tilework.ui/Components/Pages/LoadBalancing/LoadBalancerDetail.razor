@@ -9,7 +9,6 @@
 @namespace Tilework.Ui.Components.Pages
 
 @inject ILoadBalancerService _loadBalancerService
-@inject ILoadBalancerStatisticsService _statisticsService
 @inject IDialogService _dialogService
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
@@ -484,34 +483,6 @@
     {
         if(_item != null && _item.Enabled == true && index == GetMonitoringTabIndex())
         {
-            _statsLoading = true;
-            StateHasChanged();
-
-            var stats = await _statisticsService.GetStatistics(_item.Id, DateTimeOffset.UtcNow - TimeSpan.FromHours(1), DateTimeOffset.UtcNow);
-
-            // Order by timestamp to ensure correct sequence
-            var statistics = stats.OrderBy(s => s.Timestamp).ToList();
-
-            _chartLabels = statistics
-                .Select(s =>
-                {
-                    var t = s.Timestamp.ToLocalTime();
-                    return t.Minute % 5 == 0 ? t.ToString("HH:mm") : "";
-                })
-                .ToArray();
-
-            var dataset = statistics.Select(s => (double)(s.Statistics?.TotalSessions ?? 0)).ToArray();
-
-            _series = new List<ChartSeries>() 
-            {
-                new ChartSeries() {
-                    Name = "Sessions",
-                    Data = dataset
-                }
-            };
-
-            _statsLoading = false;
-            StateHasChanged();
         }
     }
 }

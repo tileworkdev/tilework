@@ -25,7 +25,6 @@ public class TileworkContext : DbContext
     public DbSet<Rule> Rules { get; set; }
     public DbSet<TargetGroup> TargetGroups { get; set; }
     public DbSet<Target> Targets { get; set; }
-    public DbSet<LoadBalancerStatistics> LoadBalancerStatistics { get; set; }
 
 
     // Certificate management
@@ -73,21 +72,6 @@ public class TileworkContext : DbContext
                     .HasForeignKey("BalancerId")
                     .OnDelete(DeleteBehavior.Cascade)
             );
-
-
-        modelBuilder.Entity<LoadBalancerStatistics>()
-            .Property(x => x.Timestamp)
-            .HasConversion(
-                v => v.ToUnixTimeSeconds(),
-                v => DateTimeOffset.FromUnixTimeSeconds(v)
-            )
-            .HasColumnType("INTEGER");
-
-        modelBuilder.Entity<LoadBalancerStatistics>()
-            .OwnsOne(o => o.Statistics, b =>
-            {
-                b.ToJson();
-            });
 
 
         // Certificate management
