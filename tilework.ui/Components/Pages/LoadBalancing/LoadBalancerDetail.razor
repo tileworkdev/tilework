@@ -495,14 +495,38 @@
         var data = await _loadBalancerService.GetMonitoringData(_item.Id, start, end) ?? new List<LoadBalancingMonitorData>();
 
         var orderedData = data.OrderBy(d => d.Timestamp).ToList();
-        _chartLabels = orderedData
-            .Select(d => d.Timestamp.ToLocalTime().ToString("HH:mm"))
-            .ToArray();
-
         _series = new List<ChartSeries>();
         if (orderedData.Count == 0)
         {
+            _chartLabels = Array.Empty<string>();
             return;
+        }
+
+        const int targetLabelCount = 6;
+        var localTimes = orderedData.Select(d => d.Timestamp.ToLocalTime().DateTime).ToList();
+        var duration = localTimes.Last() - localTimes.First();
+        var approxIntervalMinutes = Math.Max(1, duration.TotalMinutes / targetLabelCount);
+        var intervalMinutes = GetRoundedIntervalMinutes(approxIntervalMinutes);
+        var interval = TimeSpan.FromMinutes(intervalMinutes);
+        var nextLabelTime = AlignToNextInterval(localTimes.First(), interval);
+
+        _chartLabels = new string[orderedData.Count];
+        for (var i = 0; i < orderedData.Count; i++)
+        {
+            var current = localTimes[i];
+            var label = string.Empty;
+
+            if (current >= nextLabelTime)
+            {
+                while (current >= nextLabelTime)
+                {
+                    nextLabelTime = nextLabelTime.Add(interval);
+                }
+
+                label = nextLabelTime.Subtract(interval).ToString("HH:mm");
+            }
+
+            _chartLabels[i] = label;
         }
 
         _series.Add(new ChartSeries
@@ -512,5 +536,24 @@
                 .Select(d => (double)d.Sessions)
                 .ToArray()
         });
+    }
+
+    private static int GetRoundedIntervalMinutes(double approxMinutes)
+    {
+        int[] allowed = { 1, 2, 5, 10, 15, 30, 60, 120, 240, 720, 1440 };
+        foreach (var candidate in allowed)
+        {
+            if (approxMinutes <= candidate)
+            {
+                return candidate;
+            }
+        }
+        return allowed.Last();
+    }
+
+    private static DateTime AlignToNextInterval(DateTime time, TimeSpan interval)
+    {
+        var ticks = ((time.Ticks + interval.Ticks - 1) / interval.Ticks) * interval.Ticks;
+        return new DateTime(ticks, time.Kind);
     }
 }
