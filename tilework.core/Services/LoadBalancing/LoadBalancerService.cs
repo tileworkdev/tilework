@@ -28,19 +28,21 @@ public class LoadBalancerService : ILoadBalancerService
     private readonly ILoadBalancingConfigurator _configurator;
     private readonly ILogger<LoadBalancerService> _logger;
     private readonly IMapper _mapper;
+    private readonly MonitoringService _monitoringService;
 
 
     public LoadBalancerService(IServiceProvider serviceProvider,
                                TileworkContext dbContext,
                                IMapper mapper,
                                IOptions<LoadBalancerConfiguration> settings,
-                               ILogger<LoadBalancerService> logger)
+                               ILogger<LoadBalancerService> logger,
+                               MonitoringService monitoringService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
         _configurator = LoadConfigurator(serviceProvider, _settings);
-
+        _monitoringService = monitoringService;
         _mapper = mapper;
     }
 
@@ -451,5 +453,12 @@ public class LoadBalancerService : ILoadBalancerService
         await _configurator.Shutdown();
     }
 
-    
+    public async Task<List<LoadBalancingMonitorData>> GetMonitoringData(Guid id, DateTimeOffset start, DateTimeOffset end)
+    {
+        var lb = await GetLoadBalancer(id);
+        if(lb == null)
+            throw new ArgumentException("Invalid load balancer id");
+
+        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>($"LoadBalancing-{lb.Id}", start, end);
+    }
 }

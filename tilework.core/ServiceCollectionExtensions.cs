@@ -56,6 +56,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDataCollectorConfigurator, TelegrafConfigurator>();
         services.AddSingleton<IDataPersistenceConfigurator, InfluxdbConfigurator>();
         services.AddScoped<DataCollectorService>();
+        services.AddScoped<MonitoringService>();
 
         services.AddHostedService<MonitoringInitializer>();
 

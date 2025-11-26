@@ -481,8 +481,36 @@
 
     private async Task OnTabChanged(int index)
     {
+        
         if(_item != null && _item.Enabled == true && index == GetMonitoringTabIndex())
         {
+            await RefreshMonitoringData();
         }
+    }
+
+    private async Task RefreshMonitoringData()
+    {
+        var end = DateTimeOffset.UtcNow;
+        var start = end.AddHours(-1);
+        var data = await _loadBalancerService.GetMonitoringData(_item.Id, start, end) ?? new List<LoadBalancingMonitorData>();
+
+        var orderedData = data.OrderBy(d => d.Timestamp).ToList();
+        _chartLabels = orderedData
+            .Select(d => d.Timestamp.ToLocalTime().ToString("HH:mm"))
+            .ToArray();
+
+        _series = new List<ChartSeries>();
+        if (orderedData.Count == 0)
+        {
+            return;
+        }
+
+        _series.Add(new ChartSeries
+        {
+            Name = "Sessions",
+            Data = orderedData
+                .Select(d => (double)d.Sessions)
+                .ToArray()
+        });
     }
 }

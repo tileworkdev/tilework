@@ -97,7 +97,7 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
                         array.Add(new TomlTable
                         {
                             ["servers"] = new TomlArray { $"tcp://{source.Host.Value}:{source.Port}" },
-                            ["interval"] = "60s",
+                            ["interval"] = "30s",
                             ["tags"] = new TomlTable { ["instance"] = source.Name }
                         });
 

@@ -15,7 +15,7 @@ using Tilework.Core.Interfaces;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
-public class HAProxyMonitor : ILoadBalancingMonitor
+public class HAProxyMonitor
 {
     private readonly IContainerManager _containerManager;
     private readonly HAProxyConfigurator _configurator;
@@ -108,7 +108,7 @@ public class HAProxyMonitor : ILoadBalancingMonitor
         return JsonSerializer.Deserialize<T>(jsonString);
     }
 
-    public async Task<LoadBalancingStatistics> GetRealtimeStatistics(BaseLoadBalancer balancer)
+    public async Task GetRealtimeStatistics(BaseLoadBalancer balancer)
     {
         if (await _configurator.CheckLoadBalancerStatus(balancer) == false)
             throw new ArgumentOutOfRangeException($"Cannot get statistics for balancer {balancer}: Balancer is not running");
@@ -121,6 +121,6 @@ public class HAProxyMonitor : ILoadBalancingMonitor
 
         var balancerStats = stats.First(r => r.svname == "FRONTEND" && r.pxname == balancer.Id.ToString());
 
-        return _mapper.Map<LoadBalancingStatistics>((info, balancerStats));
+        // TODO: Should return here...
     }
 }
