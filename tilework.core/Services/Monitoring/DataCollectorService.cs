@@ -6,7 +6,7 @@ using Tilework.Monitoring.Models;
 using Tilework.Core.Persistence;
 using Tilework.Monitoring.Interfaces;
 
-namespace Tilework.LoadBalancing.Services;
+namespace Tilework.Monitoring.Services;
 
 public class DataCollectorService
 {

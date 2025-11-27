@@ -22,7 +22,10 @@ using Tilework.Core.Persistence;
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Telegraf;
 using Tilework.Monitoring.Models;
+using Tilework.Monitoring.Services;
 using Tilework.Monitoring.Influxdb;
+
+using Tilework.TokenVault.Services;
 
 using Tilework.Core.Jobs.CertificateManagement;
 using Tilework.Events;
@@ -37,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IContainerManager, DockerServiceManager>();
         services.AddSingleton<HttpApiFactoryService>();
         services.AddHostedService<CoreInitializer>();
+
+        services.AddScoped<TokenService>();
 
 
         services.AddScheduler();
