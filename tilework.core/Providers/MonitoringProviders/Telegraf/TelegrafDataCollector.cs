@@ -121,6 +121,7 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
                             ["urls"] = new TomlArray { $"http://{target.Host.Value}:{target.Port}" },
                             ["token"] = target.Password,
                             ["bucket"] = source.Name,
+                            ["organization"] = "tilework",
                             ["tagpass"] = new TomlTable
                             {
                                 ["instance"] = new TomlArray { source.Name }

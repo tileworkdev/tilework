@@ -59,7 +59,7 @@ public static class ServiceCollectionExtensions
         services.Configure<DataPersistenceConfiguration>(configuration.GetSection("DataPersistence"));
 
         services.AddScoped<IDataCollectorConfigurator, TelegrafConfigurator>();
-        services.AddSingleton<IDataPersistenceConfigurator, InfluxdbConfigurator>();
+        services.AddScoped<IDataPersistenceConfigurator, Influxdb2Configurator>();
         services.AddScoped<DataCollectorService>();
         services.AddScoped<MonitoringService>();
 

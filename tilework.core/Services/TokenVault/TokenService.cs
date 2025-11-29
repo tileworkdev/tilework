@@ -39,7 +39,7 @@ public class TokenService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task DeleteToken(string key, string value)
+    public async Task DeleteToken(string key)
     {
         var token = await _dbContext.Tokens.FirstOrDefaultAsync(t => t.Key == key);
         if(token != null)
