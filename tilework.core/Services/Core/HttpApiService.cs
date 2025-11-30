@@ -46,16 +46,16 @@ public class HttpApiService
                                      Dictionary<string, string>? query = null,
                                      object? requestData = null) where T : class
     {
-        var fullUrl = $"{_baseUrl.TrimEnd('/')}/{url.TrimStart('/')}";
-
-        using var request = new HttpRequestMessage(method, fullUrl);
+        var requestUrl = $"{_baseUrl.TrimEnd('/')}/{url.TrimStart('/')}";
 
         if (query is not null && query.Count > 0)
         {
             var q = string.Join("&", query.Select(kv =>
                 $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
-            fullUrl = $"{fullUrl}?{q}";
+            requestUrl = $"{requestUrl}?{q}";
         }
+
+        using var request = new HttpRequestMessage(method, requestUrl);
 
         if (headers is not null)
         {
@@ -65,22 +65,43 @@ public class HttpApiService
             }
         }
 
+        string? serializedRequestData = null;
         if(requestData != null)
         {
-            var jsonData = JsonSerializer.Serialize(requestData);
-            request.Content = new StringContent(jsonData, Encoding.UTF8, "application/json");            
+            serializedRequestData = JsonSerializer.Serialize(requestData);
+            request.Content = new StringContent(serializedRequestData, Encoding.UTF8, "application/json");            
         }
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        var headerLog = headers is not null && headers.Count > 0
+            ? string.Join(", ", headers.Select(kv => $"{kv.Key}={kv.Value}"))
+            : "";
+        var bodyLog = serializedRequestData ?? "";
 
-        string responseBody = await response.Content.ReadAsStringAsync();
+        _logger.LogDebug("Sending HTTP {Method} {Url}\nHeaders: {Headers}\nBody: {Body}",
+                         method, requestUrl, headerLog, bodyLog);
 
-        var deserializedResponse = JsonSerializer.Deserialize<T>(responseBody, new JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true
-        });
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
 
-        return deserializedResponse!;
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            _logger.LogDebug("Received HTTP {StatusCode} response to {Method} {Url}\nBody: {Body}",
+                             (int) response.StatusCode, method, requestUrl, responseBody);
+
+            response.EnsureSuccessStatusCode();
+
+            var deserializedResponse = JsonSerializer.Deserialize<T>(responseBody, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return deserializedResponse!;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "HTTP {Method} {Url} failed.", method, requestUrl);
+            throw;
+        }
     }
 }
