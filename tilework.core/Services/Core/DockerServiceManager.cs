@@ -37,6 +37,12 @@ public class DockerServiceManager : IContainerManager
         throw new ArgumentException($"Invalid container state: {state}");
     }
 
+    public async Task Initialize()
+    {
+        var network = await GetOrCreateDefaultNetwork();
+        await AddMeToDefaultNetwork(network);
+    }
+
     private async Task AddMeToDefaultNetwork(ContainerNetwork network)
     {
         var containerId = Dns.GetHostName();
@@ -74,8 +80,6 @@ public class DockerServiceManager : IContainerManager
 
         if (network == null)
             network = await CreateNetwork(defaultNetworkName);
-
-        await AddMeToDefaultNetwork(network);
 
         return network;
     }

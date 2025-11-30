@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Coravel;
 
 using Tilework.Core.Persistence;
+using Tilework.Core.Interfaces;
 
 namespace Tilework.Core.Services;
 
@@ -31,6 +32,9 @@ public sealed class CoreInitializer : IHostedService
         await dbContext.Database.MigrateAsync(ct);
 
         scope.ServiceProvider.ConfigureEvents();
+
+        var containerManager = scope.ServiceProvider.GetRequiredService<IContainerManager>();
+        containerManager.Initialize();
     }
 
 

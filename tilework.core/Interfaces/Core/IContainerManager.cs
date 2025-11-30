@@ -7,6 +7,8 @@ namespace Tilework.Core.Interfaces;
 
 public interface IContainerManager
 {
+    public Task Initialize();
+
     public Task<List<ContainerNetwork>> ListNetworks();
     public Task<ContainerNetwork> CreateNetwork(string name);
     public Task DeleteNetwork(string id);
