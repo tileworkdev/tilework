@@ -20,7 +20,7 @@ public class HttpApiService
         _logger = logger;
         _httpClient = new HttpClient
         {
-            Timeout = timeout ?? TimeSpan.FromSeconds(10)
+            Timeout = timeout ?? TimeSpan.FromSeconds(1000)
         };
         _baseUrl = baseUrl;
     }
