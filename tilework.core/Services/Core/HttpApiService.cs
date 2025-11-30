@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -14,10 +15,13 @@ public class HttpApiService
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public HttpApiService(ILogger<HttpApiService> logger, string baseUrl)
+    public HttpApiService(ILogger<HttpApiService> logger, string baseUrl, TimeSpan? timeout = null)
     {
         _logger = logger;
-        _httpClient = new HttpClient();
+        _httpClient = new HttpClient
+        {
+            Timeout = timeout ?? TimeSpan.FromSeconds(10)
+        };
         _baseUrl = baseUrl;
     }
 
