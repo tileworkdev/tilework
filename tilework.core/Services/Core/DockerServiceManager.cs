@@ -37,6 +37,36 @@ public class DockerServiceManager : IContainerManager
         throw new ArgumentException($"Invalid container state: {state}");
     }
 
+    private async Task AddMeToDefaultNetwork(ContainerNetwork network)
+    {
+        var containerId = Dns.GetHostName();
+
+        ContainerInspectResponse container;
+        try {
+            container = await _client.Containers.InspectContainerAsync(containerId);
+        }
+        catch (DockerContainerNotFoundException)
+        {
+            _logger.LogInformation("Not adding tilework to default network: Not containerized");
+            return;
+        }
+
+        var attachedNetworks = container.NetworkSettings?.Networks ?? new Dictionary<string, EndpointSettings>();
+
+        var alreadyInNetwork = attachedNetworks.Any(n =>
+            string.Equals(n.Key, network.Name, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(n.Value.NetworkID, network.Id, StringComparison.OrdinalIgnoreCase));
+
+
+        if(!alreadyInNetwork)
+        {
+            await _client.Networks.ConnectNetworkAsync(network.Id, new NetworkConnectParameters
+            {
+                Container = containerId
+            });
+        }
+    }
+
     private async Task<ContainerNetwork> GetOrCreateDefaultNetwork()
     {
         var networks = await ListNetworks();
@@ -44,6 +74,8 @@ public class DockerServiceManager : IContainerManager
 
         if (network == null)
             network = await CreateNetwork(defaultNetworkName);
+
+        await AddMeToDefaultNetwork(network);
 
         return network;
     }
