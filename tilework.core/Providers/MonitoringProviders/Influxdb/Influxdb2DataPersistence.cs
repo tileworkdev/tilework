@@ -81,23 +81,38 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task ApplyConfiguration()
     {
-        await StartUp();
+        var container = await GetContainer();
+        if(container == null || container.State != ContainerState.Running)
+            await StartUp();
+
         await CheckRunSetup();
     }
 
     private async Task CheckRunSetup()
     {
-        await Task.Delay(2000);
         var service = await GetApiService();
-        var resp = await service.ApiGet<SetupResponse>("/setup");
-        if(resp.Allowed == true)
+        for(int i=0; i<5; i++)
         {
-            var container = await GetContainer();
-            var tokenKey = $"influxdb.{container.Id}";
+            try
+            {
+                var resp = await service.ApiGet<SetupResponse>("/setup");
 
-            await _tokenService.DeleteToken(tokenKey);
+                if(resp.Allowed == true)
+                {
+                    var container = await GetContainer();
+                    var tokenKey = $"influxdb.{container.Id}";
 
-            await GetAdminToken();
+                    await _tokenService.DeleteToken(tokenKey);
+
+                    await GetAdminToken();
+                }
+                break;
+            }
+            catch
+            {
+                await Task.Delay(2000);
+                continue;
+            }
         }
     }
 
