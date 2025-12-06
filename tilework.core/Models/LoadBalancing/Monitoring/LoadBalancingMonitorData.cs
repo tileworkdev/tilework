@@ -6,5 +6,5 @@ namespace Tilework.LoadBalancing.Models;
 public class LoadBalancingMonitorData : BaseMonitorData
 {
     public int Sessions { get; set; } // stot
-    // public int Requests { get; set; } // req_tot
+    public int Requests { get; set; } // req_tot
 }

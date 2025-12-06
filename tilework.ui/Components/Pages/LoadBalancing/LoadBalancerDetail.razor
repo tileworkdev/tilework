@@ -536,6 +536,14 @@
                 .Select(d => (double)d.Sessions)
                 .ToArray()
         });
+
+        _series.Add(new ChartSeries
+        {
+            Name = "Requests",
+            Data = orderedData
+                .Select(d => (double)d.Requests)
+                .ToArray()
+        });
     }
 
     private static int GetRoundedIntervalMinutes(double approxMinutes)
