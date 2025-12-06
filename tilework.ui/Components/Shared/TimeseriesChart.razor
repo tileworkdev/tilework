@@ -18,7 +18,11 @@
     [Parameter]
     public Dictionary<DateTime, double> Data { get; set; } = new();
 
-    private readonly ChartOptions _chartOptions = new ChartOptions { ShowLegend = false };
+    private readonly ChartOptions _chartOptions = new ChartOptions {
+        ShowLegend = false,
+        LineStrokeWidth = 2,
+        ChartPalette = [Colors.Green.Darken4]
+    };
     private readonly AxisChartOptions _axisChartOptions = new AxisChartOptions();
     private string[] _chartLabels = Array.Empty<string>();
     private List<ChartSeries> _series = new();
