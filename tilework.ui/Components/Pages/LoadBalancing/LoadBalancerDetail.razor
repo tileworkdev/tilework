@@ -112,46 +112,52 @@
             </MudTabPanel>
         }
         <MudTabPanel Text="Monitoring">
-            @if (_statsLoading)
-            {
-                <MudProgressCircular Class="my-4" Color="Color.Primary" />
-            }
-            else if (_monitoringData?.Any() == true)
-            {
-                <MudCard Outlined="true" Class="mb-4">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudText Typo="Typo.h6">Monitoring</MudText>
-                        </CardHeaderContent>
-                        <CardHeaderActions>
-                            <MudIconButton Icon="Icons.Material.Filled.Home" Color="Color.Inherit" />
-                            <MudIconButton Icon="Icons.Material.Filled.Settings" Color="Color.Inherit" />
-                        </CardHeaderActions>
-                    </MudCardHeader>
-                        <MudCardContent>
-                            <MudGrid>
-                                <MudItem xs="4">
-                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                                        <TimeseriesChart Name="Sessions" Data="@BuildSeries(d => d.Sessions)" />
-                                    </MudPaper>
-                                </MudItem>
-                                <MudItem xs="4">
-                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                                        <TimeseriesChart Name="Requests" Data="@BuildSeries(d => d.Requests)" />
-                                    </MudPaper>
-                            </MudItem>
-                            @* <MudItem xs="4">
-                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
+
+            <MudCard Outlined="true" Class="mb-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Monitoring</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                            <MudButton>1h</MudButton>
+                            <MudButton>3h</MudButton>
+                            <MudButton>12h</MudButton>
+                            <MudButton>1d</MudButton>
+                            <MudButton>3d</MudButton>
+                            <MudButton>1w</MudButton>
+                        </MudButtonGroup>
+                        <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="RefreshMonitoringData">
+                            <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                        </MudButton>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_statsLoading)
+                    {
+                        <MudProgressCircular Class="my-4" Color="Color.Primary" />
+                    }
+                    else if (_monitoringData?.Any() == true)
+                    {
+                        <MudGrid>
+                            <MudItem xs="4">
+                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
+                                    <TimeseriesChart Name="Sessions" Data="@BuildSeries(d => d.Sessions)" />
                                 </MudPaper>
-                            </MudItem> *@
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
+                                    <TimeseriesChart Name="Requests" Data="@BuildSeries(d => d.Requests)" />
+                                </MudPaper>
+                            </MudItem>
+                        @* <MudItem xs="4">
+                            <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
+                            </MudPaper>
+                        </MudItem> *@
                         </MudGrid>
-                    </MudCardContent>
-                </MudCard>
-            }
-            else
-            {
-                <MudText Typo="Typo.body2" Class="my-4">No statistics available.</MudText>
-            }
+                    }
+                </MudCardContent>
+            </MudCard>
         </MudTabPanel>
 
     </TabContent>
