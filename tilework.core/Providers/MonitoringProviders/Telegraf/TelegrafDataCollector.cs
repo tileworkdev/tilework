@@ -96,9 +96,13 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
 
                         array.Add(new TomlTable
                         {
-                            ["servers"] = new TomlArray { $"tcp://{source.Host.Value}:{source.Port}" },
+                            ["servers"] = new TomlArray {
+                                $"tcp://{source.Host.Value}:{source.Port}"
+                            },
                             ["interval"] = "30s",
-                            ["tags"] = new TomlTable { ["instance"] = source.Name }
+                            ["tags"] = new TomlTable {
+                                ["instance"] = source.Name
+                            }
                         });
 
                         break;
@@ -120,7 +124,7 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
                         {
                             ["urls"] = new TomlArray { $"http://{target.Host.Value}:{target.Port}" },
                             ["token"] = target.Password,
-                            ["bucket"] = source.Name,
+                            ["bucket"] = source.Module,
                             ["organization"] = "tilework",
                             ["tagpass"] = new TomlTable
                             {

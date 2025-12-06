@@ -453,12 +453,17 @@ public class LoadBalancerService : ILoadBalancerService
         await _configurator.Shutdown();
     }
 
-    public async Task<List<LoadBalancingMonitorData>> GetMonitoringData(Guid id, DateTimeOffset start, DateTimeOffset end)
+    public async Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid id, DateTimeOffset start, DateTimeOffset end)
     {
         var lb = await GetLoadBalancer(id);
         if(lb == null)
             throw new ArgumentException("Invalid load balancer id");
 
-        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>($"LoadBalancing-{lb.Id}", start, end);
+        var filters = new Dictionary<string, string>();
+        filters["instance"] = lb.Id.ToString();
+        filters["type"] = "frontend";
+        filters["proxy"] = lb.Id.ToString();
+
+        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, start, end);
     }
 }

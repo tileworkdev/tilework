@@ -16,8 +16,8 @@ public class MonitoringService
         _logger = logger;
     }
 
-    public async Task<List<T>> GetMonitoringData<T>(string monitorName, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List<T>> GetMonitoringData<T>(string module, Dictionary<string, string> filters, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
-        return await _persistenceConfigurator.GetData<T>(monitorName, start, end);
+        return await _persistenceConfigurator.GetData<T>(module, filters, start, end);
     }
 }

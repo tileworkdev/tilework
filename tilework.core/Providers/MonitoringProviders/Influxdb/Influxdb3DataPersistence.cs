@@ -110,9 +110,13 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
         return token;
     }
 
-    public async Task<List <T>> GetData<T>(string name, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
-        using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken(), database: name);
+        // This method has not been maintained and tested. Disable it for now
+        throw new NotImplementedException();
+
+
+        using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken(), database: module);
 
 
         var measurementNames = new List<string>();

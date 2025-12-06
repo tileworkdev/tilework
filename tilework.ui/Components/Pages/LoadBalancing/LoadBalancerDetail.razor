@@ -492,7 +492,7 @@
     {
         var end = DateTimeOffset.UtcNow;
         var start = end.AddHours(-1);
-        var data = await _loadBalancerService.GetMonitoringData(_item.Id, start, end) ?? new List<LoadBalancingMonitorData>();
+        var data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end) ?? new List<LoadBalancingMonitorData>();
 
         var orderedData = data.OrderBy(d => d.Timestamp).ToList();
         _series = new List<ChartSeries>();

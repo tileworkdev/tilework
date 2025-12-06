@@ -232,7 +232,8 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
             {
                 var monitoringSource = new MonitoringSource()
                 {
-                    Name = $"LoadBalancing-{lb.Id}",
+                    Module = "LoadBalancing",
+                    Name = lb.Id.ToString(),
                     Type = MonitoringSourceType.HAPROXY,
                     Host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString()),
                     Port = 4380

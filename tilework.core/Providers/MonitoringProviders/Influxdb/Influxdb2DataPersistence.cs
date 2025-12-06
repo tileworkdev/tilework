@@ -67,7 +67,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
     {
         var container = await GetContainer();
 
-        await CheckCreateBucket(_orgName, source.Name);
+        await CheckCreateBucket(_orgName, source.Module);
 
         return new MonitoringTarget()
         {
@@ -189,16 +189,31 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         return org[0].Id;
     }
 
-    public async Task<List <T>> GetData<T>(string name, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
         using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
+        // using var client = new InfluxDBClient("http://ifu.wh:8086", token: "{Nc97#*%4DggeR3w");
+        // name = "LoadBalancing-4283cffc-903d-4360-be0f-861f77fd2318";
 
         var queryApi = client.GetQueryApi();
 
         var startStr = start.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
         var stopStr = end.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
 
-        var query = $"from(bucket: \"{name}\")\n  |> range(start: {startStr}, stop: {stopStr})";
+        var query = $"from(bucket: \"{module}\")\n  |> range(start: {startStr}, stop: {stopStr})";
+
+        if (filters is { Count: > 0 })
+        {
+            var filterExpressions = filters.Select(filter =>
+            {
+                var key = (filter.Key ?? string.Empty).Replace("\"", "\\\"");
+                var value = (filter.Value ?? string.Empty).Replace("\"", "\\\"");
+                return $"r[\"{key}\"] == \"{value}\"";
+            });
+
+            var filtersCombined = string.Join(" and ", filterExpressions);
+            query += $"\n  |> filter(fn: (r) => {filtersCombined})";
+        }
 
         var fluxTables = await queryApi.QueryAsync(query, _orgName);
 
