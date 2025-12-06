@@ -1,3 +1,4 @@
+@using System
 @using Tilework.LoadBalancing.Enums
 @using Tilework.Core.Enums
 @using Tilework.LoadBalancing.Interfaces
@@ -5,6 +6,7 @@
 @using Tilework.CertificateManagement.Models
 @using Tilework.LoadBalancing.Models
 @using System.Linq
+@using Tilework.Ui.Components.Shared
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -114,7 +116,7 @@
             {
                 <MudProgressCircular Class="my-4" Color="Color.Primary" />
             }
-            else if (_series?.Any() == true)
+            else if (_monitoringData?.Any() == true)
             {
                 <MudCard Outlined="true" Class="mb-4">
                     <MudCardHeader>
@@ -126,23 +128,22 @@
                             <MudIconButton Icon="Icons.Material.Filled.Settings" Color="Color.Inherit" />
                         </CardHeaderActions>
                     </MudCardHeader>
-                    <MudCardContent>
-                        <MudGrid>
-                            <MudItem xs="4">
-                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
-                                    <MudChart ChartType="ChartType.Line" width="100%" Height="100%"
-                                        XAxisLabels="@_chartLabels" ChartSeries="@_series"
-                                        ChartOptions="@_options" AxisChartOptions="_axisChartOptions" />
-                                </MudPaper>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="4">
+                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
+                                        <TimeseriesChart Name="Sessions" Data="@BuildSeries(d => d.Sessions)" />
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
+                                        <TimeseriesChart Name="Requests" Data="@BuildSeries(d => d.Requests)" />
+                                    </MudPaper>
                             </MudItem>
-                            <MudItem xs="4">
+                            @* <MudItem xs="4">
                                 <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
                                 </MudPaper>
-                            </MudItem>
-                            <MudItem xs="4">
-                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
-                                </MudPaper>
-                            </MudItem>
+                            </MudItem> *@
                         </MudGrid>
                     </MudCardContent>
                 </MudCard>
@@ -176,15 +177,8 @@
     private List<ActionItem> _actions = new List<ActionItem>();
 
 
-    private ChartOptions _options = new ChartOptions()
-    {
-        ShowLegend=false
-    };
-    private AxisChartOptions _axisChartOptions = new AxisChartOptions();
-
-    private string[] _chartLabels = Array.Empty<string>();
-    private List<ChartSeries> _series = new();
     private bool _statsLoading = false;
+    private List<LoadBalancingMonitorData> _monitoringData = new();
 
     private int GetMaxRulePriority() => _rules.Count() > 0 ? _rules.Max(p => p.Priority) + 1 : 0;
 
@@ -490,78 +484,33 @@
 
     private async Task RefreshMonitoringData()
     {
-        var end = DateTimeOffset.UtcNow;
-        var start = end.AddHours(-1);
-        var data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end) ?? new List<LoadBalancingMonitorData>();
+        _statsLoading = true;
+        StateHasChanged();
 
-        var orderedData = data.OrderBy(d => d.Timestamp).ToList();
-        _series = new List<ChartSeries>();
-        if (orderedData.Count == 0)
+        try
         {
-            _chartLabels = Array.Empty<string>();
-            return;
+            var end = DateTimeOffset.UtcNow;
+            var start = end.AddHours(-1);
+            var data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end)
+                ?? new List<LoadBalancingMonitorData>();
+
+            _monitoringData = data;
         }
-
-        const int targetLabelCount = 6;
-        var localTimes = orderedData.Select(d => d.Timestamp.ToLocalTime().DateTime).ToList();
-        var duration = localTimes.Last() - localTimes.First();
-        var approxIntervalMinutes = Math.Max(1, duration.TotalMinutes / targetLabelCount);
-        var intervalMinutes = GetRoundedIntervalMinutes(approxIntervalMinutes);
-        var interval = TimeSpan.FromMinutes(intervalMinutes);
-        var nextLabelTime = AlignToNextInterval(localTimes.First(), interval);
-
-        _chartLabels = new string[orderedData.Count];
-        for (var i = 0; i < orderedData.Count; i++)
+        finally
         {
-            var current = localTimes[i];
-            var label = string.Empty;
-
-            if (current >= nextLabelTime)
-            {
-                while (current >= nextLabelTime)
-                {
-                    nextLabelTime = nextLabelTime.Add(interval);
-                }
-
-                label = nextLabelTime.Subtract(interval).ToString("HH:mm");
-            }
-
-            _chartLabels[i] = label;
+            _statsLoading = false;
         }
-
-        _series.Add(new ChartSeries
-        {
-            Name = "Sessions",
-            Data = orderedData
-                .Select(d => (double)d.Sessions)
-                .ToArray()
-        });
-
-        _series.Add(new ChartSeries
-        {
-            Name = "Requests",
-            Data = orderedData
-                .Select(d => (double)d.Requests)
-                .ToArray()
-        });
     }
 
-    private static int GetRoundedIntervalMinutes(double approxMinutes)
+    private Dictionary<DateTime, double> BuildSeries(Func<LoadBalancingMonitorData, double> valueSelector)
     {
-        int[] allowed = { 1, 2, 5, 10, 15, 30, 60, 120, 240, 720, 1440 };
-        foreach (var candidate in allowed)
+        var series = new Dictionary<DateTime, double>();
+        foreach (var entry in _monitoringData.OrderBy(d => d.Timestamp))
         {
-            if (approxMinutes <= candidate)
-            {
-                return candidate;
-            }
+            var localTimestamp = entry.Timestamp.ToLocalTime().DateTime;
+            series[localTimestamp] = valueSelector(entry);
         }
-        return allowed.Last();
-    }
 
-    private static DateTime AlignToNextInterval(DateTime time, TimeSpan interval)
-    {
-        var ticks = ((time.Ticks + interval.Ticks - 1) / interval.Ticks) * interval.Ticks;
-        return new DateTime(ticks, time.Kind);
+        return series;
     }
 }

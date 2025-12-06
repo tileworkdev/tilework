@@ -1,0 +1,97 @@
+@using System.Linq
+@using Tilework.LoadBalancing.Models
+
+<div class="d-flex flex-column mud-width-full">
+    <MudText Typo="Typo.subtitle2" Class="mb-2">@Name</MudText>
+    <MudChart ChartType="ChartType.Line"
+              Width="100%"
+              Height="100%"
+              XAxisLabels="@_chartLabels"
+              ChartSeries="@_series"
+              ChartOptions="@_chartOptions"
+              AxisChartOptions="@_axisChartOptions" />
+</div>
+
+@code {
+    [Parameter]
+    public string Name { get; set; } = string.Empty;
+    [Parameter]
+    public Dictionary<DateTime, double> Data { get; set; } = new();
+
+    private readonly ChartOptions _chartOptions = new ChartOptions { ShowLegend = false };
+    private readonly AxisChartOptions _axisChartOptions = new AxisChartOptions();
+    private string[] _chartLabels = Array.Empty<string>();
+    private List<ChartSeries> _series = new();
+
+    protected override void OnParametersSet()
+    {
+        BuildChartData();
+    }
+
+    private void BuildChartData()
+    {
+        var orderedData = Data.OrderBy(kv => kv.Key).ToList();
+        if (orderedData.Count == 0)
+        {
+            _chartLabels = Array.Empty<string>();
+            _series = new List<ChartSeries>();
+            return;
+        }
+
+        const int targetLabelCount = 6;
+
+        var times = orderedData.Select(d => d.Key).ToList();
+        var duration = times.Last() - times.First();
+        var approxIntervalMinutes = Math.Max(1, duration.TotalMinutes / targetLabelCount);
+        var intervalMinutes = GetRoundedIntervalMinutes(approxIntervalMinutes);
+        var interval = TimeSpan.FromMinutes(intervalMinutes);
+        var nextLabelTime = AlignToNextInterval(times.First(), interval);
+
+        _chartLabels = new string[orderedData.Count];
+        for (var i = 0; i < orderedData.Count; i++)
+        {
+            var current = times[i];
+            var label = string.Empty;
+
+            if (current >= nextLabelTime)
+            {
+                while (current >= nextLabelTime)
+                {
+                    nextLabelTime = nextLabelTime.Add(interval);
+                }
+
+                label = nextLabelTime.Subtract(interval).ToString("HH:mm");
+            }
+
+            _chartLabels[i] = label;
+        }
+
+        _series = new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = Name,
+                Data = orderedData.Select(d => (double)d.Value).ToArray()
+            }
+        };
+    }
+
+    private static int GetRoundedIntervalMinutes(double approxMinutes)
+    {
+        int[] allowed = { 1, 2, 5, 10, 15, 30, 60, 120, 240, 720, 1440 };
+        foreach (var candidate in allowed)
+        {
+            if (approxMinutes <= candidate)
+            {
+                return candidate;
+            }
+        }
+        return allowed.Last();
+    }
+
+    private static DateTime AlignToNextInterval(DateTime time, TimeSpan interval)
+    {
+        var ticks = ((time.Ticks + interval.Ticks - 1) / interval.Ticks) * interval.Ticks;
+        return new DateTime(ticks, time.Kind);
+    }
+}
