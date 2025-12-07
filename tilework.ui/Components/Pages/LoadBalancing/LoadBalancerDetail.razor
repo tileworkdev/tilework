@@ -120,17 +120,19 @@
                     </CardHeaderContent>
                     <CardHeaderActions>
                     <div class="d-flex align-items-center pt-2">
-                        <MudButtonGroup Class="pr-3" Color="Color.Primary" Variant="Variant.Outlined">
-                            <MudButton>1h</MudButton>
-                            <MudButton>3h</MudButton>
-                            <MudButton>12h</MudButton>
-                            <MudButton>1d</MudButton>
-                            <MudButton>3d</MudButton>
-                            <MudButton>1w</MudButton>
-                        </MudButtonGroup>
-                        <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="RefreshMonitoringData">
-                            <MudIcon Icon="@Icons.Material.Filled.Refresh" />
-                        </MudButton>
+                        <MudToggleGroup T="string" Value="_selectedRange" Color="Color.Primary" ValueChanged="RefreshMonitoringData" Style="width: 20rem">
+                            <MudToggleItem Value="@("1h")"/>
+                            <MudToggleItem Value="@("3h")"/>
+                            <MudToggleItem Value="@("12h")"/>
+                            <MudToggleItem Value="@("1d")"/>
+                            <MudToggleItem Value="@("3d")"/>
+                            <MudToggleItem Value="@("1w")"/>
+                        </MudToggleGroup>
+                        <div class="pl-3">
+                            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="@(() => RefreshMonitoringData(_selectedRange))">
+                                <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                            </MudButton>
+                        </div>
                     </div>
                     </CardHeaderActions>
                 </MudCardHeader>
@@ -175,6 +177,8 @@
     private List<RuleDTO> _rules = new();
     private List<CertificateDTO> _certificates = new();
     private bool _showCertificates;
+
+    private string _selectedRange = "1h";
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -486,19 +490,47 @@
         
         if(_item != null && _item.Enabled == true && index == GetMonitoringTabIndex())
         {
-            await RefreshMonitoringData();
+            await RefreshMonitoringData(_selectedRange);
         }
     }
 
-    private async Task RefreshMonitoringData()
+    private async Task RefreshMonitoringData(string range)
     {
         _statsLoading = true;
         StateHasChanged();
 
+        _selectedRange = range;
+
         try
         {
             var end = DateTimeOffset.UtcNow;
-            var start = end.AddHours(-1);
+            DateTimeOffset start;
+            switch(range)
+            {
+                case "1h":
+                    start = end.AddHours(-1);
+                    break;
+                case "3h":
+                    start = end.AddHours(-3);
+                    break;
+                case "12h":
+                    start = end.AddHours(-12);
+                    break;
+                case "1d":
+                    start = end.AddDays(-1);
+                    break;
+                case "3d":
+                    start = end.AddDays(-3);
+                    break;
+                case "1w":
+                    start = end.AddDays(-7);
+                    break;
+                default:
+                    start = end.AddHours(-1);
+                    break;
+            }
+            
+            
             var data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end)
                 ?? new List<LoadBalancingMonitorData>();
 
