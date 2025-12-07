@@ -118,6 +118,10 @@ public class CertificateManagementService : ICertificateManagementService
 
     public async Task<CertificateDTO> AddCertificate(string name, string fqdn, KeyAlgorithm algorithm, Guid authorityId)
     {
+        var nameExists = await _dbContext.Certificates.AnyAsync(c => c.Name == name);
+        if (nameExists)
+            throw new ArgumentException($"Certificate with name '{name}' already exists.", nameof(name));
+
         var authority = await _dbContext.CertificateAuthorities.FindAsync(authorityId);
         var key = GenerateKey(algorithm);
 
