@@ -1,11 +1,16 @@
 @using System
-@using Tilework.LoadBalancing.Enums
+@using System.Linq
+
 @using Tilework.Core.Enums
+@using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Interfaces
+@using Tilework.LoadBalancing.Models
+
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Models
-@using Tilework.LoadBalancing.Models
-@using System.Linq
+
+
+@using Tilework.Ui.Services
 @using Tilework.Ui.Components.Shared
 
 @namespace Tilework.Ui.Components.Pages
@@ -15,6 +20,7 @@
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
 @inject ICertificateManagementService _certificateService
+@inject IBrowserTimeZoneProvider _browserTimezoneProvider
 
 @page "/lb/loadbalancers/{Id:guid}"
 
@@ -146,12 +152,12 @@
                         <MudGrid>
                             <MudItem xs="4">
                                 <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                                    <TimeseriesChart Name="Sessions" Data="@BuildSeries(d => d.Sessions)" />
+                                    <TimeseriesChart Name="Sessions" Data="@(_monitoringData["sessions"])" />
                                 </MudPaper>
                             </MudItem>
                             <MudItem xs="4">
                                 <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                                    <TimeseriesChart Name="Requests" Data="@BuildSeries(d => d.Requests)" />
+                                    <TimeseriesChart Name="Requests" Data="@(_monitoringData["requests"])" />
                                 </MudPaper>
                             </MudItem>
                         @* <MudItem xs="4">
@@ -190,7 +196,7 @@
 
 
     private bool _statsLoading = false;
-    private List<LoadBalancingMonitorData> _monitoringData = new();
+    private Dictionary<string, Dictionary<DateTime, double>> _monitoringData = new();
 
     private int GetMaxRulePriority() => _rules.Count() > 0 ? _rules.Max(p => p.Priority) + 1 : 0;
 
@@ -531,26 +537,24 @@
             }
             
             
-            var data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end)
+            List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end)
                 ?? new List<LoadBalancingMonitorData>();
 
-            _monitoringData = data;
+            var tz = await _browserTimezoneProvider.GetTimeZoneAsync();
+
+            _monitoringData["sessions"] = new();
+            _monitoringData["requests"] = new();
+
+            foreach (var entry in data.OrderBy(d => d.Timestamp))
+            {
+                var localTimestamp = TimeZoneInfo.ConvertTime(entry.Timestamp.ToUniversalTime(), tz).DateTime;
+                _monitoringData["sessions"][localTimestamp] = entry.Sessions;
+                _monitoringData["requests"][localTimestamp] = entry.Requests;
+            }
         }
         finally
         {
             _statsLoading = false;
         }
-    }
-
-    private Dictionary<DateTime, double> BuildSeries(Func<LoadBalancingMonitorData, double> valueSelector)
-    {
-        var series = new Dictionary<DateTime, double>();
-        foreach (var entry in _monitoringData.OrderBy(d => d.Timestamp))
-        {
-            var localTimestamp = entry.Timestamp.ToLocalTime().DateTime;
-            series[localTimestamp] = valueSelector(entry);
-        }
-
-        return series;
     }
 }
