@@ -129,21 +129,11 @@ public class CertificateManagementService : ICertificateManagementService
             PrivateKey = key
         };
 
-        try
-        {
-            _dbContext.Certificates.Add(certificate);
-            // TODO: Currently, the process is synchronous so either everything succeeds or nothing.
-            // Eventually, the signing process should be done in the background and we could save the
-            // thing here
-            // await _dbContext.SaveChangesAsync();
 
-            await SignCertificate(certificate);
-        }
-        catch
-        {
-            _dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        await SignCertificate(certificate);
+
+        _dbContext.Certificates.Add(certificate);
+        await _dbContext.SaveChangesAsync();
 
         return _mapper.Map<CertificateDTO>(certificate);
     }
@@ -215,8 +205,6 @@ public class CertificateManagementService : ICertificateManagementService
         certificate.Status = CertificateStatus.ACTIVE;
 
         certificate.Authority.Parameters = DeserializeConfig(config);
-
-        await _dbContext.SaveChangesAsync();
     }
 
     private async Task RevokeCertificate(Certificate certificate)
@@ -245,17 +233,10 @@ public class CertificateManagementService : ICertificateManagementService
 
     private async Task<CertificateDTO> RenewCertificate(Certificate certificate)
     {
-        try
-        {
-            certificate.Status = CertificateStatus.NEW;
-            certificate.PrivateKey = GenerateKey(certificate.PrivateKey.Algorithm);
-            await SignCertificate(certificate);            
-        }
-        catch
-        {
-            _dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        certificate.Status = CertificateStatus.NEW;
+        certificate.PrivateKey = GenerateKey(certificate.PrivateKey.Algorithm);
+        await SignCertificate(certificate);
+        await _dbContext.SaveChangesAsync();
 
         var cert = _mapper.Map<CertificateDTO>(certificate);
 
