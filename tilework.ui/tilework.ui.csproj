@@ -22,8 +22,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\tilework.core\tilework.core.csproj" />
-    <ProjectReference Include="..\loadbalancing.tile\loadbalancing.tile.csproj" />
-    <ProjectReference Include="..\certificatemanagement.tile\certificatemanagement.tile.csproj" />
   </ItemGroup>
   
 </Project>
