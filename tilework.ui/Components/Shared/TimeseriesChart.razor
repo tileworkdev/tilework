@@ -42,14 +42,25 @@
             return;
         }
 
-        const int targetLabelCount = 6;
-
         var times = orderedData.Select(d => d.Key).ToList();
         var duration = times.Last() - times.First();
-        var approxIntervalMinutes = Math.Max(1, duration.TotalMinutes / targetLabelCount);
-        var intervalMinutes = GetRoundedIntervalMinutes(approxIntervalMinutes);
-        var interval = TimeSpan.FromMinutes(intervalMinutes);
-        var nextLabelTime = AlignToNextInterval(times.First(), interval);
+
+        const int targetLabelCount = 6;
+        var useDayLabels = duration >= TimeSpan.FromHours(48);
+        TimeSpan interval;
+        DateTime nextLabelTime;
+        if (useDayLabels)
+        {
+            interval = TimeSpan.FromDays(1);
+            nextLabelTime = AlignToNextMidday(times.First());
+        }
+        else
+        {
+            var approxIntervalMinutes = Math.Max(1, duration.TotalMinutes / targetLabelCount);
+            var intervalMinutes = GetRoundedIntervalMinutes(approxIntervalMinutes);
+            interval = TimeSpan.FromMinutes(intervalMinutes);
+            nextLabelTime = AlignToNextInterval(times.First(), interval);
+        }
 
         _chartLabels = new string[orderedData.Count];
         for (var i = 0; i < orderedData.Count; i++)
@@ -64,7 +75,7 @@
                     nextLabelTime = nextLabelTime.Add(interval);
                 }
 
-                label = nextLabelTime.Subtract(interval).ToString("HH:mm");
+                label = FormatLabel(nextLabelTime.Subtract(interval), useDayLabels);
             }
 
             _chartLabels[i] = label;
@@ -97,5 +108,18 @@
     {
         var ticks = ((time.Ticks + interval.Ticks - 1) / interval.Ticks) * interval.Ticks;
         return new DateTime(ticks, time.Kind);
+    }
+
+    private static DateTime AlignToNextMidday(DateTime time)
+    {
+        var midday = time.Date.AddHours(12);
+        return time <= midday ? midday : midday.AddDays(1);
+    }
+
+    private static string FormatLabel(DateTime labelTime, bool useDayLabels)
+    {
+        return useDayLabels
+            ? labelTime.ToString("ddd dd")
+            : labelTime.ToString("HH:mm");
     }
 }

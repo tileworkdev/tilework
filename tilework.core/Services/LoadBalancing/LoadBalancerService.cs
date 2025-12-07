@@ -453,7 +453,7 @@ public class LoadBalancerService : ILoadBalancerService
         await _configurator.Shutdown();
     }
 
-    public async Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid id, DateTimeOffset start, DateTimeOffset end)
+    public async Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end)
     {
         var lb = await GetLoadBalancer(id);
         if(lb == null)
@@ -464,6 +464,6 @@ public class LoadBalancerService : ILoadBalancerService
         filters["type"] = "frontend";
         filters["proxy"] = lb.Id.ToString();
 
-        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, start, end);
+        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
 }

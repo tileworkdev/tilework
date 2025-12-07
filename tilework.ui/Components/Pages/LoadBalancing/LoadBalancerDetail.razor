@@ -535,9 +535,9 @@
                     start = end.AddHours(-1);
                     break;
             }
-            
-            
-            List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, start, end)
+
+            var interval = new TimeSpan(hours: 0, minutes: 1, seconds: 0);
+            List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, start, end)
                 ?? new List<LoadBalancingMonitorData>();
 
             var tz = await _browserTimezoneProvider.GetTimeZoneAsync();

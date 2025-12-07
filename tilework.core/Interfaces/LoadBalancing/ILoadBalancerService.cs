@@ -42,7 +42,7 @@ public interface ILoadBalancerService
     public Task UpdateTarget(TargetGroupDTO group, TargetDTO target);
     public Task RemoveTarget(TargetGroupDTO group, TargetDTO target);
 
-    public Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid Id, DateTimeOffset start, DateTimeOffset end);
+    public Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid Id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end);
 
     public Task ApplyConfiguration();
     public Task Shutdown();

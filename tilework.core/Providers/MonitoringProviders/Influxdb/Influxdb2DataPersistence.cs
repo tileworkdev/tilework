@@ -189,11 +189,9 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         return org[0].Id;
     }
 
-    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
         using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
-        // using var client = new InfluxDBClient("http://ifu.wh:8086", token: "{Nc97#*%4DggeR3w");
-        // name = "LoadBalancing-4283cffc-903d-4360-be0f-861f77fd2318";
 
         var queryApi = client.GetQueryApi();
 
@@ -214,6 +212,10 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
             var filtersCombined = string.Join(" and ", filterExpressions);
             query += $"\n  |> filter(fn: (r) => {filtersCombined})";
         }
+
+        query += $"  |> aggregateWindow(every: {ToFluxDuration(interval)}, fn: sum, createEmpty: true)";
+
+
 
         var fluxTables = await queryApi.QueryAsync(query, _orgName);
 
@@ -261,6 +263,21 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         
         return data;
     }
+
+    private string ToFluxDuration(TimeSpan ts)
+    {
+        var parts = new List<string>();
+
+        if (ts.Days > 0) parts.Add($"{ts.Days}d");
+        if (ts.Hours > 0) parts.Add($"{ts.Hours}h");
+        if (ts.Minutes > 0) parts.Add($"{ts.Minutes}m");
+        if (ts.Seconds > 0) parts.Add($"{ts.Seconds}s");
+        if (ts.Milliseconds > 0) parts.Add($"{ts.Milliseconds}ms");
+
+        // If everything is zero, return "0s"
+        return parts.Count > 0 ? string.Join("", parts) : "0s";
+    }
+
 
     private static bool TryConvertFieldValue(object value, Type targetType, out object? convertedValue)
     {
