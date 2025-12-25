@@ -48,7 +48,7 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
                                  ILogger<Influxdb3Configurator> logger,
                                  TokenService tokenService,
                                  HttpApiFactoryService httpApiFactoryService,
-                                 IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage, _ports)
+                                 IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
     {
         _logger = logger;
         _settings = settings.Value;
@@ -60,7 +60,7 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task<MonitoringTarget> GetTarget(MonitoringSource source)
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
 
         return new MonitoringTarget()
         {
@@ -74,7 +74,12 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task ApplyConfiguration()
     {
-        await StartUp();
+        await StartUp(_serviceName, _ports, new(), ContainerRestartType.RESTART);
+    }
+
+    public async Task Shutdown()
+    {
+        await Shutdown(_serviceName);
     }
 
     private async Task<HttpApiService> GetApiService()
@@ -85,14 +90,14 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
 
     private async Task<string> GetHost()
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
         var host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString());
         return $"http://{host.Value}:8181";
     }
 
     private async Task<string> GetAdminToken()
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
 
         var tokenKey = $"influxdb.{container.Id}";
 

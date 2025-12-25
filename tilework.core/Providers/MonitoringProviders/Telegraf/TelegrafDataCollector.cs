@@ -14,11 +14,10 @@ using Tilework.Monitoring.Enums;
 
 namespace Tilework.Monitoring.Telegraf;
 
-public class TelegrafConfigurator : IDataCollectorConfigurator
+public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigurator
 {
-    public string ServiceName => "Telegraf";
-
-    private string ContainerName => $"DataCollector-{ServiceName}";
+    protected static string _serviceName = "influxdb";
+    protected static string _moduleName = "telegraf";
 
     private readonly IContainerManager _containerManager;
     private readonly DataCollectorConfiguration _settings;
@@ -28,39 +27,12 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
     public TelegrafConfigurator(IOptions<DataCollectorConfiguration> settings,
                                IContainerManager containerManager,
                                ILogger<TelegrafConfigurator> logger,
-                               IMapper mapper)
+                               IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
     {
         _logger = logger;
         _settings = settings.Value;
         _containerManager = containerManager;
         _mapper = mapper;
-    }
-
-    private async Task<Container?> GetContainer()
-    {
-        var containers = await _containerManager.ListContainers("monitoring.tile");
-
-        return containers.FirstOrDefault(c => c.Name == ContainerName);
-    }
-
-    private async Task<Container> CreateContainer()
-    {
-        try
-        {
-            var container = await _containerManager.CreateContainer(
-                ContainerName,
-                _settings.BackendImage,
-                "monitoring.tile",
-                new List<ContainerPort>() { }
-            );
-
-            return container;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogCritical($"Failed to create container for telegraf data collector: {ex.ToString()}");
-            throw;
-        }
     }
 
     private static T GetOrCreate<T>(TomlTable parent, string name)
@@ -149,22 +121,13 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
 
     public async Task ApplyConfiguration(List<Monitoring.Models.Monitor> monitors)
     {
-        var container = await GetContainer();
-
         if (monitors.Count() == 0)
         {
             _logger.LogInformation("No active monitors found. Deferring configuration for data collector");
-            if (container != null)
-            {
-                _logger.LogInformation($"Stopping container for data collector");
-                await _containerManager.StopContainer(container.Id);
-            }
+            await Shutdown(_serviceName);
             return;
         }
 
-        
-        if (container == null)
-            container = await CreateContainer();
 
         var localConfigPath = Path.GetTempFileName();
         var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "telegraf.conf");
@@ -176,7 +139,14 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
         {
             File.Copy(configPath, localConfigPath, overwrite: true);
             UpdateConfigFile(localConfigPath, monitors);
-            await _containerManager.CopyFileToContainer(container.Id, localConfigPath, "/etc/telegraf/telegraf.conf");
+
+            var containerFile = new ContainerFile()
+            {
+                LocalPath = localConfigPath,
+                ContainerPath = "/etc/telegraf/telegraf.conf"
+            };
+
+            await StartUp(_serviceName, new(), new() { containerFile }, ContainerRestartType.RESTART);
         }
         finally
         {
@@ -184,28 +154,11 @@ public class TelegrafConfigurator : IDataCollectorConfigurator
                 File.Delete(localConfigPath);
         }
 
-        if (container.State != ContainerState.Running)
-        {
-            _logger.LogInformation($"Starting container for data collector");
-            await _containerManager.StartContainer(container.Id);
-        }
-        else
-        {
-            _logger.LogInformation($"Restarting container for data collector");
-            await _containerManager.StopContainer(container.Id);
-            await _containerManager.StartContainer(container.Id);
-        }
+
     }
 
     public async Task Shutdown()
     {
-        var container = await GetContainer();
-        if (container != null)
-        {
-            _logger.LogInformation($"Stopping and deleting telegraf data collector");
-            if (container.State == ContainerState.Running)
-                await _containerManager.StopContainer(container.Id);
-            await _containerManager.DeleteContainer(container.Id);
-        }
+        await Shutdown(_serviceName);
     }
 }

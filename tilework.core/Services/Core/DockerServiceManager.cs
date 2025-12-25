@@ -320,7 +320,6 @@ public class DockerServiceManager : IContainerManager
         {
             throw new DockerException(ex.ResponseBody);
         }
-
     }
 
     public async Task StopContainer(string id)

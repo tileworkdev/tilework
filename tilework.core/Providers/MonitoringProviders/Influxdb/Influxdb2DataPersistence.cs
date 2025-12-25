@@ -52,7 +52,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
                                  ILogger<Influxdb2Configurator> logger,
                                  TokenService tokenService,
                                  HttpApiFactoryService httpApiFactoryService,
-                                 IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage, _ports)
+                                 IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
     {
         _logger = logger;
         _settings = settings.Value;
@@ -65,7 +65,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task<MonitoringTarget> GetTarget(MonitoringSource source)
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
 
         await CheckCreateBucket(_orgName, source.Module);
 
@@ -81,11 +81,16 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task ApplyConfiguration()
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
         if(container == null || container.State != ContainerState.Running)
-            await StartUp();
+            await StartUp(_serviceName, _ports, new(), ContainerRestartType.RESTART);
 
         await CheckRunSetup();
+    }
+
+    public async Task Shutdown()
+    {
+        await Shutdown(_serviceName);
     }
 
     private async Task CheckRunSetup()
@@ -99,7 +104,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
                 if(resp.Allowed == true)
                 {
-                    var container = await GetContainer();
+                    var container = await GetContainer(_serviceName);
                     var tokenKey = $"influxdb.{container.Id}";
 
                     await _tokenService.DeleteToken(tokenKey);
@@ -126,14 +131,14 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     private async Task<string> GetHost()
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
         var host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString());
         return $"http://{host.Value}:8086";
     }
 
     private async Task<string> GetAdminToken()
     {
-        var container = await GetContainer();
+        var container = await GetContainer(_serviceName);
 
         var tokenKey = $"influxdb.{container.Id}";
 
