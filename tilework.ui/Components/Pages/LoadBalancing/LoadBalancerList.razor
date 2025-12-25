@@ -25,20 +25,18 @@
             @(context is ApplicationLoadBalancerDTO ? ((ApplicationLoadBalancerDTO) context).Protocol : ((NetworkLoadBalancerDTO) context).Protocol)
         </MudTd>
         <MudTd DataLabel="Status">
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
             @if (context.Enabled)
             {
-                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                    <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
-                    <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Enabled</MudText>
-                </MudStack>
+                <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
+                <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Enabled</MudText>
             }
             else
             {
-                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                    <MudIcon Style="@($"color:{Colors.Gray.Darken1};")" Icon="@Icons.Material.Outlined.StopCircle" Size="Size.Small"/>
-                    <MudText Style="@($"color:{Colors.Gray.Darken1};")" Typo="Typo.body2">Disabled</MudText>
-                </MudStack>
+                <MudIcon Style="@($"color:{Colors.Gray.Darken1};")" Icon="@Icons.Material.Outlined.StopCircle" Size="Size.Small"/>
+                <MudText Style="@($"color:{Colors.Gray.Darken1};")" Typo="Typo.body2">Disabled</MudText>
             }
+            </MudStack>
         </MudTd>
     </RowContent>
 </GenericListview>

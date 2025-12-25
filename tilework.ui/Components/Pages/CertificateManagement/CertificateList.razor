@@ -1,6 +1,8 @@
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
+@using Tilework.CertificateManagement.Enums
 @using Tilework.Core.Enums
+
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -25,7 +27,30 @@
     <RowContent>
         <MudTd DataLabel="Name"><MudLink Href="@($"/cm/certificates/{context.Id}")">@context.Name</MudLink></MudTd>
         <MudTd DataLabel="FQDN">@context.Fqdn</MudTd>
-        <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Status">
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            @if (context.Status == CertificateStatus.NEW)
+            {
+                <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.AddCircleOutline" Size="Size.Small"/>
+                <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">New</MudText>
+            }
+            else if(context.Status == CertificateStatus.ACTIVE)
+            {
+                <MudIcon Style="@($"color:{Colors.Green.Darken2};")" Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
+                <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Active</MudText>
+            }
+            else if(context.Status == CertificateStatus.EXPIRED)
+            {
+                <MudIcon Style="@($"color:{Colors.Orange.Darken2};")" Icon="@Icons.Material.Outlined.ChangeCircle" Size="Size.Small"/>
+                <MudText Style="@($"color:{Colors.Orange.Darken2};")" Typo="Typo.body2">Expired</MudText>
+            }
+            else if(context.Status == CertificateStatus.REVOKED)
+            {
+                <MudIcon Style="@($"color:{Colors.Red.Darken2};")" Icon="@Icons.Material.Outlined.Cancel" Size="Size.Small"/>
+                <MudText Style="@($"color:{Colors.Red.Darken2};")" Typo="Typo.body2">Revoked</MudText>
+            }
+            </MudStack>
+        </MudTd>
         <MudTd DataLabel="Key algorithm">@_certificateManagementService.GetPrivateKey(context.PrivateKey).Result?.Algorithm.GetDescription()</MudTd>
         <MudTd DataLabel="Expiration">@context.ExpiresAtUtc</MudTd>
         <MudTd DataLabel="Intermediate certificates">@(context.CertificateData.Count > 0 ? context.CertificateData.Count - 1 : 0)</MudTd>
