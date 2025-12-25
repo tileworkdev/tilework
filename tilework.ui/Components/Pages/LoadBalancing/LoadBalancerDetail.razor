@@ -29,7 +29,7 @@
 
 <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions" OnTabChanged="OnTabChanged">
     <DetailContent>
-        <MudGrid Spacing="5">
+        <MudGrid Spacing="20">
             <MudItem>
                 <MudText Typo="Typo.subtitle2">Type</MudText>
                 <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancerDTO appBalancer ? "Application" : "Network")</MudText>
@@ -38,11 +38,17 @@
                 <MudText Typo="Typo.subtitle2">Status</MudText>
                 @if (_item.Enabled)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Enabled</MudChip>
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
+                        <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Enabled</MudText>
+                    </MudStack>
                 }
                 else
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudIcon Style="@($"color:{Colors.Gray.Darken1};")" Icon="@Icons.Material.Outlined.StopCircle" Size="Size.Small"/>
+                        <MudText Style="@($"color:{Colors.Gray.Darken1};")" Typo="Typo.body2">Disabled</MudText>
+                    </MudStack>
                 }
             </MudItem>
         </MudGrid>
