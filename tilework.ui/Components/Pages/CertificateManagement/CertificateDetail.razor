@@ -189,10 +189,7 @@
     {
         _actions = new List<ActionItem>();
 
-        if(_item.Status != CertificateStatus.REVOKED)
-        {
-            _actions.Add(new ActionItem() { Name = "Renew", OnClick = ConfirmRenew });
-        }
+        _actions.Add(new ActionItem() { Name = "Renew", OnClick = ConfirmRenew });
 
         if(_item.Status == CertificateStatus.ACTIVE)
         {
