@@ -64,13 +64,16 @@ public class DataCollectorService
     {
         await _persistenceConfigurator.ApplyConfiguration();
 
-        var monitors = (await Task.WhenAll(
-            _sources.Select(async s => new Monitoring.Models.Monitor
+        var monitors = new List<Monitoring.Models.Monitor>(_sources.Count);
+        foreach (var source in _sources)
+        {
+            var target = await _persistenceConfigurator.GetTarget(source);
+            monitors.Add(new Monitoring.Models.Monitor
             {
-                Source = s,
-                Target = await _persistenceConfigurator.GetTarget(s)
-            })
-        )).ToList();
+                Source = source,
+                Target = target
+            });
+        }
 
         await _collectorConfigurator.ApplyConfiguration(monitors);
     }
