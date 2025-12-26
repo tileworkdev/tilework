@@ -14,6 +14,7 @@ public interface IContainerManager
     public Task DeleteNetwork(string id);
 
     public Task<IPAddress> GetContainerAddress(string id);
+    public Task<List<ContainerPort>> GetContainerPorts(string id);
 
     public Task<List<Container>> ListContainers(string? module);
     public Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort>? ports);

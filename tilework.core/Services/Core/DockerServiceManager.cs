@@ -147,6 +147,55 @@ public class DockerServiceManager : IContainerManager
         return IPAddress.Parse(network.Value.IPAddress);
     }
 
+    public async Task<List<ContainerPort>> GetContainerPorts(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("Container ID cannot be null or empty.", nameof(id));
+
+        var info = await _client.Containers.InspectContainerAsync(id);
+        var ports = info.NetworkSettings?.Ports;
+
+        var containerPorts = new List<ContainerPort>();
+
+        if (ports == null || ports.Count == 0)
+            return containerPorts;
+
+        foreach (var portEntry in ports)
+        {
+            if (string.IsNullOrWhiteSpace(portEntry.Key))
+                continue;
+
+            var parts = portEntry.Key.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0 || !int.TryParse(parts[0], out int containerPort))
+                continue;
+
+            if (!Enum.TryParse(parts.Length > 1 ? parts[1] : nameof(PortType.TCP), true, out PortType portType))
+                portType = PortType.TCP;
+
+            var bindings = portEntry.Value;
+            if (bindings == null || bindings.Count == 0)
+                continue;
+
+            foreach (var binding in bindings)
+            {
+                int? hostPort = null;
+                if (!string.IsNullOrEmpty(binding.HostPort) && int.TryParse(binding.HostPort, out var parsedHostPort))
+                    hostPort = parsedHostPort;
+                else
+                    continue;
+
+                containerPorts.Add(new ContainerPort
+                {
+                    Port = containerPort,
+                    HostPort = hostPort,
+                    Type = portType
+                });
+            }
+        }
+
+        return containerPorts;
+    }
+
 
     public async Task<List<Container>> ListContainers(string? module = null)
     {

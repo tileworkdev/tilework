@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 
 using Tilework.Core.Interfaces;
@@ -72,6 +73,18 @@ public abstract class BaseContainerProvider
     {
         var container = await GetContainer(name);
 
+        if(container != null)
+        {
+            var existingPorts = await _containerManager.GetContainerPorts(container.Id);
+
+            if (PortsAreDifferent(existingPorts, ports))
+            {
+                _logger.LogInformation($"Container {getFullName(name)} ports changed, forcing recreate");
+                restartType = ContainerRestartType.RECREATE;
+            }
+        }
+
+
         if(container != null && restartType == ContainerRestartType.RECREATE)
         {
             await DeleteContainer(name);
@@ -109,6 +122,42 @@ public abstract class BaseContainerProvider
                 await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
             }
         }
+    }
+
+    private static bool PortsAreDifferent(List<ContainerPort>? existingPorts, List<ContainerPort>? desiredPorts)
+    {
+        var normalizedExisting = NormalizePorts(existingPorts);
+        var normalizedDesired = NormalizePorts(desiredPorts);
+
+        if (normalizedExisting.Count != normalizedDesired.Count)
+            return true;
+
+        for (int i = 0; i < normalizedExisting.Count; i++)
+        {
+            var existing = normalizedExisting[i];
+            var desired = normalizedDesired[i];
+
+            if (existing.Port != desired.Port ||
+                existing.HostPort != desired.HostPort ||
+                existing.Type != desired.Type)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static List<ContainerPort> NormalizePorts(List<ContainerPort>? ports)
+    {
+        if (ports == null)
+            return new List<ContainerPort>();
+
+        return ports
+            .OrderBy(p => p.Port)
+            .ThenBy(p => p.HostPort ?? -1)
+            .ThenBy(p => p.Type)
+            .ToList();
     }
 
     private async Task DeleteContainer(string name)
