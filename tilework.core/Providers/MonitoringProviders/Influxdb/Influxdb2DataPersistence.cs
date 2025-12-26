@@ -155,7 +155,6 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
             await _tokenService.SetToken(tokenKey, token);
         }
-        _logger.LogInformation($"Admin token ---> {token}");
         return token;
     }
 
