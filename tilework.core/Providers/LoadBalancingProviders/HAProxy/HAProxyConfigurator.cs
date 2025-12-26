@@ -22,9 +22,10 @@ using Tilework.Monitoring.Services;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
-public class HAProxyConfigurator : ILoadBalancingConfigurator
+public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigurator
 {
-    public string ServiceName => "HAProxy";
+    protected static string _serviceName = "haproxy";
+    protected static string _moduleName = "loadbalancing";
 
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerConfiguration _settings;
@@ -38,7 +39,7 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
                                ICertificateManagementService certificateManagementService,
                                DataCollectorService dataCollectorService,
                                ILogger<HAProxyConfigurator> logger,
-                               IMapper mapper)
+                               IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
     {
         _logger = logger;
         _settings = settings.Value;
@@ -51,11 +52,6 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
     public List<BaseLoadBalancer> LoadConfiguration()
     {
         return null;
-    }
-
-    private async Task<List<Container>> GetLoadBalancerContainers()
-    {
-        return await _containerManager.ListContainers("loadbalancing.tile");
     }
 
     private void UpdateConfigFile(string path, BaseLoadBalancer balancer)
@@ -92,13 +88,13 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         haproxyConfig.Save();
     }
 
-    private async Task SaveCertificates(Container container, BaseLoadBalancer loadBalancer)
+    private async Task<List<ContainerFile>> GetCertificateFiles(BaseLoadBalancer loadBalancer)
     {
+        var containerFiles = new List<ContainerFile>();
+
         var certlist = new StringBuilder();
 
-        var activeCertificates = loadBalancer.Certificates.Where(
-            c => c.Status == CertificateStatus.ACTIVE &&
-            c.PrivateKey != null);
+        var activeCertificates = loadBalancer.Certificates.Where(c => c.PrivateKey != null);
 
         foreach (var cert in activeCertificates)
         {
@@ -109,152 +105,32 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
             var certFilePath = Path.GetTempFileName();
 
-            var containerFilePath = $"/usr/local/etc/haproxy/certs/{cert.Fqdn}.{keyType}.pem";
+            File.WriteAllText(certFilePath, $"{keyData}\n{certData}");
 
-            try
+            var containerFile = new ContainerFile()
             {
-                File.WriteAllText(certFilePath, $"{keyData}\n{certData}");
-                await _containerManager.CopyFileToContainer(
-                    container.Id,
-                    certFilePath,
-                    containerFilePath
-                );
-            }
-            finally
-            {
-                if (File.Exists(certFilePath))
-                    File.Delete(certFilePath);
-            }
+                LocalPath = certFilePath,
+                ContainerPath = $"/usr/local/etc/haproxy/certs/{cert.Fqdn}.{keyType}.pem"
+            };
 
-            certlist.Append($"{containerFilePath}\n");
+            containerFiles.Add(containerFile);
+
+            certlist.Append($"{containerFile.ContainerPath}\n");
         }
+
 
         var certListFilePath = Path.GetTempFileName();
-        
-        try
+        File.WriteAllText(certListFilePath, certlist.ToString());
+
+        containerFiles.Add(new ContainerFile()
         {
-            File.WriteAllText(certListFilePath, certlist.ToString());
-            await _containerManager.CopyFileToContainer(
-                container.Id,
-                certListFilePath,
-                "/usr/local/etc/haproxy/certs/certlist.txt"
-            );
-        }
-        finally
-        {
-            if (File.Exists(certListFilePath))
-                File.Delete(certListFilePath);
-        }
+            LocalPath = certListFilePath,
+            ContainerPath = "/usr/local/etc/haproxy/certs/certlist.txt"
+        });
+
+        return containerFiles;
     }
 
-    public async Task ApplyConfiguration(List<BaseLoadBalancer> config)
-    {
-        if (string.IsNullOrEmpty(_settings.BackendImage))
-            throw new ArgumentException("No image setting supplied for load balancing tile");
-
-        var containers = await GetLoadBalancerContainers();
-        foreach (var lb in config)
-        {
-            var name = lb.Id.ToString();
-            var container = containers.FirstOrDefault(cnt => cnt.Name == name);
-
-            if (container == null)
-            {
-                _logger.LogInformation($"Creating new container for load balancer {lb.Name}");
-                var port = new ContainerPort()
-                {
-                    Port = lb.Port,
-                    HostPort = lb.Port,
-                    Type = _mapper.Map<PortType>(lb)
-                };
-
-                try
-                {
-                    container = await _containerManager.CreateContainer(
-                        name,
-                        _settings.BackendImage,
-                        "loadbalancing.tile",
-                        new List<ContainerPort>() { port }
-                    );
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogCritical($"Failed to create container for load balancer {lb.Name}: {ex.ToString()}");
-                    throw;
-                }
-            }
-
-            var localConfigPath = Path.GetTempFileName();
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "haproxy.cfg");
-
-            if (!File.Exists(configPath))
-                throw new InvalidOperationException($"No default haproxy configuration file found at {configPath}");
-
-            try
-            {
-                File.Copy(configPath, localConfigPath, overwrite: true);
-                UpdateConfigFile(localConfigPath, lb);
-                await _containerManager.CopyFileToContainer(container.Id, localConfigPath, "/usr/local/etc/haproxy/haproxy.cfg");
-            }
-            finally
-            {
-                if (File.Exists(localConfigPath))
-                    File.Delete(localConfigPath);
-            }
-
-            await SaveCertificates(container, lb);
-
-
-            if (container.State != ContainerState.Running)
-            {
-                if (lb.Enabled == true)
-                {
-                    _logger.LogInformation($"Starting container for load balancer {lb.Name}");
-                    await _containerManager.StartContainer(container.Id);
-                }
-            }
-            else
-            {
-                if (lb.Enabled == true)
-                {
-                    _logger.LogInformation($"Signaling container for load balancer {lb.Name} of configuration changes");
-                    await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
-                }
-                else
-                {
-                    _logger.LogInformation($"Stopping container for load balancer {lb.Name}");
-                    await _containerManager.StopContainer(container.Id);
-                }
-            }
-
-
-            if (lb.Enabled == true && _dataCollectorService.IsMonitored(lb.Id.ToString()) == false)
-            {
-                var monitoringSource = new MonitoringSource()
-                {
-                    Module = "LoadBalancing",
-                    Name = lb.Id.ToString(),
-                    Type = MonitoringSourceType.HAPROXY,
-                    Host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString()),
-                    Port = 4380
-                };
-                await _dataCollectorService.StartMonitoring(monitoringSource);
-            }
-            else if (lb.Enabled == false && _dataCollectorService.IsMonitored(lb.Id.ToString()) == true)
-            {
-                await _dataCollectorService.StopMonitoring(lb.Id.ToString());
-            }
-        }
-
-        var containersToDelete = containers.Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
-        foreach (var cnt in containersToDelete)
-        {
-            _logger.LogInformation($"Deleting load balancer {cnt.Name}");
-            if (cnt.State == ContainerState.Running)
-                await _containerManager.StopContainer(cnt.Id);
-            await _containerManager.DeleteContainer(cnt.Id);
-        }
-    }
 
     private static string GetPrivateKeyPem(AsymmetricAlgorithm key)
     {
@@ -270,10 +146,93 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
         return new string(pem);
     }
 
+
+    public async Task ConfigureMonitoring(BaseLoadBalancer loadBalancer)
+    {
+        if (loadBalancer.Enabled == true && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == false)
+        {
+            var monitoringSource = new MonitoringSource()
+            {
+                Module = "LoadBalancing",
+                Name = loadBalancer.Id.ToString(),
+                Type = MonitoringSourceType.HAPROXY,
+                Host = Host.Parse(await GetLoadBalancerHostname(loadBalancer)),
+                Port = 4380
+            };
+            await _dataCollectorService.StartMonitoring(monitoringSource);
+        }
+        else if (loadBalancer.Enabled == false && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == true)
+        {
+            await _dataCollectorService.StopMonitoring(loadBalancer.Id.ToString());
+        }
+    }
+
+    public async Task ApplyConfiguration(List<BaseLoadBalancer> config)
+    {
+        foreach(var lb in config)
+        {
+            if(lb.Enabled == true)
+            {
+                var port = new ContainerPort()
+                {
+                    Port = lb.Port,
+                    HostPort = lb.Port,
+                    Type = _mapper.Map<PortType>(lb)
+                };
+
+
+                var localConfigPath = Path.GetTempFileName();
+                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "haproxy.cfg");
+
+                if (!File.Exists(configPath))
+                    throw new InvalidOperationException($"No default haproxy configuration file found at {configPath}");
+
+                var containerFiles = new List<ContainerFile>();
+
+                try
+                {
+                    File.Copy(configPath, localConfigPath, overwrite: true);
+                    UpdateConfigFile(localConfigPath, lb);
+
+                    containerFiles.Add(new ContainerFile()
+                    {
+                        LocalPath = localConfigPath,
+                        ContainerPath = "/usr/local/etc/haproxy/haproxy.cfg"
+                    });
+
+                    containerFiles.AddRange(await GetCertificateFiles(lb));
+
+                    await StartUp(lb.Name, new() { port }, containerFiles, ContainerRestartType.SIGNAL);
+                }
+                finally
+                {
+                    foreach(var file in containerFiles)
+                    {
+                        if (File.Exists(file.LocalPath))
+                            File.Delete(file.LocalPath);
+                    }
+                }
+            }
+            else
+            {
+                await Shutdown(lb.Name);
+            }
+
+            
+            await ConfigureMonitoring(lb);
+        }
+
+        var containersToDelete = (await GetContainers()).Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
+
+        foreach (var cnt in containersToDelete)
+        {
+            await Shutdown(cnt.Name);
+        }
+    }
+
     private async Task<Container> GetContainer(BaseLoadBalancer balancer)
     {
-        var containers = await GetLoadBalancerContainers();
-        var container = containers.FirstOrDefault(cnt => cnt.Name == balancer.Id.ToString());
+        var container = await GetContainer(balancer.Name);
         if (container == null)
             throw new ArgumentException($"Container for balancer {balancer.Id} not found");
         return container;
@@ -294,13 +253,10 @@ public class HAProxyConfigurator : ILoadBalancingConfigurator
 
     public async Task Shutdown()
     {
-        var containers = await GetLoadBalancerContainers();
+        var containers = await GetContainers();
         foreach (var cnt in containers)
         {
-            _logger.LogInformation($"Stopping and deleting load balancer {cnt.Name}");
-            if (cnt.State == ContainerState.Running)
-                await _containerManager.StopContainer(cnt.Id);
-            await _containerManager.DeleteContainer(cnt.Id);
+            await Shutdown(cnt.Name);
         }
     }
 }

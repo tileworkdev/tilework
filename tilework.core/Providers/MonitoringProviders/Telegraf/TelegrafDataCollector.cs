@@ -146,7 +146,7 @@ public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigu
                 ContainerPath = "/etc/telegraf/telegraf.conf"
             };
 
-            await StartUp(_serviceName, new(), new() { containerFile }, ContainerRestartType.RESTART);
+            await StartUp("main", new(), new() { containerFile }, ContainerRestartType.RESTART);
         }
         finally
         {

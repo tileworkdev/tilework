@@ -40,10 +40,14 @@ public abstract class BaseContainerProvider
         return $"{_module}.{_service}.{name}";
     }
 
+    protected async Task<List<Container>> GetContainers()
+    {
+        return await _containerManager.ListContainers(_fullModule);
+    }
+
     protected async Task<Container?> GetContainer(string name)
     {
-        var containers = await _containerManager.ListContainers(_fullModule);
-
+        var containers = await GetContainers();
         return containers.FirstOrDefault(c => c.Name == getFullName(name));
     }
 
