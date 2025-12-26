@@ -19,6 +19,7 @@ using Tilework.Monitoring.Enums;
 using Tilework.Monitoring.Models;
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Monitoring.Services;
+using Tilework.Exceptions.Core;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
@@ -167,17 +168,15 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         }
     }
 
-    public async Task ApplyConfiguration(List<BaseLoadBalancer> config)
+    public async Task ApplyConfiguration(BaseLoadBalancer loadBalancer)
     {
-        foreach(var lb in config)
-        {
-            if(lb.Enabled == true)
+            if(loadBalancer.Enabled == true)
             {
                 var port = new ContainerPort()
                 {
-                    Port = lb.Port,
-                    HostPort = lb.Port,
-                    Type = _mapper.Map<PortType>(lb)
+                    Port = loadBalancer.Port,
+                    HostPort = loadBalancer.Port,
+                    Type = _mapper.Map<PortType>(loadBalancer)
                 };
 
 
@@ -192,7 +191,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
                 try
                 {
                     File.Copy(configPath, localConfigPath, overwrite: true);
-                    UpdateConfigFile(localConfigPath, lb);
+                    UpdateConfigFile(localConfigPath, loadBalancer);
 
                     containerFiles.Add(new ContainerFile()
                     {
@@ -200,9 +199,17 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
                         ContainerPath = "/usr/local/etc/haproxy/haproxy.cfg"
                     });
 
-                    containerFiles.AddRange(await GetCertificateFiles(lb));
+                    containerFiles.AddRange(await GetCertificateFiles(loadBalancer));
 
-                    await StartUp(lb.Name, new() { port }, containerFiles, ContainerRestartType.SIGNAL);
+                    await StartUp(loadBalancer.Name, new() { port }, containerFiles, ContainerRestartType.SIGNAL);
+                }
+                catch(DockerException ex)
+                {
+                    if(ex.Type == ContainerExceptionType.PORT_CONFLICT)
+                    {
+                        throw new PortConfictException("Port is already in use");
+                    }
+                    throw;
                 }
                 finally
                 {
@@ -215,14 +222,28 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
             }
             else
             {
-                await Shutdown(lb.Name);
+                await Shutdown(loadBalancer.Name);
             }
 
             
-            await ConfigureMonitoring(lb);
+            await ConfigureMonitoring(loadBalancer);
+    }
+
+    public async Task ApplyConfiguration(List<BaseLoadBalancer> loadBalancers)
+    {
+        foreach(var lb in loadBalancers)
+        {
+            try
+            {
+                await ApplyConfiguration(lb);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogCritical(ex, $"Failed to configure load balancer [{lb.Name}]");
+            }
         }
 
-        var containersToDelete = (await GetContainers()).Where(cnt => !config.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
+        var containersToDelete = (await GetContainers()).Where(cnt => !loadBalancers.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
 
         foreach (var cnt in containersToDelete)
         {

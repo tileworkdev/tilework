@@ -169,7 +169,7 @@ public class LoadBalancerService : ILoadBalancerService
         try
         {
             await _dbContext.SaveChangesAsync();
-            await ApplyConfiguration();
+            await ApplyConfiguration(Id);
             await tx.CommitAsync();
         }
         catch
@@ -191,7 +191,7 @@ public class LoadBalancerService : ILoadBalancerService
         try
         {
             await _dbContext.SaveChangesAsync();
-            await ApplyConfiguration();
+            await ApplyConfiguration(Id);
             await tx.CommitAsync();
         }
         catch
@@ -446,6 +446,13 @@ public class LoadBalancerService : ILoadBalancerService
     {
         var balancers = await _dbContext.LoadBalancers.ToListAsync();
         await _configurator.ApplyConfiguration(balancers);
+    }
+
+    public async Task ApplyConfiguration(Guid Id)
+    {
+        var balancer = await _dbContext.LoadBalancers.FindAsync(Id);
+        if(balancer != null)
+            await _configurator.ApplyConfiguration(balancer);
     }
 
     public async Task Shutdown()
