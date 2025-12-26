@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Linq;
 
 using Microsoft.Extensions.Logging;
 
@@ -193,7 +194,10 @@ public class DockerServiceManager : IContainerManager
             }
         }
 
-        return containerPorts;
+        return containerPorts
+            .GroupBy(p => new { p.Port, p.HostPort, p.Type })
+            .Select(g => g.First())
+            .ToList();
     }
 
 
