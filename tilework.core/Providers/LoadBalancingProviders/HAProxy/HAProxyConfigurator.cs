@@ -170,63 +170,63 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
 
     public async Task ApplyConfiguration(BaseLoadBalancer loadBalancer)
     {
-            if(loadBalancer.Enabled == true)
+        if(loadBalancer.Enabled == true)
+        {
+            var port = new ContainerPort()
             {
-                var port = new ContainerPort()
+                Port = loadBalancer.Port,
+                HostPort = loadBalancer.Port,
+                Type = _mapper.Map<PortType>(loadBalancer)
+            };
+
+
+            var localConfigPath = Path.GetTempFileName();
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "haproxy.cfg");
+
+            if (!File.Exists(configPath))
+                throw new InvalidOperationException($"No default haproxy configuration file found at {configPath}");
+
+            var containerFiles = new List<ContainerFile>();
+
+            try
+            {
+                File.Copy(configPath, localConfigPath, overwrite: true);
+                UpdateConfigFile(localConfigPath, loadBalancer);
+
+                containerFiles.Add(new ContainerFile()
                 {
-                    Port = loadBalancer.Port,
-                    HostPort = loadBalancer.Port,
-                    Type = _mapper.Map<PortType>(loadBalancer)
-                };
+                    LocalPath = localConfigPath,
+                    ContainerPath = "/usr/local/etc/haproxy/haproxy.cfg"
+                });
 
+                containerFiles.AddRange(await GetCertificateFiles(loadBalancer));
 
-                var localConfigPath = Path.GetTempFileName();
-                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "haproxy.cfg");
-
-                if (!File.Exists(configPath))
-                    throw new InvalidOperationException($"No default haproxy configuration file found at {configPath}");
-
-                var containerFiles = new List<ContainerFile>();
-
-                try
+                await StartUp(loadBalancer.Name, new() { port }, containerFiles, ContainerRestartType.SIGNAL);
+            }
+            catch(DockerException ex)
+            {
+                if(ex.Type == ContainerExceptionType.PORT_CONFLICT)
                 {
-                    File.Copy(configPath, localConfigPath, overwrite: true);
-                    UpdateConfigFile(localConfigPath, loadBalancer);
-
-                    containerFiles.Add(new ContainerFile()
-                    {
-                        LocalPath = localConfigPath,
-                        ContainerPath = "/usr/local/etc/haproxy/haproxy.cfg"
-                    });
-
-                    containerFiles.AddRange(await GetCertificateFiles(loadBalancer));
-
-                    await StartUp(loadBalancer.Name, new() { port }, containerFiles, ContainerRestartType.SIGNAL);
+                    throw new PortConfictException("Port is already in use");
                 }
-                catch(DockerException ex)
+                throw;
+            }
+            finally
+            {
+                foreach(var file in containerFiles)
                 {
-                    if(ex.Type == ContainerExceptionType.PORT_CONFLICT)
-                    {
-                        throw new PortConfictException("Port is already in use");
-                    }
-                    throw;
-                }
-                finally
-                {
-                    foreach(var file in containerFiles)
-                    {
-                        if (File.Exists(file.LocalPath))
-                            File.Delete(file.LocalPath);
-                    }
+                    if (File.Exists(file.LocalPath))
+                        File.Delete(file.LocalPath);
                 }
             }
-            else
-            {
-                await Shutdown(loadBalancer.Name);
-            }
+        }
+        else
+        {
+            await Shutdown(loadBalancer.Name);
+        }
 
-            
-            await ConfigureMonitoring(loadBalancer);
+        
+        await ConfigureMonitoring(loadBalancer);
     }
 
     public async Task ApplyConfiguration(List<BaseLoadBalancer> loadBalancers)
