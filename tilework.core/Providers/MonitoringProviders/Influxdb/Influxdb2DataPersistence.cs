@@ -26,6 +26,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 {
     protected static string _serviceName = "influxdb";
     protected static string _moduleName = "monitoring";
+    private static string _defaultName = "default";
 
     private static string _orgName = "tilework";
 
@@ -65,13 +66,13 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task<MonitoringTarget> GetTarget(MonitoringSource source)
     {
-        var container = await GetContainer(_serviceName);
+        var container = await GetContainer(_defaultName);
 
         await CheckCreateBucket(_orgName, source.Module);
 
         return new MonitoringTarget()
         {
-            Name = _serviceName,
+            Name = _defaultName,
             Type = Enums.MonitoringPersistenceType.INFLUXDB,
             Host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString()),
             Port = 8086,
@@ -81,16 +82,16 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     public async Task ApplyConfiguration()
     {
-        var container = await GetContainer(_serviceName);
+        var container = await GetContainer(_defaultName);
         if(container == null || container.State != ContainerState.Running)
-            await StartUp(_serviceName, _ports, new(), ContainerRestartType.RESTART);
+            await StartUp(_defaultName, _ports, new(), ContainerRestartType.RESTART);
 
         await CheckRunSetup();
     }
 
     public async Task Shutdown()
     {
-        await Shutdown(_serviceName);
+        await Shutdown(_defaultName);
     }
 
     private async Task CheckRunSetup()
@@ -104,10 +105,9 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
                 if(resp.Allowed == true)
                 {
-                    var container = await GetContainer(_serviceName);
-                    var tokenKey = $"influxdb.{container.Id}";
+                    var container = await GetContainer(_defaultName);
 
-                    await _tokenService.DeleteToken(tokenKey);
+                    await _tokenService.DeleteToken(GetFullName(_defaultName));
 
                     await GetAdminToken();
                 }
@@ -131,18 +131,16 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     private async Task<string> GetHost()
     {
-        var container = await GetContainer(_serviceName);
+        var container = await GetContainer(_defaultName);
         var host = Host.Parse((await _containerManager.GetContainerAddress(container.Id)).ToString());
         return $"http://{host.Value}:8086";
     }
 
     private async Task<string> GetAdminToken()
     {
-        var container = await GetContainer(_serviceName);
+        var container = await GetContainer(_defaultName);
 
-        var tokenKey = $"influxdb.{container.Id}";
-
-        var token = await _tokenService.GetToken(tokenKey);
+        var token = await _tokenService.GetToken(GetFullName(_defaultName));
 
         if(token == null)
         {
@@ -153,7 +151,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
                 container.Id,
                 $"influx setup --username admin --password \"{token}\" --org \"{_orgName}\" --bucket tilework --token \"{token}\" --force");
 
-            await _tokenService.SetToken(tokenKey, token);
+            await _tokenService.SetToken(GetFullName(_defaultName), token);
         }
         return token;
     }

@@ -16,8 +16,9 @@ namespace Tilework.Monitoring.Telegraf;
 
 public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigurator
 {
-    protected static string _serviceName = "influxdb";
-    protected static string _moduleName = "telegraf";
+    protected static string _serviceName = "telegraf";
+    protected static string _moduleName = "monitoring";
+    protected static string _defaultName = "default";
 
     private readonly IContainerManager _containerManager;
     private readonly DataCollectorConfiguration _settings;
@@ -146,7 +147,7 @@ public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigu
                 ContainerPath = "/etc/telegraf/telegraf.conf"
             };
 
-            await StartUp("main", new(), new() { containerFile }, ContainerRestartType.RESTART);
+            await StartUp(_defaultName, new(), new() { containerFile }, ContainerRestartType.RESTART);
         }
         finally
         {
