@@ -243,7 +243,8 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
             }
         }
 
-        var containersToDelete = (await GetContainers()).Where(cnt => !loadBalancers.Any(lb => lb.Id.ToString() == cnt.Name)).ToList();
+        var containers = await GetContainers();
+        var containersToDelete = containers.Where(cnt => !loadBalancers.Any(lb =>  GetFullName(lb.Name) == cnt.Name)).ToList();
 
         foreach (var cnt in containersToDelete)
         {

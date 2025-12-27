@@ -36,9 +36,17 @@ public abstract class BaseContainerProvider
             throw new ArgumentException($"No image setting supplied for {_module}.{_service}");
     }
 
-    private string getFullName(string name)
+    protected string GetFullName(string name)
     {
         return $"{_module}.{_service}.{name}";
+    }
+
+    private bool IsFullName(string name)
+    {
+        var parts = name.Split('.');
+        return parts.Length == 3 &&
+               parts[0] == _module &&
+               parts[1] == _service;
     }
 
     protected async Task<List<Container>> GetContainers()
@@ -49,7 +57,7 @@ public abstract class BaseContainerProvider
     protected async Task<Container?> GetContainer(string name)
     {
         var containers = await GetContainers();
-        return containers.FirstOrDefault(c => c.Name == getFullName(name));
+        return containers.FirstOrDefault(c => c.Name == (IsFullName(name) ? name : GetFullName(name)));
     }
 
     private async Task<Container> CreateContainer(string name, List<ContainerPort> ports)
@@ -57,14 +65,14 @@ public abstract class BaseContainerProvider
         try
         {
             var container = await _containerManager.CreateContainer(
-                getFullName(name), _imageName, _fullModule, ports
+                GetFullName(name), _imageName, _fullModule, ports
             );
 
             return container;
         }
         catch (Exception ex)
         {
-            _logger.LogCritical($"Failed to create container {getFullName(name)}: {ex}");
+            _logger.LogCritical($"Failed to create container {GetFullName(name)}: {ex}");
             throw;
         }
     }
@@ -79,7 +87,7 @@ public abstract class BaseContainerProvider
 
             if (PortsAreDifferent(existingPorts, ports))
             {
-                _logger.LogInformation($"Container {getFullName(name)} ports changed, forcing recreate");
+                _logger.LogInformation($"Container {GetFullName(name)} ports changed, forcing recreate");
                 restartType = ContainerRestartType.RECREATE;
             }
         }
@@ -93,7 +101,7 @@ public abstract class BaseContainerProvider
 
         if (container == null)
         {
-            _logger.LogInformation($"Creating container {getFullName(name)}");
+            _logger.LogInformation($"Creating container {GetFullName(name)}");
             container = await CreateContainer(name, ports);
         }
 
@@ -105,20 +113,20 @@ public abstract class BaseContainerProvider
 
         if (container.State != ContainerState.Running)
         {
-            _logger.LogInformation($"Starting container {getFullName(name)}");
+            _logger.LogInformation($"Starting container {GetFullName(name)}");
             await _containerManager.StartContainer(container.Id);
         }
         else
         {
             if(restartType == ContainerRestartType.RESTART)
             {
-                _logger.LogInformation($"Restarting container {getFullName(name)}");
+                _logger.LogInformation($"Restarting container {GetFullName(name)}");
                 await _containerManager.StopContainer(container.Id);
                 await _containerManager.StartContainer(container.Id);
             }
             else
             {
-                _logger.LogInformation($"Signaling container {getFullName(name)} of configuration changes");
+                _logger.LogInformation($"Signaling container {GetFullName(name)} of configuration changes");
                 await _containerManager.KillContainer(container.Id, UnixSignal.SIGHUP);
             }
         }
@@ -165,9 +173,12 @@ public abstract class BaseContainerProvider
         var container = await GetContainer(name);
         if (container != null)
         {
-            _logger.LogInformation($"Stopping and deleting container {getFullName(name)}");
             if (container.State == ContainerState.Running)
+            {
+                _logger.LogInformation($"Stopping container {container.Name}");
                 await _containerManager.StopContainer(container.Id);
+            }
+            _logger.LogInformation($"Deleting container {container.Name}");
             await _containerManager.DeleteContainer(container.Id);
         }
     }
