@@ -27,7 +27,7 @@
 
 <PageTitle>Load balancer details</PageTitle>
 
-<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions" OnTabChanged="OnTabChanged">
+<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
     <DetailContent>
         <MudGrid>
             <MudItem xs="4">
@@ -123,55 +123,7 @@
         }
         <MudTabPanel Text="Monitoring">
 
-            <MudCard Outlined="true" Class="mb-4">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Monitoring</MudText>
-                    </CardHeaderContent>
-                    <CardHeaderActions>
-                    <div class="d-flex align-items-center pt-2">
-                        <MudToggleGroup T="string" Value="_selectedRange" Color="Color.Primary" ValueChanged="RefreshMonitoringData" Style="width: 20rem">
-                            <MudToggleItem Value="@("1h")"/>
-                            <MudToggleItem Value="@("3h")"/>
-                            <MudToggleItem Value="@("12h")"/>
-                            <MudToggleItem Value="@("1d")"/>
-                            <MudToggleItem Value="@("3d")"/>
-                            <MudToggleItem Value="@("1w")"/>
-                        </MudToggleGroup>
-                        <div class="pl-3">
-                            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="@(() => RefreshMonitoringData(_selectedRange))">
-                                <MudIcon Icon="@Icons.Material.Filled.Refresh" />
-                            </MudButton>
-                        </div>
-                    </div>
-                    </CardHeaderActions>
-                </MudCardHeader>
-                <MudCardContent>
-                    @if (_statsLoading)
-                    {
-                        <MudProgressCircular Class="my-4" Color="Color.Primary" />
-                    }
-                    else if (_monitoringData?.Any() == true)
-                    {
-                        <MudGrid>
-                            <MudItem xs="4">
-                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                                    <TimeseriesChart Name="Sessions" Data="@(_monitoringData["sessions"])" />
-                                </MudPaper>
-                            </MudItem>
-                            <MudItem xs="4">
-                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                                    <TimeseriesChart Name="Requests" Data="@(_monitoringData["requests"])" />
-                                </MudPaper>
-                            </MudItem>
-                        @* <MudItem xs="4">
-                            <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pb-3" Outlined="true">
-                            </MudPaper>
-                        </MudItem> *@
-                        </MudGrid>
-                    }
-                </MudCardContent>
-            </MudCard>
+            <TimeSeriesChartPanel Title="Monitoring" LoadData="LoadMonitoringCharts" />
         </MudTabPanel>
 
     </TabContent>
@@ -188,8 +140,6 @@
     private List<CertificateDTO> _certificates = new();
     private bool _showCertificates;
 
-    private string _selectedRange = "1h";
-
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
@@ -197,10 +147,6 @@
     };
 
     private List<ActionItem> _actions = new List<ActionItem>();
-
-
-    private bool _statsLoading = false;
-    private Dictionary<string, Dictionary<DateTime, double>> _monitoringData = new();
 
     private int GetMaxRulePriority() => _rules.Count() > 0 ? _rules.Max(p => p.Priority) + 1 : 0;
 
@@ -484,81 +430,27 @@
         _certificates = await _loadBalancerService.GetCertificates(_item);
     }
 
-    private int GetMonitoringTabIndex()
+    private async Task<List<TimeSeriesChartData>> LoadMonitoringCharts(DateTimeOffset from, DateTimeOffset to, TimeSpan interval)
     {
-        // Count how many tabs are before Monitoring
-        var before = 0;
-        if (_item is ApplicationLoadBalancerDTO)
-            before += 1; // Rules
-        if (_showCertificates)
-            before += 1; // Certificates
-        return before; // Monitoring index
-    }
+        var charts = new List<TimeSeriesChartData>();
+        List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, from, to)
+            ?? new List<LoadBalancingMonitorData>();
 
-    private async Task OnTabChanged(int index)
-    {
-        
-        if(_item != null && _item.Enabled == true && index == GetMonitoringTabIndex())
+        var tz = await _browserTimezoneProvider.GetTimeZoneAsync();
+
+        var sessions = new Dictionary<DateTime, double>();
+        var requests = new Dictionary<DateTime, double>();
+
+        foreach (var entry in data.OrderBy(d => d.Timestamp))
         {
-            await RefreshMonitoringData(_selectedRange);
+            var localTimestamp = TimeZoneInfo.ConvertTime(entry.Timestamp.ToUniversalTime(), tz).DateTime;
+            sessions[localTimestamp] = entry.Sessions;
+            requests[localTimestamp] = entry.Requests;
         }
-    }
 
-    private async Task RefreshMonitoringData(string range)
-    {
-        _statsLoading = true;
-        StateHasChanged();
+        charts.Add(new TimeSeriesChartData { Name = "Sessions", Data = sessions });
+        charts.Add(new TimeSeriesChartData { Name = "Requests", Data = requests });
 
-        _selectedRange = range;
-
-        try
-        {
-            var end = DateTimeOffset.UtcNow;
-            DateTimeOffset start;
-            switch(range)
-            {
-                case "1h":
-                    start = end.AddHours(-1);
-                    break;
-                case "3h":
-                    start = end.AddHours(-3);
-                    break;
-                case "12h":
-                    start = end.AddHours(-12);
-                    break;
-                case "1d":
-                    start = end.AddDays(-1);
-                    break;
-                case "3d":
-                    start = end.AddDays(-3);
-                    break;
-                case "1w":
-                    start = end.AddDays(-7);
-                    break;
-                default:
-                    start = end.AddHours(-1);
-                    break;
-            }
-
-            var interval = new TimeSpan(hours: 0, minutes: 1, seconds: 0);
-            List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, start, end)
-                ?? new List<LoadBalancingMonitorData>();
-
-            var tz = await _browserTimezoneProvider.GetTimeZoneAsync();
-
-            _monitoringData["sessions"] = new();
-            _monitoringData["requests"] = new();
-
-            foreach (var entry in data.OrderBy(d => d.Timestamp))
-            {
-                var localTimestamp = TimeZoneInfo.ConvertTime(entry.Timestamp.ToUniversalTime(), tz).DateTime;
-                _monitoringData["sessions"][localTimestamp] = entry.Sessions;
-                _monitoringData["requests"][localTimestamp] = entry.Requests;
-            }
-        }
-        finally
-        {
-            _statsLoading = false;
-        }
+        return charts;
     }
 }

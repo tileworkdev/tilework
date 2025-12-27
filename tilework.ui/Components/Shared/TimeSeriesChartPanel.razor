@@ -1,0 +1,110 @@
+@using Tilework.Ui.Components.Shared
+
+<MudCard Outlined="true" Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <div class="d-flex align-items-center pt-2">
+                <MudToggleGroup T="string" Value="_selectedRange" Color="Color.Primary" ValueChanged="OnRangeChanged" Style="width: 20rem">
+                    <MudToggleItem Value="@("1h")"/>
+                    <MudToggleItem Value="@("3h")"/>
+                    <MudToggleItem Value="@("12h")"/>
+                    <MudToggleItem Value="@("1d")"/>
+                    <MudToggleItem Value="@("3d")"/>
+                    <MudToggleItem Value="@("1w")"/>
+                </MudToggleGroup>
+                <div class="pl-3">
+                    <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="@(() => RefreshAsync())">
+                        <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                    </MudButton>
+                </div>
+            </div>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Class="my-4" Color="Color.Primary" />
+        }
+        else if (_chartData?.Any() == true)
+        {
+            <MudGrid>
+                @foreach (var chart in _chartData)
+                {
+                    <MudItem xs="4">
+                        <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
+                            <TimeseriesChart Name="@chart.Name" Data="@chart.Data" />
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public Func<DateTimeOffset, DateTimeOffset, TimeSpan, Task<List<TimeSeriesChartData>>> LoadData { get; set; }
+
+    private bool _loading;
+    private string _selectedRange = "1h";
+    private List<TimeSeriesChartData> _chartData = new();
+    private bool _initialized;
+
+    public async Task RefreshAsync()
+    {
+        if (LoadData == null)
+            return;
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var to = DateTimeOffset.UtcNow;
+            var from = GetRangeStart(_selectedRange, to);
+            var interval = TimeSpan.FromMinutes(1);
+
+            _chartData = await LoadData(from, to, interval) ?? new List<TimeSeriesChartData>();
+        }
+        finally
+        {
+            _loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private Task OnRangeChanged(string range)
+    {
+        _selectedRange = range;
+        return RefreshAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            await RefreshAsync();
+        }
+    }
+
+    private static DateTimeOffset GetRangeStart(string range, DateTimeOffset to)
+    {
+        return range switch
+        {
+            "1h" => to.AddHours(-1),
+            "3h" => to.AddHours(-3),
+            "12h" => to.AddHours(-12),
+            "1d" => to.AddDays(-1),
+            "3d" => to.AddDays(-3),
+            "1w" => to.AddDays(-7),
+            _ => to.AddHours(-1)
+        };
+    }
+}
