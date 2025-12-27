@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
 
 using AutoMapper;
 using Coravel.Events.Interfaces;
@@ -42,28 +41,13 @@ public class CertificateManagementService : ICertificateManagementService
         _mapper = mapper;
     }
 
-    private (ICAProvider, ICAConfiguration) GetProvider(CertificateAuthority certificateAuthority)
+    private ICAProvider GetProvider(CertificateAuthorityType type)
     {
-        return certificateAuthority.Type switch
+        return type switch
         {
-            CertificateAuthorityType.ACME => (
-                _serviceProvider.GetRequiredService<AcmeProvider>(),
-                JsonSerializer.Deserialize<AcmeConfiguration>(certificateAuthority.Parameters)!
-                ),
-            CertificateAuthorityType.LETSENCRYPT => (
-                _serviceProvider.GetRequiredService<AcmeProvider>(),
-                JsonSerializer.Deserialize<LetsEncryptConfiguration>(certificateAuthority.Parameters)!
-                ),
-            _ => throw new ArgumentException($"Invalid CA provider {certificateAuthority.Type}")
-        };
-    }
-
-    private string DeserializeConfig(ICAConfiguration config)
-    {
-        return config switch
-        {
-            AcmeConfiguration acme => JsonSerializer.Serialize(acme),
-            _ => throw new NotSupportedException(config.GetType().Name)
+            CertificateAuthorityType.ACME => _serviceProvider.GetRequiredService<AcmeProvider>(),
+            CertificateAuthorityType.LETSENCRYPT => _serviceProvider.GetRequiredService<AcmeProvider>(),
+            _ => throw new ArgumentException($"Invalid CA provider type {type}")
         };
     }
 
@@ -198,7 +182,8 @@ public class CertificateManagementService : ICertificateManagementService
         if (certificate.Status != CertificateStatus.NEW)
             throw new InvalidOperationException($"Cannot issue certificate: status is {certificate.Status}");
 
-        (var provider, var config) = GetProvider(certificate.Authority);
+        var provider = GetProvider(certificate.Authority.Type);
+        var config = certificate.Authority.Parameters;
 
         var csr = GenerateCsr(certificate);
 
@@ -208,7 +193,7 @@ public class CertificateManagementService : ICertificateManagementService
         certificate.ExpiresAtUtc = new DateTimeOffset(certificate.CertificateData.First().NotAfter.ToUniversalTime());
         certificate.Status = CertificateStatus.ACTIVE;
 
-        certificate.Authority.Parameters = DeserializeConfig(config);
+        certificate.Authority.Parameters = config;
     }
 
     private async Task RevokeCertificate(Certificate certificate)
@@ -219,9 +204,11 @@ public class CertificateManagementService : ICertificateManagementService
             throw new InvalidOperationException($"Cannot revoke certificate: no certificate data found");
 
 
-        (var provider, var config) = GetProvider(certificate.Authority);
+        var provider = GetProvider(certificate.Authority.Type);
+        var config = certificate.Authority.Parameters;
+
         config = await provider.RevokeCertificate(certificate.CertificateData.First(), config);
-        certificate.Authority.Parameters = DeserializeConfig(config);
+        certificate.Authority.Parameters = config;
         certificate.Status = CertificateStatus.REVOKED;
         await _dbContext.SaveChangesAsync();
     }
@@ -306,9 +293,12 @@ public class CertificateManagementService : ICertificateManagementService
     public async Task AddCertificateAuthority(CertificateAuthorityDTO authority)
     {
         var entity = _mapper.Map<CertificateAuthority>(authority);
-        (var provider, var config) = GetProvider(entity);
+
+        var provider = GetProvider(entity.Type);
+        var config = entity.Parameters;
+
         config = await provider.Register(config);
-        entity.Parameters = DeserializeConfig(config);
+        entity.Parameters = config;
 
         _dbContext.CertificateAuthorities.Add(entity);
         await _dbContext.SaveChangesAsync();

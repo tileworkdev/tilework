@@ -29,12 +29,12 @@
 
 <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions" OnTabChanged="OnTabChanged">
     <DetailContent>
-        <MudGrid Spacing="20">
-            <MudItem>
+        <MudGrid>
+            <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Type</MudText>
                 <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancerDTO appBalancer ? "Application" : "Network")</MudText>
             </MudItem>
-            <MudItem>
+            <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Status</MudText>
                 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                 @if (_item.Enabled)
