@@ -44,6 +44,7 @@ public interface ILoadBalancerService
 
     public Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid Id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end);
 
+    public Task ApplyConfiguration(Guid Id);
     public Task ApplyConfiguration();
     public Task Shutdown();
 }

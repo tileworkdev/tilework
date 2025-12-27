@@ -285,7 +285,7 @@
 
                     await _loadBalancerService.AddRule(appBalancer, rule);
                     await GetRules();
-                    await _loadBalancerService.ApplyConfiguration();
+                    await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
                     _snackbar.Add("Rule added successfully!", Severity.Success);
                 }
                 catch(Exception ex)
@@ -341,7 +341,7 @@
 
                     await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
                     await GetRules();
-                    await _loadBalancerService.ApplyConfiguration();
+                    await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
                     _snackbar.Add("Rule updated successfully!", Severity.Success);
                 }
                 catch(Exception ex)
@@ -371,7 +371,7 @@
         {
             await _loadBalancerService.RemoveRule(appBalancer, rule);
             await GetRules();
-            await _loadBalancerService.ApplyConfiguration();
+            await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
         }
     }
 
@@ -389,7 +389,7 @@
             var cert = (Guid) result.Data;
             await _loadBalancerService.AddCertificate(_item, cert);
             await GetCertificates();
-            await _loadBalancerService.ApplyConfiguration();
+            await _loadBalancerService.ApplyConfiguration(_item.Id);
         }
     }
 

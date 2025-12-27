@@ -85,8 +85,8 @@ else if(form is NewNetworkLoadBalancerForm nlbForm)
             else
                 throw new ArgumentException();
 
-            await _loadBalancerService.AddLoadBalancer(item);
-            await _loadBalancerService.ApplyConfiguration();
+            item = await _loadBalancerService.AddLoadBalancer(item);
+            await _loadBalancerService.ApplyConfiguration(item.Id);
 
             NavigationManager.NavigateTo("/lb/loadbalancers");
             Snackbar.Add("Load balancer added successfully!", Severity.Success);
