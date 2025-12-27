@@ -1,4 +1,5 @@
 @using Tilework.Ui.Components.Shared
+@using Tilework.Ui.Services
 
 <MudCard Outlined="true" Class="mb-4">
     <MudCardHeader>
@@ -35,7 +36,7 @@
                 {
                     <MudItem xs="4">
                         <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
-                            <TimeseriesChart Name="@chart.Name" Data="@chart.Data" />
+                            <TimeseriesChart Name="@chart.Name" Data="@Localize(chart.Data)" />
                         </MudPaper>
                     </MudItem>
                 }
@@ -55,6 +56,10 @@
     private string _selectedRange = "1h";
     private List<TimeSeriesChartData> _chartData = new();
     private bool _initialized;
+    private TimeZoneInfo? _browserTimeZone;
+
+    [Inject]
+    private IBrowserTimeZoneProvider _browserTimezoneProvider { get; set; }
 
     public async Task RefreshAsync()
     {
@@ -71,6 +76,7 @@
             var interval = TimeSpan.FromMinutes(1);
 
             _chartData = await LoadData(from, to, interval) ?? new List<TimeSeriesChartData>();
+            _browserTimeZone ??= await _browserTimezoneProvider.GetTimeZoneAsync();
         }
         finally
         {
@@ -106,5 +112,21 @@
             "1w" => to.AddDays(-7),
             _ => to.AddHours(-1)
         };
+    }
+
+    private Dictionary<DateTime, double> Localize(Dictionary<DateTimeOffset, double> data)
+    {
+        var localData = new Dictionary<DateTime, double>();
+        foreach(var point in data.OrderBy(p => p.Key))
+        {
+            DateTime localTime;
+            if(_browserTimeZone != null)
+                localTime = TimeZoneInfo.ConvertTime(point.Key, _browserTimeZone).DateTime;
+            else
+                localTime = point.Key.LocalDateTime;
+
+            localData[localTime] = point.Value;
+        }
+        return localData;
     }
 }

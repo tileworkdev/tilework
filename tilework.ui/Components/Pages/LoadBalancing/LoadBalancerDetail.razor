@@ -20,7 +20,6 @@
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
 @inject ICertificateManagementService _certificateService
-@inject IBrowserTimeZoneProvider _browserTimezoneProvider
 
 @page "/lb/loadbalancers/{Id:guid}"
 
@@ -436,16 +435,14 @@
         List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, from, to)
             ?? new List<LoadBalancingMonitorData>();
 
-        var tz = await _browserTimezoneProvider.GetTimeZoneAsync();
-
-        var sessions = new Dictionary<DateTime, double>();
-        var requests = new Dictionary<DateTime, double>();
+        var sessions = new Dictionary<DateTimeOffset, double>();
+        var requests = new Dictionary<DateTimeOffset, double>();
 
         foreach (var entry in data.OrderBy(d => d.Timestamp))
         {
-            var localTimestamp = TimeZoneInfo.ConvertTime(entry.Timestamp.ToUniversalTime(), tz).DateTime;
-            sessions[localTimestamp] = entry.Sessions;
-            requests[localTimestamp] = entry.Requests;
+            var timestamp = entry.Timestamp.ToUniversalTime();
+            sessions[timestamp] = entry.Sessions;
+            requests[timestamp] = entry.Requests;
         }
 
         charts.Add(new TimeSeriesChartData { Name = "Sessions", Data = sessions });
