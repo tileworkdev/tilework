@@ -1,4 +1,5 @@
 @namespace Tilework.Ui.Components.Layout
+@using System.Linq
 
 @inject NavigationManager NavigationManager
 
@@ -34,7 +35,7 @@
 </MudCard>
 @if(TabContent != null)
 {
-    <MudTabs Outlined="true" Class="mb-4" ActivePanelIndexChanged="TabChanged">
+    <MudTabs @ref="_tabs" Outlined="true" Class="mb-4" ActivePanelIndex="@_activeTabIndex" ActivePanelIndexChanged="TabChanged">
         @TabContent
     </MudTabs>
 }
@@ -51,9 +52,92 @@
 
     [Parameter] public EventCallback<int> OnTabChanged { get; set; }
 
+    private MudTabs? _tabs;
+    private int _activeTabIndex;
+    private string? _requestedTab;
+    private bool _tabInitialized;
+
+    protected override void OnInitialized()
+    {
+        var currentUri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        _requestedTab = GetTabNameFromUri(currentUri);
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _tabInitialized)
+            return Task.CompletedTask;
+
+        _tabInitialized = true;
+
+        if (_tabs?.Panels == null || string.IsNullOrWhiteSpace(_requestedTab))
+            return Task.CompletedTask;
+
+        var panels = _tabs.Panels.ToList();
+        var matchingIndex = panels.FindIndex(panel => string.Equals(panel.Text, _requestedTab, StringComparison.OrdinalIgnoreCase));
+
+        if (matchingIndex >= 0 && matchingIndex != _activeTabIndex)
+        {
+            _activeTabIndex = matchingIndex;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
 
     private async Task TabChanged(int index)
     {
-        await OnTabChanged.InvokeAsync(index);
+        _activeTabIndex = index;
+
+        var tabText = GetTabText(index);
+        if (!string.IsNullOrWhiteSpace(tabText))
+        {
+            var targetUri = BuildTabAwareUri(tabText);
+            NavigationManager.NavigateTo(targetUri, replace: true);
+        }
+
+        if (OnTabChanged.HasDelegate)
+            await OnTabChanged.InvokeAsync(index);
+    }
+
+    private string? GetTabText(int index)
+    {
+        return _tabs?.Panels?.ElementAtOrDefault(index)?.Text;
+    }
+
+    private string BuildTabAwareUri(string tabText)
+    {
+        var uriWithoutFragment = NavigationManager.Uri.Split('#')[0];
+
+        return $"{uriWithoutFragment}#tab={Uri.EscapeDataString(tabText)}";
+    }
+
+    private static string? GetTabNameFromUri(Uri uri)
+    {
+        var fragment = uri.Fragment.TrimStart('#');
+        if (fragment.StartsWith("tab=", StringComparison.OrdinalIgnoreCase))
+            return Uri.UnescapeDataString(fragment.Substring("tab=".Length));
+
+        var tabFromQuery = GetQueryValue(uri.Query, "tab");
+        if (!string.IsNullOrWhiteSpace(tabFromQuery))
+            return tabFromQuery;
+
+        return null;
+    }
+
+    private static string? GetQueryValue(string query, string key)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return null;
+
+        var parameters = query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var parameter in parameters)
+        {
+            var pair = parameter.Split('=', 2);
+            if (pair.Length == 2 && pair[0].Equals(key, StringComparison.OrdinalIgnoreCase))
+                return Uri.UnescapeDataString(pair[1]);
+        }
+
+        return null;
     }
 }
