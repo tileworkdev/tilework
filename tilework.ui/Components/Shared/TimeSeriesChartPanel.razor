@@ -9,7 +9,7 @@
         <CardHeaderActions>
             <div class="d-flex align-items-center pt-2">
                 <MudSelect T="string" Value="_selectedInterval" Margin="Margin.Dense" Color="Color.Primary"
-                           ValueChanged="OnIntervalChanged" Dense="true" Variant="Variant.Outlined" Class="mr-3 my-0">
+                           ValueChanged="OnIntervalChanged" Dense="true" Variant="Variant.Outlined" Class="mr-3 my-0" Style="width: 9rem">
                     @foreach (var option in _intervalOptions)
                     {
                         <MudSelectItem Value="@option.Value">@option.Label</MudSelectItem>
