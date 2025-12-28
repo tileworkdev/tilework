@@ -8,7 +8,14 @@
         </CardHeaderContent>
         <CardHeaderActions>
             <div class="d-flex align-items-center pt-2">
-                <MudToggleGroup T="string" Value="_selectedRange" Color="Color.Primary" ValueChanged="OnRangeChanged" Style="width: 20rem">
+                <MudSelect T="string" Value="_selectedInterval" Margin="Margin.Dense" Color="Color.Primary"
+                           ValueChanged="OnIntervalChanged" Dense="true" Variant="Variant.Outlined" Class="mr-3 my-0">
+                    @foreach (var option in _intervalOptions)
+                    {
+                        <MudSelectItem Value="@option.Value">@option.Label</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudToggleGroup Class="mr-3" T="string" Value="_selectedRange" Color="Color.Primary" ValueChanged="OnRangeChanged" Style="width: 20rem">
                     <MudToggleItem Value="@("1h")"/>
                     <MudToggleItem Value="@("3h")"/>
                     <MudToggleItem Value="@("12h")"/>
@@ -16,11 +23,9 @@
                     <MudToggleItem Value="@("3d")"/>
                     <MudToggleItem Value="@("1w")"/>
                 </MudToggleGroup>
-                <div class="pl-3">
-                    <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="@(() => RefreshAsync())">
-                        <MudIcon Icon="@Icons.Material.Filled.Refresh" />
-                    </MudButton>
-                </div>
+                <MudButton Class="pl-3" Color="Color.Primary" Variant="Variant.Outlined" OnClick="@(() => RefreshAsync())">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                </MudButton>
             </div>
         </CardHeaderActions>
     </MudCardHeader>
@@ -52,8 +57,21 @@
     [Parameter]
     public Func<DateTimeOffset, DateTimeOffset, TimeSpan, Task<List<TimeSeriesChartData>>> LoadData { get; set; }
 
+    private readonly List<IntervalOption> _intervalOptions = new()
+    {
+        new IntervalOption("1 minute", "1m", TimeSpan.FromMinutes(1)),
+        new IntervalOption("5 minutes", "5m", TimeSpan.FromMinutes(5)),
+        new IntervalOption("15 minutes", "15m", TimeSpan.FromMinutes(15)),
+        new IntervalOption("1 hour", "1h", TimeSpan.FromHours(1)),
+        new IntervalOption("6 hours", "6h", TimeSpan.FromHours(6)),
+        new IntervalOption("1 day", "1d", TimeSpan.FromDays(1)),
+        new IntervalOption("7 days", "7d", TimeSpan.FromDays(7)),
+        new IntervalOption("30 days", "30d", TimeSpan.FromDays(30))
+    };
+
     private bool _loading;
     private string _selectedRange = "1h";
+    private string _selectedInterval = "1m";
     private List<TimeSeriesChartData> _chartData = new();
     private bool _initialized;
     private TimeZoneInfo? _browserTimeZone;
@@ -73,7 +91,7 @@
         {
             var to = DateTimeOffset.UtcNow;
             var from = GetRangeStart(_selectedRange, to);
-            var interval = TimeSpan.FromMinutes(1);
+            var interval = _intervalOptions.FirstOrDefault(o => o.Value == _selectedInterval)?.Span ?? TimeSpan.FromMinutes(1);
 
             _chartData = await LoadData(from, to, interval) ?? new List<TimeSeriesChartData>();
             _browserTimeZone ??= await _browserTimezoneProvider.GetTimeZoneAsync();
@@ -88,6 +106,12 @@
     private Task OnRangeChanged(string range)
     {
         _selectedRange = range;
+        return RefreshAsync();
+    }
+
+    private Task OnIntervalChanged(string interval)
+    {
+        _selectedInterval = interval;
         return RefreshAsync();
     }
 
@@ -128,5 +152,19 @@
             localData[localTime] = point.Value;
         }
         return localData;
+    }
+
+    private class IntervalOption
+    {
+        public string Label { get; }
+        public string Value { get; }
+        public TimeSpan Span { get; }
+
+        public IntervalOption(string label, string value, TimeSpan span)
+        {
+            Label = label;
+            Value = value;
+            Span = span;
+        }
     }
 }
