@@ -221,17 +221,21 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
         var fluxTables = await queryApi.QueryAsync(query, _orgName);
 
+        if (fluxTables is null || fluxTables.Count == 0)
+            return new List<T>();
+
         var entryProperties = typeof(T)
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(p => p.CanWrite && p.Name != nameof(BaseMonitorData.Timestamp))
             .ToArray();
 
         var entryPropertyNames = entryProperties
-            .Select(property => property.Name)
+            .Select(property => property.Name.ToLower())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var records = fluxTables[0].Records
-            .Where(record => record.GetField() is string fieldName && entryPropertyNames.Contains(fieldName))
+        var records = fluxTables
+            .SelectMany(table => table.Records)
+            .Where(record => record.GetField().ToLower() is string fieldName && entryPropertyNames.Contains(fieldName))
             .ToList();
 
         var groups = records

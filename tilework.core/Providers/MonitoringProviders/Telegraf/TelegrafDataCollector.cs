@@ -72,7 +72,7 @@ public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigu
                             ["servers"] = new TomlArray {
                                 $"tcp://{source.Host.Value}:{source.Port}"
                             },
-                            ["interval"] = "30s",
+                            ["interval"] = "60s",
                             ["tags"] = new TomlTable {
                                 ["instance"] = source.Name
                             }
