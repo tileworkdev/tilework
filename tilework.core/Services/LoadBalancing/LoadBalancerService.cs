@@ -469,7 +469,7 @@ public class LoadBalancerService : ILoadBalancerService
         var filters = new Dictionary<string, string>();
         filters["instance"] = lb.Id.ToString();
         filters["type"] = "frontend";
-        filters["proxy"] = lb.Id.ToString();
+        filters["instance"] = lb.Id.ToString();
 
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
