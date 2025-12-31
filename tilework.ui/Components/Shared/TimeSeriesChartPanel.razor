@@ -36,11 +36,11 @@
         }
         else if (_chartData?.Any() == true)
         {
-            <MudGrid Spacing="3">
+            <MudGrid Spacing="2">
                 @foreach (var chart in _chartData)
                 {
                     <MudItem xl="3" lg="4" sm="6" xs="12">
-                        <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-3" Outlined="true">
+                        <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-2" Outlined="true">
                             <TimeseriesChart Name="@chart.Name" Data="@Localize(chart.Data)" />
                         </MudPaper>
                     </MudItem>
