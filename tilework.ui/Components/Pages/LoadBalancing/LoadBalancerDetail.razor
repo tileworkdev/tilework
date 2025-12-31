@@ -435,18 +435,36 @@
         List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, from, to)
             ?? new List<LoadBalancingMonitorData>();
 
-        var sessions = new Dictionary<DateTimeOffset, double>();
-        var requests = new Dictionary<DateTimeOffset, double>();
+        Dictionary<string, Dictionary<DateTimeOffset, double>> chartData = new()
+        {
+            ["Sessions"] = new Dictionary<DateTimeOffset, double>(),
+            ["Requests"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 1xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 2xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 3xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 4xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 5xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP Other"] = new Dictionary<DateTimeOffset, double>(),
+        };
 
         foreach (var entry in data.OrderBy(d => d.Timestamp))
         {
             var timestamp = entry.Timestamp.ToUniversalTime();
-            sessions[timestamp] = entry.Sessions;
-            requests[timestamp] = entry.Requests;
+            
+            chartData["Sessions"][timestamp] = entry.Sessions;
+            chartData["Requests"][timestamp] = entry.Requests;
+            chartData["HTTP 1xx"][timestamp] = entry.HttpResponses1xx;
+            chartData["HTTP 2xx"][timestamp] = entry.HttpResponses2xx;
+            chartData["HTTP 3xx"][timestamp] = entry.HttpResponses3xx;
+            chartData["HTTP 4xx"][timestamp] = entry.HttpResponses4xx;
+            chartData["HTTP 5xx"][timestamp] = entry.HttpResponses5xx;
+            chartData["HTTP Other"][timestamp] = entry.HttpResponsesOther;
         }
 
-        charts.Add(new TimeSeriesChartData { Name = "Sessions", Data = sessions });
-        charts.Add(new TimeSeriesChartData { Name = "Requests", Data = requests });
+        foreach(var datapoint in chartData)
+        {
+            charts.Add(new TimeSeriesChartData { Name = datapoint.Key, Data = datapoint.Value });
+        }
 
         return charts;
     }
