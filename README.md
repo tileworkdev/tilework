@@ -13,7 +13,7 @@ Tilework is a fully integrated reverse proxying and load balancing platform. It 
 
 
 ## Install
-1. Install the [docker engine](https://docs.docker.com/engine/install/) or [docker desktop](https://docs.docker.com/get-started/get-docker/). Be sure that docker compose is also installed.
+1. Install [docker engine](https://docs.docker.com/engine/install/) or [docker desktop](https://docs.docker.com/get-started/get-docker/). Be sure that docker compose is also installed.
 
 
 
