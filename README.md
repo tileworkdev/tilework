@@ -2,17 +2,18 @@
 
 ## About
 
-Tilework is a service delivery platform for tools and services of the modern software landscape. It is designed with the main objective of being simple and fast to configure rather than being in the way.
+Tilework is a fully integrated reverse proxying and load balancing platform. It is designed with the main objective of being simple and fast to configure rather than being in the way.
 
 ## Features
 - Deployment of HTTP/TCP/UDP load balancers with multiple backends
 - HTTP rules based routing, including hostname, URL path, query string
 - Certificate issuing via popular services, lifecycle management, auto-renewal
+- Realtime and historical service statistics
 - Docker based service deployment - no disruption of the host environement
 
 
 ## Install
-1. Install the [docker engine](https://docs.docker.com/engine/install/) or [docker desktop](https://docs.docker.com/get-started/get-docker/). Be sure that docker compose is also installed.
+1. Install [docker engine](https://docs.docker.com/engine/install/) or [docker desktop](https://docs.docker.com/get-started/get-docker/). Be sure that docker compose is also installed.
 
 
 
