@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Text.Json;
 
 using Tilework.Core.Models;
 
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Persistence.CertificateManagement.Models;
+using Tilework.Persistence.TokenVault.Models;
 
 namespace Tilework.Core.Persistence;
 
@@ -32,16 +32,19 @@ public class TileworkContext : DbContext
     public DbSet<PrivateKey> PrivateKeys { get; set; }
     public DbSet<CertificateAuthority> CertificateAuthorities { get; set; }
 
+    // Token vault
+    public DbSet<Token> Tokens { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
         // Load balancing
         modelBuilder.Entity<Rule>()
-        .OwnsMany(r => r.Conditions, b =>
-        {
-            b.ToJson();
-        });
+            .OwnsMany(r => r.Conditions, b =>
+            {
+                b.ToJson();
+            });
 
         modelBuilder.Entity<Target>()
             .Property(e => e.Host)
@@ -72,6 +75,7 @@ public class TileworkContext : DbContext
                     .HasForeignKey("BalancerId")
                     .OnDelete(DeleteBehavior.Cascade)
             );
+
 
         // Certificate management
         modelBuilder.Entity<Certificate>()

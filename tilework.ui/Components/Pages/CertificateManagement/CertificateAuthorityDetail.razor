@@ -1,5 +1,6 @@
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
+@using Tilework.CertificateManagement.Enums
 @using Tilework.Core.Enums
 
 @namespace Tilework.Ui.Components.Pages
@@ -11,17 +12,34 @@
 
 @page "/cm/authorities/{Id:guid}"
 
+<PageTitle>Certificate authority details</PageTitle>
+
 <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
     <DetailContent>
-        <MudGrid Spacing="5">
-            <MudItem>
+        <MudGrid>
+            <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Type</MudText>
                 <MudText Typo="Typo.body2">@_item.Type.GetDescription()</MudText>
             </MudItem>
-            @* <MudItem>
-                <MudText Typo="Typo.subtitle2">Directory URL</MudText>
-                <MudText Typo="Typo.body2">@_item.DirectoryUrl</MudText>
-            </MudItem> *@
+            @if(_item.Type == CertificateAuthorityType.ACME || _item.Type == CertificateAuthorityType.LETSENCRYPT)
+            {
+                var config = (AcmeConfiguration) _item.Parameters;
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Registration email</MudText>
+                    <MudText Typo="Typo.body2">@config.Email</MudText>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Directory URL</MudText>
+                    <MudText Typo="Typo.body2">@config.DirectoryUrl</MudText>
+                </MudItem>
+                <MudItem xs="8">
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">KID</MudText>
+                    <MudText Typo="Typo.body2">@config.Kid</MudText>
+                </MudItem>
+            }
+
         </MudGrid>
     </DetailContent>
 </GenericDetailview>
@@ -71,8 +89,15 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _certificateManagementService.DeleteCertificateAuthority(_item.Id);
-            _navigationManager.NavigateTo("/cm/authorities");
+            try {
+                await _certificateManagementService.DeleteCertificateAuthority(_item.Id);
+                _navigationManager.NavigateTo("/cm/authorities");
+                _snackbar.Add($"Certificate authority deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete certificate authority: {ex.Message}", Severity.Error);
+            }
         }
     }
 }

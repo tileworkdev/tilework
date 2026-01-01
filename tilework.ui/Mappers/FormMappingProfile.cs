@@ -40,26 +40,20 @@ public class FormMappingProfile : Profile
         // Certificate authorities
         CreateMap<NewPredefinedAcmeCertificateAuthorityForm, CertificateAuthorityDTO>()
             .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
-                JsonSerializer.Serialize(
-                    new LetsEncryptConfiguration()
-                    {
-                        Email = src.Email!,
-                        AcceptTos = src.AcceptTos
-                    },
-                    (JsonSerializerOptions?)null
-                )
+                new LetsEncryptConfiguration()
+                {
+                    Email = src.Email!,
+                    AcceptTos = src.AcceptTos
+                }
             ));
         CreateMap<NewAcmeCertificateAuthorityForm, CertificateAuthorityDTO>()
             .ForMember(dest => dest.Parameters, opt => opt.MapFrom(src =>
-                JsonSerializer.Serialize(
-                    new AcmeConfiguration()
-                    {
-                        DirectoryUrl = src.DirectoryUrl!,
-                        Email = src.Email!,
-                        AcceptTos = src.AcceptTos
-                    },
-                    (JsonSerializerOptions?)null
-                )
+                new AcmeConfiguration()
+                {
+                    DirectoryUrl = src.DirectoryUrl!,
+                    Email = src.Email!,
+                    AcceptTos = src.AcceptTos
+                }
             ));
 
         CreateMap<NewAcmeCertificateAuthorityForm, NewPredefinedAcmeCertificateAuthorityForm>();

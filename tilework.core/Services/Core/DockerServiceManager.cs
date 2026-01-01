@@ -1,3 +1,7 @@
+using System.Net;
+using System.Text;
+using System.Linq;
+
 using Microsoft.Extensions.Logging;
 
 using Docker.DotNet;
@@ -9,6 +13,7 @@ using Tilework.Core.Enums;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
 using Tilework.Exceptions.Core;
+
 
 namespace Tilework.Core.Services;
 
@@ -33,6 +38,42 @@ public class DockerServiceManager : IContainerManager
         throw new ArgumentException($"Invalid container state: {state}");
     }
 
+    public async Task Initialize()
+    {
+        var network = await GetOrCreateDefaultNetwork();
+        await AddMeToDefaultNetwork(network);
+    }
+
+    private async Task AddMeToDefaultNetwork(ContainerNetwork network)
+    {
+        var containerId = Dns.GetHostName();
+
+        ContainerInspectResponse container;
+        try {
+            container = await _client.Containers.InspectContainerAsync(containerId);
+        }
+        catch (DockerContainerNotFoundException)
+        {
+            _logger.LogInformation("Not adding tilework to default network: Not containerized");
+            return;
+        }
+
+        var attachedNetworks = container.NetworkSettings?.Networks ?? new Dictionary<string, EndpointSettings>();
+
+        var alreadyInNetwork = attachedNetworks.Any(n =>
+            string.Equals(n.Key, network.Name, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(n.Value.NetworkID, network.Id, StringComparison.OrdinalIgnoreCase));
+
+
+        if(!alreadyInNetwork)
+        {
+            await _client.Networks.ConnectNetworkAsync(network.Id, new NetworkConnectParameters
+            {
+                Container = containerId
+            });
+        }
+    }
+
     private async Task<ContainerNetwork> GetOrCreateDefaultNetwork()
     {
         var networks = await ListNetworks();
@@ -48,7 +89,7 @@ public class DockerServiceManager : IContainerManager
     {
         var labelFilters = new Dictionary<string, bool>
         {
-            { "TileworkManaged=true", true }
+            { "dev.tilework.managed=true", true }
         };
 
         var networks = await _client.Networks.ListNetworksAsync(
@@ -71,7 +112,7 @@ public class DockerServiceManager : IContainerManager
     public async Task<ContainerNetwork> CreateNetwork(string name)
     {
         var tags = new Dictionary<string, string> {
-            {"TileworkManaged", "true"}
+            {"dev.tilework.managed", "true"}
         };
 
         var response = await _client.Networks.CreateNetworkAsync(
@@ -91,16 +132,84 @@ public class DockerServiceManager : IContainerManager
         await _client.Networks.DeleteNetworkAsync(id);
     }
 
+    public async Task<IPAddress?> GetContainerAddress(string id)
+    {
+
+        var info = await _client.Containers.InspectContainerAsync(id);
+
+        if (info.NetworkSettings.Networks.Count == 0)
+            return null;
+
+        if (info.NetworkSettings.Networks.Count > 1)
+            _logger.LogWarning("Container is attached on multiple networks. Getting address on first");
+
+        var network = info.NetworkSettings.Networks.First();
+
+        return IPAddress.Parse(network.Value.IPAddress);
+    }
+
+    public async Task<List<ContainerPort>> GetContainerPorts(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("Container ID cannot be null or empty.", nameof(id));
+
+        var info = await _client.Containers.InspectContainerAsync(id);
+        var ports = info.NetworkSettings?.Ports;
+
+        var containerPorts = new List<ContainerPort>();
+
+        if (ports == null || ports.Count == 0)
+            return containerPorts;
+
+        foreach (var portEntry in ports)
+        {
+            if (string.IsNullOrWhiteSpace(portEntry.Key))
+                continue;
+
+            var parts = portEntry.Key.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0 || !int.TryParse(parts[0], out int containerPort))
+                continue;
+
+            if (!Enum.TryParse(parts.Length > 1 ? parts[1] : nameof(PortType.TCP), true, out PortType portType))
+                portType = PortType.TCP;
+
+            var bindings = portEntry.Value;
+            if (bindings == null || bindings.Count == 0)
+                continue;
+
+            foreach (var binding in bindings)
+            {
+                int? hostPort = null;
+                if (!string.IsNullOrEmpty(binding.HostPort) && int.TryParse(binding.HostPort, out var parsedHostPort))
+                    hostPort = parsedHostPort;
+                else
+                    continue;
+
+                containerPorts.Add(new ContainerPort
+                {
+                    Port = containerPort,
+                    HostPort = hostPort,
+                    Type = portType
+                });
+            }
+        }
+
+        return containerPorts
+            .GroupBy(p => new { p.Port, p.HostPort, p.Type })
+            .Select(g => g.First())
+            .ToList();
+    }
+
 
     public async Task<List<Container>> ListContainers(string? module = null)
     {
         var labelFilters = new Dictionary<string, bool>
         {
-            { "TileworkManaged=true", true }
+            { "dev.tilework.managed=true", true }
         };
 
         if (!string.IsNullOrEmpty(module))
-            labelFilters.Add($"Module={module}", true);
+            labelFilters.Add($"dev.tilework.module={module}", true);
 
 
         var containers = await _client.Containers.ListContainersAsync(
@@ -148,8 +257,8 @@ public class DockerServiceManager : IContainerManager
 
 
         var tags = new Dictionary<string, string> {
-            {"TileworkManaged", "true"},
-            {"Module", module}
+            {"dev.tilework.managed", "true"},
+            {"dev.tilework.module", module}
         };
 
         var exposedPorts = new Dictionary<string, EmptyStruct>();
@@ -264,7 +373,6 @@ public class DockerServiceManager : IContainerManager
         {
             throw new DockerException(ex.ResponseBody);
         }
-
     }
 
     public async Task StopContainer(string id)
@@ -278,5 +386,46 @@ public class DockerServiceManager : IContainerManager
         {
             Signal = DockerSignalMapper.MapUnixSignalToDockerSignal(signal)
         });
+    }
+
+
+    public async Task<ContainerCommandResult> ExecuteContainerCommand(string id, string command)
+    {
+        var execCreate = await _client.Exec.ExecCreateContainerAsync(id, new ContainerExecCreateParameters
+        {
+            AttachStdout = true,
+            AttachStderr = true,
+            Cmd = ["sh", "-c", command]
+        });
+
+
+        using var stream = await _client.Exec.StartAndAttachContainerExecAsync(execCreate.ID, false);
+
+
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+        var buffer = new byte[8192];
+        MultiplexedStream.ReadResult result;
+        do
+        {
+            result = await stream.ReadOutputAsync(buffer, 0, buffer.Length, default);
+            if (result.EOF) break;
+
+            var text = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            if (result.Target == MultiplexedStream.TargetStream.StandardOut)
+                stdout.Append(text);
+            else
+                stderr.Append(text);
+        }
+        while (!result.EOF);
+
+        var execInspect = await _client.Exec.InspectContainerExecAsync(execCreate.ID);
+
+        return new ContainerCommandResult()
+        {
+            ExitCode = (int)execInspect.ExitCode,
+            Stdout = stdout.ToString(),
+            Stderr = stderr.ToString()
+        };
     }
 }

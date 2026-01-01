@@ -18,5 +18,5 @@ public abstract class BaseLoadBalancer
 
     public bool Enabled { get; set; }
 
-    public List<Certificate> Certificates { get; set; } = new();
+    public virtual List<Certificate> Certificates { get; set; } = new();
 }

@@ -1,0 +1,158 @@
+@using System.Linq
+@using Microsoft.JSInterop
+@using MudBlazor
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+
+<div class="d-flex flex-column mud-width-full">
+    <MudText Typo="Typo.subtitle2" Class="mb-2">@Name</MudText>
+    <div class="timeseries-chart-container">
+        <canvas @ref="_chartCanvas"></canvas>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Name { get; set; } = string.Empty;
+    [Parameter]
+    public Dictionary<DateTime, double> Data { get; set; } = new();
+
+    private static readonly string ChartColor = Colors.Green.Darken4;
+    private string[] _chartLabels = Array.Empty<string>();
+    private double[] _chartData = Array.Empty<double>();
+    private bool _renderPending;
+    private ElementReference _chartCanvas;
+    private IJSObjectReference? _chartModule;
+
+    protected override void OnParametersSet()
+    {
+        BuildChartData();
+        _renderPending = true;
+    }
+
+    private void BuildChartData()
+    {
+        var orderedData = Data.OrderBy(kv => kv.Key).ToList();
+        if (orderedData.Count == 0)
+        {
+            _chartLabels = Array.Empty<string>();
+            _chartData = Array.Empty<double>();
+            return;
+        }
+
+        var times = orderedData.Select(d => d.Key).ToList();
+        var duration = times.Last() - times.First();
+
+        const int targetLabelCount = 4;
+        var useDayLabels = duration >= TimeSpan.FromHours(48);
+        TimeSpan interval;
+        DateTime nextLabelTime;
+        if (useDayLabels)
+        {
+            interval = TimeSpan.FromDays(1);
+            nextLabelTime = AlignToNextMidday(times.First());
+        }
+        else
+        {
+            var approxIntervalMinutes = Math.Max(1, duration.TotalMinutes / targetLabelCount);
+            var intervalMinutes = GetRoundedIntervalMinutes(approxIntervalMinutes);
+            interval = TimeSpan.FromMinutes(intervalMinutes);
+            nextLabelTime = AlignToNextInterval(times.First(), interval);
+        }
+
+        _chartLabels = new string[orderedData.Count];
+        for (var i = 0; i < orderedData.Count; i++)
+        {
+            var current = times[i];
+            var label = string.Empty;
+
+            if (current >= nextLabelTime)
+            {
+                while (current >= nextLabelTime)
+                {
+                    nextLabelTime = nextLabelTime.Add(interval);
+                }
+
+                label = FormatLabel(nextLabelTime.Subtract(interval), useDayLabels);
+            }
+
+            _chartLabels[i] = label;
+        }
+
+        _chartData = orderedData.Select(d => (double)d.Value).ToArray();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_renderPending)
+        {
+            return;
+        }
+
+        _chartModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/timeseriesChart.js");
+        if (_chartModule is null)
+        {
+            return;
+        }
+
+        await _chartModule.InvokeVoidAsync("renderTimeseriesChart", _chartCanvas, new
+        {
+            labels = _chartLabels,
+            data = _chartData,
+            color = ChartColor,
+            name = Name
+        });
+
+        _renderPending = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_chartModule is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _chartModule.InvokeVoidAsync("disposeTimeseriesChart", _chartCanvas);
+            await _chartModule.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // JS runtime already disposed
+        }
+    }
+
+    private static int GetRoundedIntervalMinutes(double approxMinutes)
+    {
+        int[] allowed = { 1, 2, 5, 10, 15, 30, 60, 120, 240, 720, 1440 };
+        foreach (var candidate in allowed)
+        {
+            if (approxMinutes <= candidate)
+            {
+                return candidate;
+            }
+        }
+        return allowed.Last();
+    }
+
+    private static DateTime AlignToNextInterval(DateTime time, TimeSpan interval)
+    {
+        var ticks = ((time.Ticks + interval.Ticks - 1) / interval.Ticks) * interval.Ticks;
+        return new DateTime(ticks, time.Kind);
+    }
+
+    private static DateTime AlignToNextMidday(DateTime time)
+    {
+        var midday = time.Date.AddHours(12);
+        return time <= midday ? midday : midday.AddDays(1);
+    }
+
+    private static string FormatLabel(DateTime labelTime, bool useDayLabels)
+    {
+        return useDayLabels
+            ? labelTime.ToString("ddd dd")
+            : labelTime.ToString("HH:mm");
+    }
+}

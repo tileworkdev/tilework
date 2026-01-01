@@ -2,7 +2,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
+using Coravel;
+
 using Tilework.LoadBalancing.Interfaces;
+using Tilework.Events;
 
 namespace Tilework.LoadBalancing.Services;
 
@@ -25,6 +28,10 @@ public sealed class LoadBalancingInitializer : IHostedService
 
         var loadBalancerService = scope.ServiceProvider.GetRequiredService<ILoadBalancerService>();
         await loadBalancerService.ApplyConfiguration();
+
+        var events = scope.ServiceProvider.ConfigureEvents();
+        events.Register<CertificateRenewed>()
+              .Subscribe<LoadBalancerCertificateListener>();
     }
 
     public async Task StopAsync(CancellationToken ct)

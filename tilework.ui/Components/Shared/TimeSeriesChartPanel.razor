@@ -1,0 +1,170 @@
+@using Tilework.Ui.Components.Shared
+@using Tilework.Ui.Services
+
+<MudCard Outlined="true" Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <div class="d-flex align-items-center pt-2">
+                <MudSelect T="string" Value="_selectedInterval" Margin="Margin.Dense" Color="Color.Primary"
+                           ValueChanged="OnIntervalChanged" Dense="true" Variant="Variant.Outlined" Class="mr-3 my-0" Style="width: 9rem">
+                    @foreach (var option in _intervalOptions)
+                    {
+                        <MudSelectItem Value="@option.Value">@option.Label</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudToggleGroup Class="mr-3" T="string" Value="_selectedRange" Color="Color.Primary" ValueChanged="OnRangeChanged" Style="width: 20rem">
+                    <MudToggleItem Value="@("1h")"/>
+                    <MudToggleItem Value="@("3h")"/>
+                    <MudToggleItem Value="@("12h")"/>
+                    <MudToggleItem Value="@("1d")"/>
+                    <MudToggleItem Value="@("3d")"/>
+                    <MudToggleItem Value="@("1w")"/>
+                </MudToggleGroup>
+                <MudButton Class="pl-3" Color="Color.Primary" Variant="Variant.Outlined" OnClick="@(() => RefreshAsync())">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                </MudButton>
+            </div>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Class="my-4" Color="Color.Primary" />
+        }
+        else if (_chartData?.Any() == true)
+        {
+            <MudGrid Spacing="2">
+                @foreach (var chart in _chartData)
+                {
+                    <MudItem xl="3" lg="4" sm="6" xs="12">
+                        <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full pa-2" Outlined="true">
+                            <TimeseriesChart Name="@chart.Name" Data="@Localize(chart.Data)" />
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public Func<DateTimeOffset, DateTimeOffset, TimeSpan, Task<List<TimeSeriesChartData>>> LoadData { get; set; }
+
+    private readonly List<IntervalOption> _intervalOptions = new()
+    {
+        new IntervalOption("1 minute", "1m", TimeSpan.FromMinutes(1)),
+        new IntervalOption("5 minutes", "5m", TimeSpan.FromMinutes(5)),
+        new IntervalOption("15 minutes", "15m", TimeSpan.FromMinutes(15)),
+        new IntervalOption("1 hour", "1h", TimeSpan.FromHours(1)),
+        new IntervalOption("6 hours", "6h", TimeSpan.FromHours(6)),
+        new IntervalOption("1 day", "1d", TimeSpan.FromDays(1)),
+        new IntervalOption("7 days", "7d", TimeSpan.FromDays(7)),
+        new IntervalOption("30 days", "30d", TimeSpan.FromDays(30))
+    };
+
+    private bool _loading;
+    private string _selectedRange = "1h";
+    private string _selectedInterval = "1m";
+    private List<TimeSeriesChartData> _chartData = new();
+    private bool _initialized;
+    private TimeZoneInfo? _browserTimeZone;
+
+    [Inject]
+    private IBrowserTimeZoneProvider _browserTimezoneProvider { get; set; }
+
+    public async Task RefreshAsync()
+    {
+        if (LoadData == null)
+            return;
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var to = DateTimeOffset.UtcNow;
+            var from = GetRangeStart(_selectedRange, to);
+            var interval = _intervalOptions.FirstOrDefault(o => o.Value == _selectedInterval)?.Span ?? TimeSpan.FromMinutes(1);
+
+            _chartData = await LoadData(from, to, interval) ?? new List<TimeSeriesChartData>();
+            _browserTimeZone ??= await _browserTimezoneProvider.GetTimeZoneAsync();
+        }
+        finally
+        {
+            _loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private Task OnRangeChanged(string range)
+    {
+        _selectedRange = range;
+        return RefreshAsync();
+    }
+
+    private Task OnIntervalChanged(string interval)
+    {
+        _selectedInterval = interval;
+        return RefreshAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            await RefreshAsync();
+        }
+    }
+
+    private static DateTimeOffset GetRangeStart(string range, DateTimeOffset to)
+    {
+        return range switch
+        {
+            "1h" => to.AddHours(-1),
+            "3h" => to.AddHours(-3),
+            "12h" => to.AddHours(-12),
+            "1d" => to.AddDays(-1),
+            "3d" => to.AddDays(-3),
+            "1w" => to.AddDays(-7),
+            _ => to.AddHours(-1)
+        };
+    }
+
+    private Dictionary<DateTime, double> Localize(Dictionary<DateTimeOffset, double> data)
+    {
+        var localData = new Dictionary<DateTime, double>();
+        foreach(var point in data.OrderBy(p => p.Key))
+        {
+            DateTime localTime;
+            if(_browserTimeZone != null)
+                localTime = TimeZoneInfo.ConvertTime(point.Key, _browserTimeZone).DateTime;
+            else
+                localTime = point.Key.LocalDateTime;
+
+            localData[localTime] = point.Value;
+        }
+        return localData;
+    }
+
+    private class IntervalOption
+    {
+        public string Label { get; }
+        public string Value { get; }
+        public TimeSpan Span { get; }
+
+        public IntervalOption(string label, string value, TimeSpan span)
+        {
+            Label = label;
+            Value = value;
+            Span = span;
+        }
+    }
+}

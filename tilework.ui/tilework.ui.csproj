@@ -16,14 +16,12 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.8" />
-    <PackageReference Include="MudBlazor" Version="8.11.0" />
+    <PackageReference Include="MudBlazor" Version="8.15.0" />
   </ItemGroup>
 
   
   <ItemGroup>
     <ProjectReference Include="..\tilework.core\tilework.core.csproj" />
-    <ProjectReference Include="..\loadbalancing.tile\loadbalancing.tile.csproj" />
-    <ProjectReference Include="..\certificatemanagement.tile\certificatemanagement.tile.csproj" />
   </ItemGroup>
   
 </Project>

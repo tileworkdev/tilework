@@ -4,7 +4,7 @@
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<MudLayout>
+<MudLayout Class="mud-height-full">
     <MudAppBar Elevation="0" Dense="true">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.subtitle2" Class="ml-3">Tilework</MudText>
@@ -12,10 +12,10 @@
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         @* <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" /> *@
     </MudAppBar>
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
+    <MudDrawer Class="mud-height-full border-r border-solid mud-border-lines-default" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
         <NavMenu />
     </MudDrawer>
-    <MudMainContent Class="pt-11 pa-4">
+    <MudMainContent Class="mud-height-full px-4">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -45,7 +45,7 @@
             {
                 Default = new DefaultTypography()
                 {
-                    FontFamily = new[] { "Inter", "Arial", "sans-serif" }
+                    FontFamily = new[] { "Inter", "Helvetica", "Arial", "sans-serif" }
                 }
             }
         };
@@ -65,7 +65,7 @@
     {
         Black = "#110e2d",
         AppbarText = "#424242",
-        AppbarBackground = "rgba(255,255,255,0.8)",
+        AppbarBackground = Colors.Gray.Lighten4,
         DrawerBackground = "#ffffff",
         GrayLight = "#e8e8e8",
         GrayLighter = "#f9f9f9",

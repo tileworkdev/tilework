@@ -1,0 +1,11 @@
+
+.timeseries-chart-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+}
+
+.timeseries-chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

@@ -13,7 +13,6 @@ using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.LoadBalancing.Haproxy;
 
 using Tilework.CertificateManagement.Interfaces;
-using Tilework.Persistence.CertificateManagement.Models;
 using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
@@ -29,22 +28,21 @@ public class LoadBalancerService : ILoadBalancerService
     private readonly ILoadBalancingConfigurator _configurator;
     private readonly ILogger<LoadBalancerService> _logger;
     private readonly IMapper _mapper;
-    private readonly ICertificateManagementService _certificateManagementService;
+    private readonly MonitoringService _monitoringService;
 
 
     public LoadBalancerService(IServiceProvider serviceProvider,
                                TileworkContext dbContext,
                                IMapper mapper,
-                               ICertificateManagementService certificateManagementService,
                                IOptions<LoadBalancerConfiguration> settings,
-                               ILogger<LoadBalancerService> logger)
+                               ILogger<LoadBalancerService> logger,
+                               MonitoringService monitoringService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
         _configurator = LoadConfigurator(serviceProvider, _settings);
-
-        _certificateManagementService = certificateManagementService;
+        _monitoringService = monitoringService;
         _mapper = mapper;
     }
 
@@ -56,6 +54,40 @@ public class LoadBalancerService : ILoadBalancerService
             _ => throw new ArgumentException($"Invalid configurator in load balancing tile: {_settings.Backend}")
         };
     }
+
+    private static void ValidateRulePriority(ICollection<Rule> rules, int newPriority)
+    {
+        if (newPriority < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(newPriority), newPriority, "Rule priority cannot be negative.");
+        }
+
+        var maxPriority = rules.Count == 0 ? -1 : rules.Max(r => r.Priority);
+        if (newPriority > maxPriority + 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(newPriority), newPriority, $"Rule priority cannot be greater than {maxPriority + 1}.");
+        }
+    }
+
+    private static bool RequiresCertificate(BaseLoadBalancer balancer)
+    {
+        return balancer switch
+        {
+            ApplicationLoadBalancer appBalancer => appBalancer.Protocol == AlbProtocol.HTTPS,
+            NetworkLoadBalancer netBalancer => netBalancer.Protocol == NlbProtocol.TLS,
+            _ => false
+        };
+    }
+
+    private static void EnsureCertificatesPresentIfRequired(BaseLoadBalancer balancer)
+    {
+        if (RequiresCertificate(balancer) && (balancer.Certificates == null || balancer.Certificates.Count == 0))
+        {
+            throw new InvalidOperationException($"Load balancer {balancer.Name} requires at least one certificate before it can be enabled.");
+        }
+    }
+
+    
 
     private BaseLoadBalancerDTO MapBalancerToDto(BaseLoadBalancer entity)
     {
@@ -72,10 +104,10 @@ public class LoadBalancerService : ILoadBalancerService
         return dto switch
         {
             ApplicationLoadBalancerDTO appBalancer =>
-                entity == null ? _mapper.Map<ApplicationLoadBalancer>(appBalancer) : _mapper.Map(appBalancer, (ApplicationLoadBalancer) entity),
+                entity == null ? _mapper.Map<ApplicationLoadBalancer>(appBalancer) : _mapper.Map(appBalancer, (ApplicationLoadBalancer)entity),
 
             NetworkLoadBalancerDTO netBalancer =>
-                entity == null ? _mapper.Map<NetworkLoadBalancer>(netBalancer) : _mapper.Map(netBalancer, (NetworkLoadBalancer) entity),
+                entity == null ? _mapper.Map<NetworkLoadBalancer>(netBalancer) : _mapper.Map(netBalancer, (NetworkLoadBalancer)entity),
 
             _ => throw new InvalidOperationException("Invalid balancer type")
         };
@@ -109,7 +141,7 @@ public class LoadBalancerService : ILoadBalancerService
 
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
-        
+
         return MapBalancerToDto(entity);
     }
 
@@ -122,7 +154,14 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task EnableLoadBalancer(Guid Id)
     {
-        var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        var entity = await _dbContext.LoadBalancers
+                                     .Include(lb => lb.Certificates)
+                                     .FirstOrDefaultAsync(lb => lb.Id == Id);
+
+        if (entity == null)
+            throw new ArgumentException($"Load balancer {Id} not found.");
+
+        EnsureCertificatesPresentIfRequired(entity);
         entity.Enabled = true;
         _dbContext.LoadBalancers.Update(entity);
 
@@ -130,7 +169,7 @@ public class LoadBalancerService : ILoadBalancerService
         try
         {
             await _dbContext.SaveChangesAsync();
-            await ApplyConfiguration();
+            await ApplyConfiguration(Id);
             await tx.CommitAsync();
         }
         catch
@@ -144,6 +183,7 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task DisableLoadBalancer(Guid Id)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(Id);
+        
         entity.Enabled = false;
         _dbContext.LoadBalancers.Update(entity);
 
@@ -151,7 +191,7 @@ public class LoadBalancerService : ILoadBalancerService
         try
         {
             await _dbContext.SaveChangesAsync();
-            await ApplyConfiguration();
+            await ApplyConfiguration(Id);
             await tx.CommitAsync();
         }
         catch
@@ -166,12 +206,22 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer)
     {
         var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        return _mapper.Map<List<RuleDTO>>(entity.Rules.OrderByDescending(r => r.Priority));
+        return _mapper.Map<List<RuleDTO>>(entity.Rules.OrderBy(r => r.Priority));
     }
 
     public async Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        if (entity == null)
+            throw new ArgumentNullException(nameof(balancer));
+
+        ValidateRulePriority(entity.Rules, rule.Priority);
+        
+        foreach (var existingRule in entity.Rules.Where(r => r.Priority >= rule.Priority))
+        {
+            existingRule.Priority += 1;
+        }
+
         entity.Rules.Add(_mapper.Map<Rule>(rule));
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
@@ -179,21 +229,96 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
-        if (r != null)
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        if (entity == null)
+            throw new ArgumentNullException(nameof(balancer));
+
+        var ruleEntity = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
+        if (ruleEntity == null)
+            return;
+
+        ValidateRulePriority(entity.Rules, rule.Priority);
+
+        await using var tx = await _dbContext.Database.BeginTransactionAsync();
+
+        try
         {
-            _mapper.Map(rule, r);
-            _dbContext.LoadBalancers.Update(entity);
+            var newPriority = rule.Priority;
+            var originalPriority = ruleEntity.Priority;
+                
+            if (newPriority != originalPriority)
+            {
+                // first move the original rule out of the way in order to not trip a constraint error
+                ruleEntity.Priority = -1;
+                _dbContext.Entry(ruleEntity).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+
+
+                if (newPriority < originalPriority)
+                {
+                    // rule moved up. Bump down rules from new priority to old priority
+                    var rulesToAdjust = entity.Rules.Where(r => r.Id != rule.Id &&
+                                                                r.Priority >= newPriority &&
+                                                                r.Priority < originalPriority)
+                                                    .OrderByDescending(r => r.Priority);
+
+                    foreach (var ruleToAdjust in rulesToAdjust)
+                    {
+                        ruleToAdjust.Priority += 1;
+                        _dbContext.Entry(ruleToAdjust).State = EntityState.Modified;
+                        await _dbContext.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    // rule moved down. Bump up rules from new priority to old priority
+                    var rulesToAdjust = entity.Rules.Where(r => r.Id != rule.Id &&
+                                                                r.Priority <= newPriority &&
+                                                                r.Priority > originalPriority)
+                                                    .OrderBy(r => r.Priority);
+
+                    foreach (var ruleToAdjust in rulesToAdjust)
+                    {
+                        ruleToAdjust.Priority -= 1;
+                        _dbContext.Entry(ruleToAdjust).State = EntityState.Modified;
+                        await _dbContext.SaveChangesAsync();
+                    }
+                }
+            }
+
+            var moddedRules = entity.Rules.OrderBy(r => r.Priority);
+
+            _mapper.Map(rule, ruleEntity);
+            _dbContext.Entry(ruleEntity).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            _dbContext.ChangeTracker.Clear();
+            throw;
         }
     }
 
     public async Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?) await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        var r = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
-        entity.Rules.Remove(r);
+        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        if (entity == null)
+            throw new ArgumentNullException();
+
+        var ruleEntity = entity.Rules.FirstOrDefault(t => t.Id == rule.Id);
+        if (ruleEntity == null)
+            return;
+
+        var pri = ruleEntity.Priority;
+        entity.Rules.Remove(ruleEntity);
+
+        // bump up lower rules
+        foreach (var lowerRule in entity.Rules.Where(r => r.Priority > pri))
+        {
+            lowerRule.Priority -= 1;
+        }
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
     }
@@ -270,7 +395,7 @@ public class LoadBalancerService : ILoadBalancerService
 
         _dbContext.TargetGroups.Update(entity);
         await _dbContext.SaveChangesAsync();
-        
+
         return _mapper.Map<TargetGroupDTO>(entity);
     }
 
@@ -323,8 +448,29 @@ public class LoadBalancerService : ILoadBalancerService
         await _configurator.ApplyConfiguration(balancers);
     }
 
+    public async Task ApplyConfiguration(Guid Id)
+    {
+        var balancer = await _dbContext.LoadBalancers.FindAsync(Id);
+        if(balancer != null)
+            await _configurator.ApplyConfiguration(balancer);
+    }
+
     public async Task Shutdown()
     {
         await _configurator.Shutdown();
+    }
+
+    public async Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end)
+    {
+        var lb = await GetLoadBalancer(id);
+        if(lb == null)
+            throw new ArgumentException("Invalid load balancer id");
+
+        var filters = new Dictionary<string, string>();
+        filters["instance"] = lb.Id.ToString();
+        filters["type"] = "frontend";
+        filters["instance"] = lb.Id.ToString();
+
+        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
 }

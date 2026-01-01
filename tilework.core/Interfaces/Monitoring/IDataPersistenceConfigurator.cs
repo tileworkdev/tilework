@@ -1,0 +1,12 @@
+using Tilework.Monitoring.Models;
+
+namespace Tilework.Monitoring.Interfaces;
+
+public interface IDataPersistenceConfigurator
+{
+    Task<MonitoringTarget> GetTarget(MonitoringSource source);
+    Task<List<T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new();
+
+    Task ApplyConfiguration();
+    Task Shutdown();
+}

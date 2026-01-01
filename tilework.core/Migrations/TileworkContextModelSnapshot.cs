@@ -226,6 +226,28 @@ namespace tilework.core.Migrations
                     b.ToTable("TargetGroups");
                 });
 
+            modelBuilder.Entity("Tilework.Persistence.TokenVault.Models.Token", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Tokens");
+                });
+
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", b =>
                 {
                     b.HasBaseType("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer");

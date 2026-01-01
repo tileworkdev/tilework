@@ -1,6 +1,7 @@
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Enums
+@using Tilework.Core.Enums
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -11,16 +12,59 @@
 
 @page "/cm/certificates/{Id:guid}"
 
+<PageTitle>Certificate details</PageTitle>
+
 <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
     <DetailContent>
-        <MudGrid Spacing="5">
-            <MudItem>
+        <MudGrid>
+            <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">FQDN</MudText>
                 <MudText Typo="Typo.body2">@_item.Fqdn</MudText>
             </MudItem>
-            <MudItem>
-                <MudText Typo="Typo.subtitle2">Authority</MudText>
+            <MudItem xs="4">
+                <MudText Typo="Typo.subtitle2">Not before</MudText>
+                <MudText Typo="Typo.body2">@_item.CertificateData[0].NotBefore</MudText>
+            </MudItem>
+            <MudItem xs="4">
+                <MudText Typo="Typo.subtitle2">Key algorithm</MudText>
+                <MudText Typo="Typo.body2">@_certificateManagementService.GetPrivateKey(_item.PrivateKey).Result?.Algorithm.GetDescription()</MudText>
+            </MudItem>
+            <MudItem xs="4">
+                <MudText Typo="Typo.subtitle2">Certificate authority</MudText>
                 <MudText Typo="Typo.body2">@_certificateManagementService.GeCertificateAuthority(_item.Authority).Result?.Name</MudText>
+            </MudItem>
+            <MudItem xs="4">
+                <MudText Typo="Typo.subtitle2">Expires at</MudText>
+                <MudText Typo="Typo.body2">@_item.ExpiresAtUtc</MudText>
+            </MudItem>
+            <MudItem xs="4">
+                <MudText Typo="Typo.subtitle2">Serial number</MudText>
+                <MudText Typo="Typo.body2">@_item.CertificateData[0].SerialNumber</MudText>
+            </MudItem>
+            <MudItem xs="4">
+                <MudText Typo="Typo.subtitle2">Status</MudText>
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                @if (_item.Status == CertificateStatus.NEW)
+                {
+                    <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.AddCircleOutline" Size="Size.Small"/>
+                    <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">New</MudText>
+                }
+                else if(_item.Status == CertificateStatus.ACTIVE)
+                {
+                    <MudIcon Style="@($"color:{Colors.Green.Darken2};")" Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
+                    <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Active</MudText>
+                }
+                else if(_item.Status == CertificateStatus.EXPIRED)
+                {
+                    <MudIcon Style="@($"color:{Colors.Orange.Darken2};")" Icon="@Icons.Material.Outlined.ChangeCircle" Size="Size.Small"/>
+                    <MudText Style="@($"color:{Colors.Orange.Darken2};")" Typo="Typo.body2">Expired</MudText>
+                }
+                else if(_item.Status == CertificateStatus.REVOKED)
+                {
+                    <MudIcon Style="@($"color:{Colors.Red.Darken2};")" Icon="@Icons.Material.Outlined.Cancel" Size="Size.Small"/>
+                    <MudText Style="@($"color:{Colors.Red.Darken2};")" Typo="Typo.body2">Revoked</MudText>
+                }
+                </MudStack>
             </MudItem>
         </MudGrid>
     </DetailContent>
@@ -40,10 +84,23 @@
 
     private List<ActionItem> _actions = new List<ActionItem>();
 
-    protected override async Task OnInitializedAsync()
+    private async Task RefreshItem()
     {
         _item = await _certificateManagementService.GetCertificate(Id);
-        if (_item == null)
+        if(_item == null)
+            throw new InvalidOperationException();
+
+        SetActions();
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await RefreshItem();
+        }
+        catch(InvalidOperationException)
         {
             _navigationManager.NavigateTo("/cm/certificates");
             _snackbar.Add($"Certificate {Id} not found", Severity.Error);
@@ -51,9 +108,6 @@
         }
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
-
-
-        SetActions();
     }
 
     private async Task ConfirmRevoke()
@@ -71,7 +125,7 @@
         {
             try {
                 await _certificateManagementService.RevokeCertificate(_item.Id);
-                SetActions();
+                await RefreshItem();
                 _snackbar.Add("Certificate revoked successfully!", Severity.Success);
             }
             catch(Exception ex)
@@ -94,21 +148,54 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _certificateManagementService.DeleteCertificate(_item.Id);
-            _navigationManager.NavigateTo("/cm/certificates");
+            try {
+                await _certificateManagementService.DeleteCertificate(_item.Id);
+                _navigationManager.NavigateTo("/cm/certificates");
+                _snackbar.Add($"Certificate deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete certificate: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task ConfirmRenew()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Do you want to renew the certificate?");
+        parameters.Add(x => x.ButtonText, "Renew");
+        parameters.Add(x => x.Color, Color.Primary);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = _dialogService.Show<ConfirmDialog>("Renew", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            try {
+                await _certificateManagementService.RenewCertificate(_item.Id);
+                await RefreshItem();
+                _snackbar.Add("Certificate renewed successfully!", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to renew certificate: {ex.Message}", Severity.Error);
+            }
         }
     }
 
     private void SetActions()
     {
-        _actions = new List<ActionItem>
-        {
-            new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
-        };
+        _actions = new List<ActionItem>();
+
+        _actions.Add(new ActionItem() { Name = "Renew", OnClick = ConfirmRenew });
 
         if(_item.Status == CertificateStatus.ACTIVE)
         {
             _actions.Add(new ActionItem() { Name = "Revoke", OnClick = ConfirmRevoke });
         }
+
+        _actions.Add(new ActionItem() { Name = "Delete", OnClick = ConfirmDelete });
     }
 }

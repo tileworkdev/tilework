@@ -10,7 +10,8 @@ public class CertificateManagementMappingProfile : Profile
 {
     public CertificateManagementMappingProfile()
     {
-        CreateMap<CertificateAuthorityDTO, CertificateAuthority>();
+        CreateMap<CertificateAuthorityDTO, CertificateAuthority>()
+            .ForMember(dest => dest.ParametersString, opt => opt.Ignore());
         CreateMap<CertificateAuthority, CertificateAuthorityDTO>();
 
         CreateMap<CertificateDTO, Certificate>()

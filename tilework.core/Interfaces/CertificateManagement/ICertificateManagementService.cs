@@ -14,6 +14,8 @@ public interface ICertificateManagementService
     public Task<List<CertificateDTO>> GetCertificates();
     public Task<CertificateDTO?> GetCertificate(Guid Id);
     public Task<CertificateDTO> AddCertificate(string name, string fqdn, KeyAlgorithm algorithm, Guid authorityId);
+    public Task<CertificateDTO> RenewCertificate(Guid Id);
+    public Task RenewExpiringCertificates();
     public Task RevokeCertificate(Guid Id);
     public Task DeleteCertificate(Guid Id);
 

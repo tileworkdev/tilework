@@ -14,6 +14,8 @@ public interface ILoadBalancerService
     public Task EnableLoadBalancer(Guid Id);
     public Task DisableLoadBalancer(Guid Id);
 
+    
+
     public Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer);
     public Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
     public Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule);
@@ -40,6 +42,9 @@ public interface ILoadBalancerService
     public Task UpdateTarget(TargetGroupDTO group, TargetDTO target);
     public Task RemoveTarget(TargetGroupDTO group, TargetDTO target);
 
+    public Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid Id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end);
+
+    public Task ApplyConfiguration(Guid Id);
     public Task ApplyConfiguration();
     public Task Shutdown();
 }

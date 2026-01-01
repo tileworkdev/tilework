@@ -12,6 +12,8 @@
 @inject ISnackbar Snackbar
 @page "/lb/loadbalancers/{Id:guid}/edit"
 
+<PageTitle>Edit load balancer</PageTitle>
+
 @if(form is EditApplicationLoadBalancerForm albForm)
 {
     <GenericEditview T="EditApplicationLoadBalancerForm" Model="@albForm" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
@@ -95,7 +97,7 @@ else if(form is EditNetworkLoadBalancerForm nlbForm)
         {
             _item = _mapper.Map(form, _item);
             await _loadBalancerService.UpdateLoadBalancer(_item);
-            await _loadBalancerService.ApplyConfiguration();
+            await _loadBalancerService.ApplyConfiguration(_item.Id);
 
             NavigationManager.NavigateTo("/lb/loadbalancers");
             Snackbar.Add("Load balancer saved successfully!", Severity.Success);

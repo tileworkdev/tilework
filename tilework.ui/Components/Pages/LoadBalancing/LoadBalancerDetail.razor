@@ -1,10 +1,17 @@
-@using Tilework.LoadBalancing.Enums
+@using System
+@using System.Linq
+
 @using Tilework.Core.Enums
+@using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Interfaces
+@using Tilework.LoadBalancing.Models
+
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Models
-@using Tilework.LoadBalancing.Models
-@using System.Linq
+
+
+@using Tilework.Ui.Services
+@using Tilework.Ui.Components.Shared
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -16,23 +23,30 @@
 
 @page "/lb/loadbalancers/{Id:guid}"
 
+
+<PageTitle>Load balancer details</PageTitle>
+
 <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
     <DetailContent>
-        <MudGrid Spacing="5">
-            <MudItem>
+        <MudGrid>
+            <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Type</MudText>
                 <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancerDTO appBalancer ? "Application" : "Network")</MudText>
             </MudItem>
-            <MudItem>
+            <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Status</MudText>
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                 @if (_item.Enabled)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Enabled</MudChip>
+                    <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
+                    <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Enabled</MudText>
                 }
                 else
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Disabled</MudChip>
+                    <MudIcon Style="@($"color:{Colors.Gray.Darken1};")" Icon="@Icons.Material.Outlined.StopCircle" Size="Size.Small"/>
+                    <MudText Style="@($"color:{Colors.Gray.Darken1};")" Typo="Typo.body2">Disabled</MudText>
                 }
+                </MudStack>
             </MudItem>
         </MudGrid>
     </DetailContent>
@@ -107,7 +121,8 @@
             </MudTabPanel>
         }
         <MudTabPanel Text="Monitoring">
-            <MudText>TODO</MudText>
+
+            <TimeSeriesChartPanel Title="Monitoring" LoadData="LoadMonitoringCharts" />
         </MudTabPanel>
 
     </TabContent>
@@ -131,6 +146,8 @@
     };
 
     private List<ActionItem> _actions = new List<ActionItem>();
+
+    private int GetMaxRulePriority() => _rules.Count() > 0 ? _rules.Max(p => p.Priority) + 1 : 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -170,9 +187,16 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            await _loadBalancerService.DeleteLoadBalancer(_item.Id);
-            await _loadBalancerService.ApplyConfiguration();
-            _navigationManager.NavigateTo("/lb/loadbalancers");
+            try {
+                await _loadBalancerService.DeleteLoadBalancer(_item.Id);
+                await _loadBalancerService.ApplyConfiguration();
+                _navigationManager.NavigateTo("/lb/loadbalancers");
+                _snackbar.Add($"Load balancer deleted successfully", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to delete load balancer: {ex.Message}", Severity.Error);
+            }
         }
     }
 
@@ -180,6 +204,12 @@
     {
         var rule = new RuleDTO();
         var parameters = new DialogParameters<RuleDialog>();
+
+        var maxPriorty = GetMaxRulePriority();
+
+        // By default the new rule should have the last priority
+        rule.Priority = GetMaxRulePriority();
+
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
 
@@ -191,9 +221,22 @@
         {
             if(_item is ApplicationLoadBalancerDTO appBalancer)
             {
-                await _loadBalancerService.AddRule(appBalancer, rule);
-                await GetRules();
-                await _loadBalancerService.ApplyConfiguration();
+                try
+                {
+                    if(rule.Priority < 0)
+                        rule.Priority = 0;
+                    if(rule.Priority > maxPriorty)
+                        rule.Priority = maxPriorty;
+
+                    await _loadBalancerService.AddRule(appBalancer, rule);
+                    await GetRules();
+                    await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
+                    _snackbar.Add("Rule added successfully!", Severity.Success);
+                }
+                catch(Exception ex)
+                {
+                    _snackbar.Add($"Failed to add rule: {ex.Message}", Severity.Error);
+                }
             }
             else
             {
@@ -204,6 +247,8 @@
 
     private async Task EditRule(RuleDTO rule)
     {
+        var maxPriorty = GetMaxRulePriority();
+
         var ruleEdit = new RuleDTO
         {
             Id = rule.Id,
@@ -232,9 +277,22 @@
         {
             if (_item is ApplicationLoadBalancerDTO appBalancer)
             {
-                await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
-                await GetRules();
-                await _loadBalancerService.ApplyConfiguration();
+                try
+                {
+                    if(ruleEdit.Priority < 0)
+                        ruleEdit.Priority = 0;
+                    if(ruleEdit.Priority > maxPriorty)
+                        ruleEdit.Priority = maxPriorty;
+
+                    await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
+                    await GetRules();
+                    await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
+                    _snackbar.Add("Rule updated successfully!", Severity.Success);
+                }
+                catch(Exception ex)
+                {
+                    _snackbar.Add($"Failed to update rule: {ex.Message}", Severity.Error);
+                }
             }
             else
             {
@@ -258,7 +316,7 @@
         {
             await _loadBalancerService.RemoveRule(appBalancer, rule);
             await GetRules();
-            await _loadBalancerService.ApplyConfiguration();
+            await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
         }
     }
 
@@ -276,7 +334,7 @@
             var cert = (Guid) result.Data;
             await _loadBalancerService.AddCertificate(_item, cert);
             await GetCertificates();
-            await _loadBalancerService.ApplyConfiguration();
+            await _loadBalancerService.ApplyConfiguration(_item.Id);
         }
     }
 
@@ -369,5 +427,45 @@
     private async Task GetCertificates()
     {
         _certificates = await _loadBalancerService.GetCertificates(_item);
+    }
+
+    private async Task<List<TimeSeriesChartData>> LoadMonitoringCharts(DateTimeOffset from, DateTimeOffset to, TimeSpan interval)
+    {
+        var charts = new List<TimeSeriesChartData>();
+        List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, from, to)
+            ?? new List<LoadBalancingMonitorData>();
+
+        Dictionary<string, Dictionary<DateTimeOffset, double>> chartData = new()
+        {
+            ["Sessions"] = new Dictionary<DateTimeOffset, double>(),
+            ["Requests"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 1xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 2xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 3xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 4xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP 5xx"] = new Dictionary<DateTimeOffset, double>(),
+            ["HTTP Other"] = new Dictionary<DateTimeOffset, double>(),
+        };
+
+        foreach (var entry in data.OrderBy(d => d.Timestamp))
+        {
+            var timestamp = entry.Timestamp.ToUniversalTime();
+            
+            chartData["Sessions"][timestamp] = entry.Sessions;
+            chartData["Requests"][timestamp] = entry.Requests;
+            chartData["HTTP 1xx"][timestamp] = entry.HttpResponses1xx;
+            chartData["HTTP 2xx"][timestamp] = entry.HttpResponses2xx;
+            chartData["HTTP 3xx"][timestamp] = entry.HttpResponses3xx;
+            chartData["HTTP 4xx"][timestamp] = entry.HttpResponses4xx;
+            chartData["HTTP 5xx"][timestamp] = entry.HttpResponses5xx;
+            chartData["HTTP Other"][timestamp] = entry.HttpResponsesOther;
+        }
+
+        foreach(var datapoint in chartData)
+        {
+            charts.Add(new TimeSeriesChartData { Name = datapoint.Key, Data = datapoint.Value });
+        }
+
+        return charts;
     }
 }
