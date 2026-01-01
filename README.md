@@ -2,7 +2,7 @@
 
 ## About
 
-Tilework is a service delivery platform for tools and services of the modern software landscape. It is designed with the main objective of being simple and fast to configure rather than being in the way.
+Tilework is a fully integrated reverse proxying and load balancing platform. It is designed with the main objective of being simple and fast to configure rather than being in the way.
 
 ## Features
 - Deployment of HTTP/TCP/UDP load balancers with multiple backends
