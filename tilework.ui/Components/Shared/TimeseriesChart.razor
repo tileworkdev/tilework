@@ -45,7 +45,7 @@
         var times = orderedData.Select(d => d.Key).ToList();
         var duration = times.Last() - times.First();
 
-        const int targetLabelCount = 6;
+        const int targetLabelCount = 4;
         var useDayLabels = duration >= TimeSpan.FromHours(48);
         TimeSpan interval;
         DateTime nextLabelTime;
