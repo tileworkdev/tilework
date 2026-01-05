@@ -183,7 +183,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -215,7 +215,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<RuleDialog>("Add rule", parameters, options);
+        var dialog = await _dialogService.ShowAsync<RuleDialog>("Add rule", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -271,7 +271,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<RuleDialog>("Edit rule", parameters, options);
+        var dialog = await _dialogService.ShowAsync<RuleDialog>("Edit rule", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -310,7 +310,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled && _item is ApplicationLoadBalancerDTO appBalancer)
         {
@@ -327,7 +327,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<CertificateDialog>("Add certificate", parameters, options);
+        var dialog = await _dialogService.ShowAsync<CertificateDialog>("Add certificate", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -347,7 +347,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {

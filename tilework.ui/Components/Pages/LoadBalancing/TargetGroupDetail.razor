@@ -83,7 +83,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -108,7 +108,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<TargetDialog>("Add target", parameters, options);
+        var dialog = await _dialogService.ShowAsync<TargetDialog>("Add target", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -135,7 +135,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<TargetDialog>("Edit target", parameters, options);
+        var dialog = await _dialogService.ShowAsync<TargetDialog>("Edit target", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -154,7 +154,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {

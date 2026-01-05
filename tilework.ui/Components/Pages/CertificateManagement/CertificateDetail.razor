@@ -119,7 +119,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Revoke", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Revoke", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
@@ -144,7 +144,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Delete", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {
