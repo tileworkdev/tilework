@@ -11,33 +11,34 @@
 @page "/lb/targetgroups/{Id:guid}"
 
 <PageTitle>Target group details</PageTitle>
-
-<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
-    <DetailContent>
-    </DetailContent>
-    <TabContent>
-        <MudTabPanel Text="Targets">
-            <MudDataGrid T="TargetDTO" Outlined="true" Items="_targets" Hover="true">
-                <ToolBarContent>
-                    <MudText Typo="Typo.h6">Targets</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
-                </ToolBarContent>
-                <Columns>
-                    <PropertyColumn Property="t => t.Host.Value" Title="Host" Editable="false" />
-                    <PropertyColumn Property="t => t.Port" Title="Port" />
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditTarget(context.Item))" />
-                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteTarget(context.Item))" />
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-            </MudDataGrid>
-        </MudTabPanel>
-    </TabContent>
-</GenericDetailview>
-
+@if(_item != null)
+{
+    <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
+        <DetailContent>
+        </DetailContent>
+        <TabContent>
+            <MudTabPanel Text="Targets">
+                <MudDataGrid T="TargetDTO" Outlined="true" Items="_targets" Hover="true">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Targets</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddTarget">Add target</MudButton>
+                    </ToolBarContent>
+                    <Columns>
+                        <PropertyColumn Property="t => t.Host.Value" Title="Host" Editable="false" />
+                        <PropertyColumn Property="t => t.Port" Title="Port" />
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditTarget(context.Item))" />
+                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteTarget(context.Item))" />
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudTabPanel>
+        </TabContent>
+    </GenericDetailview>
+}
 
 @code {
     [Parameter]
@@ -59,8 +60,7 @@
         _item = await _loadBalancerService.GetTargetGroup(Id);
         if(_item == null)
         {
-            _navigationManager.NavigateTo("/lb/targetgroups");
-            _snackbar.Add($"Target group {Id} not found", Severity.Error);
+            return;
         }
 
         await GetTargets();
@@ -72,6 +72,19 @@
             new ActionItem() { Name="Edit", Href=$"/lb/targetgroups/{Id}/edit" },
             new ActionItem() { Name="Delete", OnClick=ConfirmDelete }
         };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        if(_item == null)
+        {
+            _snackbar.Add($"Target group {Id} not found", Severity.Error);
+            _navigationManager.NavigateTo("/lb/targetgroups");
+            return;
+        }
     }
 
     private async Task ConfirmDelete()

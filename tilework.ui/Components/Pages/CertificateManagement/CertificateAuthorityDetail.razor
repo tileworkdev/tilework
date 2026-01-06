@@ -13,36 +13,39 @@
 @page "/cm/authorities/{Id:guid}"
 
 <PageTitle>Certificate authority details</PageTitle>
+@if(_item != null)
+{
+    <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
+        <DetailContent>
+            <MudGrid>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Type</MudText>
+                    <MudText Typo="Typo.body2">@_item.Type.GetDescription()</MudText>
+                </MudItem>
+                @if(_item.Type == CertificateAuthorityType.ACME || _item.Type == CertificateAuthorityType.LETSENCRYPT)
+                {
+                    var config = (AcmeConfiguration) _item.Parameters;
+                    <MudItem xs="4">
+                        <MudText Typo="Typo.subtitle2">Registration email</MudText>
+                        <MudText Typo="Typo.body2">@config.Email</MudText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudText Typo="Typo.subtitle2">Directory URL</MudText>
+                        <MudText Typo="Typo.body2">@config.DirectoryUrl</MudText>
+                    </MudItem>
+                    <MudItem xs="8">
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudText Typo="Typo.subtitle2">KID</MudText>
+                        <MudText Typo="Typo.body2">@config.Kid</MudText>
+                    </MudItem>
+                }
 
-<GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
-    <DetailContent>
-        <MudGrid>
-            <MudItem xs="4">
-                <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@_item.Type.GetDescription()</MudText>
-            </MudItem>
-            @if(_item.Type == CertificateAuthorityType.ACME || _item.Type == CertificateAuthorityType.LETSENCRYPT)
-            {
-                var config = (AcmeConfiguration) _item.Parameters;
-                <MudItem xs="4">
-                    <MudText Typo="Typo.subtitle2">Registration email</MudText>
-                    <MudText Typo="Typo.body2">@config.Email</MudText>
-                </MudItem>
-                <MudItem xs="4">
-                    <MudText Typo="Typo.subtitle2">Directory URL</MudText>
-                    <MudText Typo="Typo.body2">@config.DirectoryUrl</MudText>
-                </MudItem>
-                <MudItem xs="8">
-                </MudItem>
-                <MudItem xs="4">
-                    <MudText Typo="Typo.subtitle2">KID</MudText>
-                    <MudText Typo="Typo.body2">@config.Kid</MudText>
-                </MudItem>
-            }
+            </MudGrid>
+        </DetailContent>
+    </GenericDetailview>
+}
 
-        </MudGrid>
-    </DetailContent>
-</GenericDetailview>
 
 @code {
     [Parameter]
@@ -63,8 +66,6 @@
         _item = await _certificateManagementService.GeCertificateAuthority(Id);
         if (_item == null)
         {
-            _navigationManager.NavigateTo("/cm/authorities");
-            _snackbar.Add($"Certificate authority {Id} not found", Severity.Error);
             return;
         }
 
@@ -74,6 +75,19 @@
         {
             new ActionItem() { Name = "Delete", OnClick = ConfirmDelete }
         };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        if(_item == null)
+        {
+            _snackbar.Add($"Certificate authority {Id} not found", Severity.Error);
+            _navigationManager.NavigateTo("/cm/authorities");
+            return;
+        }
     }
 
     private async Task ConfirmDelete()

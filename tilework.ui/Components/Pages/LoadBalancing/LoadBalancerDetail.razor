@@ -61,7 +61,13 @@
                         <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddRule">Add rule</MudButton>
                     </ToolBarContent>
                     <Columns>
-                        <PropertyColumn Property="t => t.Priority" Title="Priority" Editable="false" />
+                        <TemplateColumn Title="Priority">
+                            <CellTemplate>
+                                <MudLink Href="@($"/lb/loadbalancers/{Id}/rules/{context.Item.Id}")" Underline="Underline.Hover">
+                                    @context.Item.Priority
+                                </MudLink>
+                            </CellTemplate>
+                        </TemplateColumn>
                         <TemplateColumn Title="Conditions">
                             <CellTemplate>
                                 @for (int i = 0; i < context.Item.Conditions.Count; i++)
@@ -154,8 +160,6 @@
         _item = await _loadBalancerService.GetLoadBalancer(Id);
         if(_item == null)
         {
-            _navigationManager.NavigateTo("/lb/loadbalancers");
-            _snackbar.Add($"Load balancer {Id} not found", Severity.Error);
             return;
         }
 
@@ -172,6 +176,19 @@
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: null, disabled: true));
 
         SetActions();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        if(_item == null)
+        {
+            _snackbar.Add($"Load balancer {Id} not found", Severity.Error);
+            _navigationManager.NavigateTo("/lb/loadbalancers");
+            return;
+        }
     }
 
     private async Task ConfirmDelete()
