@@ -1,124 +1,87 @@
-@using System.ComponentModel.DataAnnotations
-@using System.Reflection
-@using Tilework.Core.Enums
+@using Microsoft.AspNetCore.Components.Forms
 @using System.Linq
+@using Tilework.Ui.Models
 
 @namespace Tilework.Ui.Components.Layout
 
-@typeparam T where T : BaseForm
-
 <MudBreadcrumbs Items="Breadcrumbs" Separator=">"></MudBreadcrumbs>
 
-<MudCard Outlined="true">
-    <MudCardHeader>
-        <CardHeaderContent>
-            <MudText Typo="Typo.h6">@Title</MudText>
-        </CardHeaderContent>
-        <CardHeaderActions>
-        </CardHeaderActions>
-    </MudCardHeader>
-    <EditForm Model="@Model" OnValidSubmit="OnSubmit">
-        <DataAnnotationsValidator/>
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h6">@Title</MudText>
 
-        <MudCardContent>
-            @if(FormContent == null)
-            {
-                @foreach (
-                    var prop in typeof(T).GetProperties(
-                                            BindingFlags.Instance |
-                                            BindingFlags.Public
-                                         )
-                                         .OrderBy(p => p.MetadataToken)
-                )
-                {
-                    var type = prop.PropertyType;
-                    var isNullable = Nullable.GetUnderlyingType(type) != null;
-                    var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+    <MudGrid Spacing="3">
+        @foreach (var model in _models)
+        {
+            <MudItem xs="12">
+                <MudCard Outlined="true">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1">@GetModelTitle(model)</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <EditForm EditContext="@_editContexts[model]">
+                            <DataAnnotationsValidator />
+                            <GenericFormRenderer Model="@model" OnChange="OnChange" />
+                        </EditForm>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
 
-                    var options = Model.GetOptions(prop.Name);
-                    if(options == null && underlyingType.IsEnum)
-                    {
-                        var enumType = prop.PropertyType;
-                        options = Enum.GetValues(enumType).Cast<object>().Select(o => 
-                            new SelectOptionItem()
-                            {
-                                Text=(o as Enum).GetDescription() ?? o.ToString(),
-                                Value=o
-                            }
-                        ).ToList();
-                    }
-
-                    var label = prop.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? prop.Name;
-
-                    if (options != null)
-                    {
-                        <MudSelect T="object" Label="@label" Variant="Variant.Outlined"
-                                Value="@(prop.GetValue(Model))"
-                                ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })">
-                            @foreach (var option in options)
-                            {
-                                <MudSelectItem T="object" Value="@option.Value">@option.Text</MudSelectItem>
-                            }
-                        </MudSelect>
-                    }
-                    else if (underlyingType == typeof(string))
-                    {
-                        <MudTextField T="string" Label="@label" Variant="Variant.Outlined"
-                            Value="@(prop.GetValue(Model) as string)"
-                            ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
-                    }
-                    else if (underlyingType == typeof(int))
-                    {
-                        <MudNumericField HideSpinButtons="true" T="int?" Label="@label" Variant="Variant.Outlined"
-                            Value="@((int?) prop.GetValue(Model))"
-                            ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
-                    }
-                    else if (underlyingType == typeof(bool))
-                    {
-                        <MudCheckBox T="bool" Label="@label"
-                            Value="@(Convert.ToBoolean(prop.GetValue(Model)))"
-                            ValueChanged="@(v => { prop.SetValue(Model, v); OnChange.InvokeAsync((prop.Name, v)); })" />
-                    }
-                }
-            }
-            else
-            {
-                @FormContent
-            }
-        </MudCardContent>
-
-        <MudCardActions>
+        <MudItem xs="12">
             <MudGrid Justify="Justify.FlexEnd">
                 <MudItem>
-                    <MudButton Variant="Variant.Filled" DropShadow="false" OnClick="OnCancel">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" DropShadow="false" ButtonType="ButtonType.Button" OnClick="OnCancelClicked">Cancel</MudButton>
                 </MudItem>
                 <MudItem>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" DropShadow="false" Color="Color.Primary">Save</MudButton>
+                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="OnSaveClicked">Save</MudButton>
                 </MudItem>
             </MudGrid>
-        </MudCardActions>
-    </EditForm>
-</MudCard>
-
+        </MudItem>
+    </MudGrid>
+</MudStack>
 
 @code {
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public List<BreadcrumbItem> Breadcrumbs { get; set; } = new List<BreadcrumbItem>();
-    [Parameter] public RenderFragment? FormContent { get; set; }
     [Parameter] public Func<Task>? OnValidSubmit { get; set; }
     [Parameter] public Func<Task>? OnCancel { get; set; }
     [Parameter] public EventCallback<(string PropertyName, object? Value)> OnChange { get; set; }
-    [Parameter] public T Model { get; set; }
+    [Parameter] public IEnumerable<BaseForm> Models { get; set; } = Enumerable.Empty<BaseForm>();
 
+    private IReadOnlyList<BaseForm> _models = Array.Empty<BaseForm>();
+    private Dictionary<BaseForm, EditContext> _editContexts = new Dictionary<BaseForm, EditContext>();
 
-    private object BindProperty(PropertyInfo prop)
+    protected override void OnParametersSet()
     {
-        return prop.GetValue(Model);
+        _models = Models?.ToList() ?? new List<BaseForm>();
+        _editContexts = _models.ToDictionary(model => model, model => new EditContext(model));
     }
 
-    private async Task OnSubmit(EditContext context)
+    private string GetModelTitle(BaseForm model)
     {
-        if(OnValidSubmit != null)
+        return model.GetType().Name;
+    }
+
+    private async Task OnSaveClicked()
+    {
+        foreach (var model in _models)
+        {
+            if (_editContexts.TryGetValue(model, out var context))
+            {
+                if (!context.Validate())
+                    return;
+            }
+        }
+
+        if (OnValidSubmit != null)
             await OnValidSubmit();
+    }
+
+    private async Task OnCancelClicked()
+    {
+        if (OnCancel != null)
+            await OnCancel();
     }
 }

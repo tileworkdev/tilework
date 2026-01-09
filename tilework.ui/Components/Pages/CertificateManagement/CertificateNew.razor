@@ -14,7 +14,7 @@
 
 <PageTitle>New certificate</PageTitle>
 
-<GenericEditview T="NewCertificateForm" Model="@form" Title="New certificate" Breadcrumbs="@_breadcrumbs"
+<GenericEditview Models="@(new BaseForm[] { form })" Title="New certificate" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/cm/certificates"))"
                  OnValidSubmit="Submit" />
 

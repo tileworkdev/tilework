@@ -17,7 +17,7 @@
 
 <PageTitle>New target group</PageTitle>
 
-<GenericEditview T="NewTargetGroupForm" Model="@form" Title="New target group" Breadcrumbs="@_breadcrumbs"
+<GenericEditview Models="@(new BaseForm[] { form })" Title="New target group" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => _navigationManager.NavigateTo("/lb/targetgroups"))"
                  OnValidSubmit="Submit" />
 

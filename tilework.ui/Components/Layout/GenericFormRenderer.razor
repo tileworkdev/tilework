@@ -1,0 +1,117 @@
+@using System.ComponentModel.DataAnnotations
+@using System.Linq.Expressions
+@using System.Reflection
+@using Tilework.Core.Enums
+@using Tilework.Ui.Models
+@using System.Linq
+
+@namespace Tilework.Ui.Components.Layout
+
+@if (Model != null)
+{
+    <MudStack Spacing="0">
+        @foreach (var prop in Model.GetType()
+                                   .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                                   .OrderBy(p => p.MetadataToken))
+        {
+            var type = prop.PropertyType;
+            var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+
+            var options = ResolveOptions(prop, underlyingType);
+            var label = prop.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? prop.Name;
+
+            if (options != null)
+            {
+                <MudSelect T="object" Label="@label" Variant="Variant.Outlined"
+                           For="@(CreateExpression<object>(prop))"
+                           Value="@(prop.GetValue(Model))"
+                           ValueChanged="@(v => HandleChange(prop, v))">
+                    @foreach (var option in options)
+                    {
+                        <MudSelectItem T="object" Value="@option.Value">@option.Text</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else if (underlyingType == typeof(string))
+            {
+                <MudTextField T="string" Label="@label" Variant="Variant.Outlined"
+                              For="@(CreateExpression<string>(prop))"
+                              Value="@(prop.GetValue(Model) as string)"
+                              ValueChanged="@(v => HandleChange(prop, v))" />
+            }
+            else if (underlyingType == typeof(int))
+            {
+                if (prop.PropertyType == typeof(int))
+                {
+                    <MudNumericField HideSpinButtons="true" T="int" Label="@label" Variant="Variant.Outlined"
+                                     For="@(CreateExpression<int>(prop))"
+                                     Value="@((int)prop.GetValue(Model)!)"
+                                     ValueChanged="@(v => HandleChange(prop, v))" />
+                }
+                else
+                {
+                    <MudNumericField HideSpinButtons="true" T="int?" Label="@label" Variant="Variant.Outlined"
+                                     For="@(CreateExpression<int?>(prop))"
+                                     Value="@((int?)prop.GetValue(Model))"
+                                     ValueChanged="@(v => HandleChange(prop, v))" />
+                }
+            }
+            else if (underlyingType == typeof(bool))
+            {
+                if (prop.PropertyType == typeof(bool))
+                {
+                    <MudCheckBox T="bool" Label="@label"
+                                 For="@(CreateExpression<bool>(prop))"
+                                 Value="@((bool)prop.GetValue(Model)!)"
+                                 ValueChanged="@(v => HandleChange(prop, v))" />
+                }
+                else
+                {
+                    <MudCheckBox T="bool?" Label="@label"
+                                 For="@(CreateExpression<bool?>(prop))"
+                                 Value="@((bool?)prop.GetValue(Model))"
+                                 ValueChanged="@(v => HandleChange(prop, v))" />
+                }
+            }
+        }
+    </MudStack>
+}
+
+@code {
+    [Parameter] public BaseForm Model { get; set; } = default!;
+    [Parameter] public EventCallback<(string PropertyName, object? Value)> OnChange { get; set; }
+
+    private List<SelectOptionItem>? ResolveOptions(PropertyInfo prop, Type underlyingType)
+    {
+        var options = Model.GetOptions(prop.Name);
+        if (options == null && underlyingType.IsEnum)
+        {
+            var enumType = underlyingType;
+            options = Enum.GetValues(enumType).Cast<object>().Select(o =>
+                new SelectOptionItem
+                {
+                    Text = (o as Enum)?.GetDescription() ?? o.ToString(),
+                    Value = o
+                }).ToList();
+        }
+
+        return options;
+    }
+
+    private async Task HandleChange(PropertyInfo prop, object? value)
+    {
+        prop.SetValue(Model, value);
+        if (OnChange.HasDelegate)
+            await OnChange.InvokeAsync((prop.Name, value));
+    }
+
+    private Expression<Func<T>> CreateExpression<T>(PropertyInfo prop)
+    {
+        var modelExpression = Expression.Constant(Model);
+        Expression body = Expression.Property(modelExpression, prop);
+        if (prop.PropertyType != typeof(T))
+            body = Expression.Convert(body, typeof(T));
+
+        return Expression.Lambda<Func<T>>(body);
+    }
+}

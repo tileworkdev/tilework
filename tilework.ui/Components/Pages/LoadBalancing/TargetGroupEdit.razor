@@ -16,7 +16,7 @@
 
 <PageTitle>Edit target group</PageTitle>
 
-<GenericEditview T="EditTargetGroupForm" Model="@form" Title="@_item.Name" 
+<GenericEditview Models="@(new BaseForm[] { form })" Title="@_item.Name" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/targetgroups"))"
                  OnValidSubmit="Submit" />
 

@@ -18,13 +18,13 @@
 
 @if(form is NewAcmeCertificateAuthorityForm acmeForm)
 {
-    <GenericEditview T="NewAcmeCertificateAuthorityForm" Model="@acmeForm" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
+    <GenericEditview Models="@(new BaseForm[] { acmeForm })" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
                     OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
                     OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 }
 else if(form is NewPredefinedAcmeCertificateAuthorityForm pdAcmeForm)
 {
-    <GenericEditview T="NewPredefinedAcmeCertificateAuthorityForm" Model="@pdAcmeForm" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
+    <GenericEditview Models="@(new BaseForm[] { pdAcmeForm })" Title="New certificate authority" Breadcrumbs="@_breadcrumbs"
                     OnCancel="@(async () => NavigationManager.NavigateTo("/cm/authorities"))"
                     OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 }
@@ -81,4 +81,3 @@ else if(form is NewPredefinedAcmeCertificateAuthorityForm pdAcmeForm)
         }
     }
 }
-
