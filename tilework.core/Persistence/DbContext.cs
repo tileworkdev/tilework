@@ -1,15 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 using Tilework.Core.Models;
 
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Persistence.CertificateManagement.Models;
+using Tilework.Persistence.UserManagement.Models;
 using Tilework.Persistence.TokenVault.Models;
 
 namespace Tilework.Core.Persistence;
 
-public class TileworkContext : DbContext
+public class TileworkContext : IdentityDbContext<User, Role, Guid>
 {
     public TileworkContext(DbContextOptions<TileworkContext> options) : base(options) { }
 
@@ -38,6 +40,7 @@ public class TileworkContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
 
         // Load balancing
         modelBuilder.Entity<Rule>()
