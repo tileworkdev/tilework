@@ -1,12 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 using MudBlazor.Services;
 
+using Tilework.Ui.Api;
 using Tilework.Ui.Components;
 using Tilework.Ui.ViewModels;
 
 using Tilework.Core;
 using Tilework.Core.Services;
+using Tilework.Persistence.IdentityManagement.Models;
+using Tilework.Core.Persistence;
 
 
 
@@ -18,6 +22,19 @@ builder.Services.AddMudServices();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
+builder.Services.AddIdentityCore<User>()
+            .AddRoles<Role>()
+            .AddEntityFrameworkStores<TileworkContext>()
+            .AddDefaultTokenProviders()
+            .AddSignInManager();
+
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddHttpClient();
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -47,7 +64,11 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
+
+app.MapAuthEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

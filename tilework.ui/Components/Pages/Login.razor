@@ -1,0 +1,58 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@layout BlankLayout
+@using Microsoft.AspNetCore.WebUtilities
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 100vh;">
+    <MudPaper Class="pa-6" Outlined="true">
+        <MudText Typo="Typo.h5">Sign in</MudText>
+
+        <form method="post" action="/api/auth/login">
+            <MudTextField T="string"
+                          Variant="Variant.Outlined"
+                          Label="Username or email"
+                          Name="UserNameOrEmail"
+                          Required="true" />
+            <MudTextField T="string"
+                          Variant="Variant.Outlined"
+                          Label="Password"
+                          InputType="InputType.Password"
+                          Name="Password"
+                          Required="true" />
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@_error</MudAlert>
+            }
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       DropShadow="false"
+                       FullWidth="true"
+                       Class="mt-4">
+                Sign in
+            </MudButton>
+        </form>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("error", out var value))
+        {
+            _error = value == "invalid"
+                ? "Invalid username or password."
+                : "Login failed. Please try again.";
+        }
+    }
+}

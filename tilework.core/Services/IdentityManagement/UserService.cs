@@ -41,11 +41,15 @@ public class UserService
         return user != null ? _mapper.Map<UserDTO>(user) : null;
     }
 
-    public async Task<UserDTO> AddUser(UserDTO userDto)
+    public async Task<UserDTO> AddUser(UserDTO userDto, string password)
     {
         if (userDto == null)
         {
             throw new ArgumentNullException(nameof(userDto));
+        }
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new ArgumentException("Password is required.", nameof(password));
         }
 
         var user = new User
@@ -55,7 +59,7 @@ public class UserService
             Active = userDto.Active
         };
 
-        var result = await _userManager.CreateAsync(user);
+        var result = await _userManager.CreateAsync(user, password);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(error => error.Description));
@@ -109,6 +113,18 @@ public class UserService
             _logger.LogWarning("Failed to delete user {UserId}: {Errors}", Id, errors);
             throw new InvalidOperationException($"Failed to delete user: {errors}");
         }
+    }
+
+    public async Task<User?> GetUserByLogin(string login)
+    {
+        if (string.IsNullOrWhiteSpace(login))
+        {
+            return null;
+        }
+
+        var user = await _userManager.FindByNameAsync(login)
+                   ?? await _userManager.FindByEmailAsync(login);
+        return user;
     }
 
 }

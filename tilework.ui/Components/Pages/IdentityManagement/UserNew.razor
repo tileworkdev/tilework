@@ -40,7 +40,7 @@
         try
         {
             var item = Mapper.Map<UserDTO>(form);
-            await UserService.AddUser(item);
+            await UserService.AddUser(item, form.Password);
             NavigationManager.NavigateTo("/im/users");
             Snackbar.Add("User added successfully!", Severity.Success);
         }
