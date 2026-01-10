@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Tilework.Ui.Models;
 
-public class NewUserForm : BaseForm
+public class EditUserForm : BaseForm
 {
     [Required]
     public string Username { get; set; }
