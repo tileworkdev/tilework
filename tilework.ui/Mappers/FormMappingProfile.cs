@@ -3,6 +3,7 @@ using AutoMapper;
 using Tilework.Ui.Models;
 using Tilework.CertificateManagement.Models;
 using Tilework.LoadBalancing.Models;
+using Tilework.IdentityManagement.Models;
 
 using System.Text.Json;
 
@@ -36,6 +37,9 @@ public class FormMappingProfile : Profile
         CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
         CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
 
+        // Identity management
+        CreateMap<NewUserForm, UserDTO>()
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Username));
 
         // Certificate authorities
         CreateMap<NewPredefinedAcmeCertificateAuthorityForm, CertificateAuthorityDTO>()

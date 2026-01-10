@@ -1,0 +1,52 @@
+@using System.Linq
+
+@using AutoMapper
+
+@using Tilework.IdentityManagement.Models
+@using Tilework.IdentityManagement.Services
+@using Tilework.Ui.Models
+
+@namespace Tilework.Ui.Components.Pages
+
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject UserService UserService
+@inject IMapper Mapper
+
+@page "/im/users/new"
+
+<PageTitle>New user</PageTitle>
+
+<GenericEditview Models="@(new BaseForm[] { form })" Title="New user" Breadcrumbs="@_breadcrumbs"
+                 OnCancel="@(async () => NavigationManager.NavigateTo("/im/users"))"
+                 OnValidSubmit="Submit" />
+
+@code {
+    NewUserForm form = new NewUserForm();
+
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Users", href: "/im/users", icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            var item = Mapper.Map<UserDTO>(form);
+            await UserService.AddUser(item);
+            NavigationManager.NavigateTo("/im/users");
+            Snackbar.Add("User added successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"Failed to add user: {ex.Message}", Severity.Error);
+        }
+    }
+}

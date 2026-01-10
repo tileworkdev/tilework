@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 using AutoMapper;
 
@@ -31,6 +32,83 @@ public class UserService
         var users = await _userManager.Users.ToListAsync();
 
         return _mapper.Map<List<UserDTO>>(users);
+    }
+
+    public async Task<UserDTO?> GetUser(Guid Id)
+    {
+        var user = await _userManager.FindByIdAsync(Id.ToString());
+
+        return user != null ? _mapper.Map<UserDTO>(user) : null;
+    }
+
+    public async Task<UserDTO> AddUser(UserDTO userDto)
+    {
+        if (userDto == null)
+        {
+            throw new ArgumentNullException(nameof(userDto));
+        }
+
+        var user = new User
+        {
+            UserName = userDto.UserName,
+            Email = userDto.Email,
+            Active = userDto.Active
+        };
+
+        var result = await _userManager.CreateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+            _logger.LogWarning("Failed to create user {UserName}: {Errors}", userDto.UserName, errors);
+            throw new InvalidOperationException($"Failed to create user: {errors}");
+        }
+
+        return _mapper.Map<UserDTO>(user);
+    }
+
+    public async Task<UserDTO> UpdateUser(UserDTO userDto)
+    {
+        if (userDto == null)
+        {
+            throw new ArgumentNullException(nameof(userDto));
+        }
+
+        var user = await _userManager.FindByIdAsync(userDto.Id.ToString());
+        if (user == null)
+        {
+            throw new ArgumentException($"User {userDto.Id} not found.");
+        }
+
+        user.UserName = userDto.UserName;
+        user.Email = userDto.Email;
+        user.Active = userDto.Active;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+            _logger.LogWarning("Failed to update user {UserId}: {Errors}", userDto.Id, errors);
+            throw new InvalidOperationException($"Failed to update user: {errors}");
+        }
+
+        return _mapper.Map<UserDTO>(user);
+    }
+
+    public async Task DeleteUser(Guid Id)
+    {
+        var user = await _userManager.FindByIdAsync(Id.ToString());
+        if (user == null)
+        {
+            return;
+        }
+
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+            _logger.LogWarning("Failed to delete user {UserId}: {Errors}", Id, errors);
+            throw new InvalidOperationException($"Failed to delete user: {errors}");
+        }
     }
 
 }
