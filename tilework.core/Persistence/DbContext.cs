@@ -6,7 +6,7 @@ using Tilework.Core.Models;
 
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Persistence.CertificateManagement.Models;
-using Tilework.Persistence.UserManagement.Models;
+using Tilework.Persistence.IdentityManagement.Models;
 using Tilework.Persistence.TokenVault.Models;
 
 namespace Tilework.Core.Persistence;

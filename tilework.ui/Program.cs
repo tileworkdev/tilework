@@ -26,10 +26,11 @@ if(string.IsNullOrEmpty(connectionString))
 var dbContextOptions = DbContextOptionsHelper.Configure(connectionString);
 
 
-builder.Services.AddCoreServices();
-builder.Services.AddMonitoring(builder.Configuration.GetSection("Monitoring"), dbContextOptions);
-builder.Services.AddLoadBalancing(builder.Configuration.GetSection("LoadBalancing"), dbContextOptions);
-builder.Services.AddCertificateManagement(builder.Configuration.GetSection("CertificateManagement"), dbContextOptions);
+builder.Services.AddCoreServices(dbContextOptions);
+builder.Services.AddMonitoring(builder.Configuration.GetSection("Monitoring"));
+builder.Services.AddLoadBalancing(builder.Configuration.GetSection("LoadBalancing"));
+builder.Services.AddCertificateManagement(builder.Configuration.GetSection("CertificateManagement"));
+builder.Services.AddIdentityManagement(builder.Configuration.GetSection("IdentityManagement"));
 
 builder.Services.AddUserInterface();
 
