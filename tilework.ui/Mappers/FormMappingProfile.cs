@@ -39,7 +39,8 @@ public class FormMappingProfile : Profile
 
         // Identity management
         CreateMap<NewUserForm, UserDTO>()
-            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Username));
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Username))
+            .ForMember(dest => dest.Active, opt => opt.MapFrom(_ => true));
         CreateMap<UserDTO, EditUserForm>()
             .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.UserName));
         CreateMap<EditUserForm, UserDTO>()
