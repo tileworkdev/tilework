@@ -136,6 +136,35 @@
         }
     }
 
+    private async Task ResetPassword()
+    {
+        var parameters = new DialogParameters<ResetPasswordDialog>();
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await _dialogService.ShowAsync<ResetPasswordDialog>("Reset password", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            var newPassword = result.Data as string;
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                _snackbar.Add("Password is required.", Severity.Error);
+                return;
+            }
+
+            try
+            {
+                await _userService.ResetPassword(_item.Id, newPassword);
+                _snackbar.Add("Password reset successfully!", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                _snackbar.Add($"Failed to reset password: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
     private async Task Enable()
     {
         try {
@@ -170,12 +199,13 @@
         _actions = new List<ActionItem>
         {
             new ActionItem() { Name="Edit", Href=$"/im/users/{Id}/edit" },
-            new ActionItem() { Name="Delete", OnClick=ConfirmDelete },
             new ActionItem()
             {
                 Name = _item.Active ? "Disable" : "Enable",
                 OnClick = _item.Active ? Disable : Enable
-            }
+            },
+            new ActionItem() { Name="Delete", OnClick=ConfirmDelete },
+            new ActionItem() { Name="Reset password", OnClick=ResetPassword }
         };
     }
 }

@@ -145,4 +145,27 @@ public class UserService
         }
     }
 
+    public async Task ResetPassword(Guid userId, string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword))
+        {
+            throw new ArgumentException("Password is required.", nameof(newPassword));
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new ArgumentException($"User {userId} not found.");
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+            _logger.LogWarning("Failed to reset password for user {UserId}: {Errors}", userId, errors);
+            throw new InvalidOperationException($"Failed to reset password: {errors}");
+        }
+    }
+
 }

@@ -136,7 +136,6 @@ public static class ServiceCollectionExtensions
             options.Password.RequiredLength = 8;
         });
 
-        // services.Configure<CertificateManagementConfiguration>(configuration);
         services.AddScoped<UserService>();
         
         return services;
@@ -146,6 +145,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<ICommand, PrintVersionInfoCommand>();
         services.AddScoped<ICommand, CreateUserCommand>();
+        services.AddScoped<ICommand, ResetPasswordCommand>();
         services.AddScoped<CommandRunner>();
 
         return services;
