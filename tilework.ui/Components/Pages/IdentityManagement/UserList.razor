@@ -1,8 +1,10 @@
 @using Tilework.IdentityManagement.Models
 @using Tilework.IdentityManagement.Services
+@using Tilework.Ui.Services
 
 @namespace Tilework.Ui.Components.Pages
 @inject UserService _userService
+@inject IBrowserTimeZoneProvider _browserTimezoneProvider
 
 
 @page "/im/users"
@@ -14,8 +16,8 @@
         <MudTh>Username</MudTh>
         <MudTh>Email</MudTh>
         <MudTh>Status</MudTh>
-        @* <MudTh>Last login</MudTh>
-        <MudTh>Creation time</MudTh> *@
+        <MudTh>Last login</MudTh>
+        <MudTh>Creation time</MudTh>
     </HeaderContent>
     <RowContent>
         <MudTd DataLabel="Username"><MudLink Href="@($"/im/users/{context.Id}")">@context.UserName</MudLink></MudTd>
@@ -34,8 +36,8 @@
             }
             </MudStack>
         </MudTd>
-        @* <MudTd DataLabel="Last login"></MudTd>
-        <MudTd DataLabel="Creation time"></MudTd> *@
+        <MudTd DataLabel="Last login">@_browserTimezoneProvider.Localize(context.LastLoginAtUtc)</MudTd>
+        <MudTd DataLabel="Creation time">@_browserTimezoneProvider.Localize(context.CreatedAtUtc)</MudTd>
     </RowContent>
 </GenericListview>
 

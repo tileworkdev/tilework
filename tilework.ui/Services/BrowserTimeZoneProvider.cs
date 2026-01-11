@@ -27,6 +27,26 @@ public sealed class BrowserTimeZoneProvider : IBrowserTimeZoneProvider
         return _cachedTimeZone;
     }
 
+    public DateTimeOffset Localize(DateTimeOffset value)
+    {
+        if (_cachedTimeZone is null)
+        {
+            return value.ToLocalTime();
+        }
+
+        return TimeZoneInfo.ConvertTime(value, _cachedTimeZone);
+    }
+
+    public DateTimeOffset? Localize(DateTimeOffset? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        return Localize(value.Value);
+    }
+
     private static TimeZoneInfo ResolveTimeZone(string? timeZoneId)
     {
         if (!string.IsNullOrWhiteSpace(timeZoneId))

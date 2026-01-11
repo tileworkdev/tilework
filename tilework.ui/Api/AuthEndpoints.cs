@@ -44,6 +44,7 @@ public static class AuthEndpoints
 
                 if (result.Succeeded)
                 {
+                    await userService.UpdateLastLogin(user);
                     return Results.LocalRedirect(returnUrl);
                 }
 

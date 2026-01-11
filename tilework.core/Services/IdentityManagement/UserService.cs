@@ -56,7 +56,8 @@ public class UserService
         {
             UserName = userDto.UserName,
             Email = userDto.Email,
-            Active = userDto.Active
+            Active = userDto.Active,
+            CreatedAtUtc = DateTimeOffset.UtcNow
         };
 
         var result = await _userManager.CreateAsync(user, password);
@@ -125,6 +126,23 @@ public class UserService
         var user = await _userManager.FindByNameAsync(login)
                    ?? await _userManager.FindByEmailAsync(login);
         return user;
+    }
+
+    public async Task UpdateLastLogin(User user)
+    {
+        if (user == null)
+        {
+            throw new ArgumentNullException(nameof(user));
+        }
+
+        user.LastLoginAtUtc = DateTimeOffset.UtcNow;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+            _logger.LogWarning("Failed to update last login for user {UserId}: {Errors}", user.Id, errors);
+            throw new InvalidOperationException($"Failed to update last login: {errors}");
+        }
     }
 
 }
