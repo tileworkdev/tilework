@@ -49,7 +49,7 @@ public static class AuthEndpoints
         app.MapPost("/api/auth/logout", async (SignInManager<User> signInManager) =>
             {
                 await signInManager.SignOutAsync();
-                return Results.Ok();
+                return Results.Redirect("/login");
             });
 
         return app;

@@ -10,7 +10,9 @@
         <MudText Typo="Typo.subtitle2" Class="ml-3">Tilework</MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-        @* <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" /> *@
+        <form method="post" action="/api/auth/logout" class="d-inline-flex mr-1">
+            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" ButtonType="ButtonType.Submit" Edge="Edge.End" />
+        </form>
     </MudAppBar>
     <MudDrawer Class="mud-height-full border-r border-solid mud-border-lines-default" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
         <NavMenu />
@@ -106,5 +108,3 @@
         false => Icons.Material.Outlined.DarkMode,
     };
 }
-
-
