@@ -11,8 +11,8 @@ using Tilework.Core.Persistence;
 namespace tilework.core.Migrations
 {
     [DbContext(typeof(TileworkContext))]
-    [Migration("20260111090011_IdentityTimestamps")]
-    partial class IdentityTimestamps
+    [Migration("20260111192232_Identity")]
+    partial class Identity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
