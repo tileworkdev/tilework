@@ -26,7 +26,7 @@ public class CommandRunner
         ICommand? command;
         try
         {
-            command = services.First(o => o.Name.Equals(args[0]));
+            command = services.First(o => o.Name.Equals(args[0], StringComparison.OrdinalIgnoreCase));
         }
         catch (InvalidOperationException)
         {
