@@ -1,29 +1,37 @@
 using Microsoft.JSInterop;
+using Microsoft.Extensions.Logging;
 
 namespace Tilework.Ui.Services;
 
 public sealed class BrowserTimeZoneProvider : IBrowserTimeZoneProvider
 {
     private readonly IJSRuntime _jsRuntime;
+    private readonly ILogger<BrowserTimeZoneProvider> _logger;
     private TimeZoneInfo? _cachedTimeZone;
 
-    public BrowserTimeZoneProvider(IJSRuntime jsRuntime)
+    public BrowserTimeZoneProvider(IJSRuntime jsRuntime,
+                                   ILogger<BrowserTimeZoneProvider> logger)
     {
         _jsRuntime = jsRuntime;
+        _logger = logger;
     }
 
-    public async ValueTask<TimeZoneInfo> GetTimeZoneAsync(CancellationToken cancellationToken = default)
+    public async Task Initialize(CancellationToken cancellationToken = default)
     {
-        if (_cachedTimeZone is not null)
-        {
-            return _cachedTimeZone;
-        }
-
         var timeZoneId = await _jsRuntime.InvokeAsync<string>(
             identifier: "timeZoneInterop.getTimeZone",
             cancellationToken: cancellationToken);
 
         _cachedTimeZone = ResolveTimeZone(timeZoneId);
+    }
+
+    public async ValueTask<TimeZoneInfo> GetTimeZoneAsync(CancellationToken cancellationToken = default)
+    {
+        if (_cachedTimeZone == null)
+        {
+            await Initialize();
+        }
+
         return _cachedTimeZone;
     }
 
@@ -31,6 +39,7 @@ public sealed class BrowserTimeZoneProvider : IBrowserTimeZoneProvider
     {
         if (_cachedTimeZone is null)
         {
+            _logger.LogWarning("Browser timezone not initialized yet. Falling back to ToLocalTime");
             return value.ToLocalTime();
         }
 
@@ -47,7 +56,7 @@ public sealed class BrowserTimeZoneProvider : IBrowserTimeZoneProvider
         return Localize(value.Value);
     }
 
-    private static TimeZoneInfo ResolveTimeZone(string? timeZoneId)
+    private TimeZoneInfo ResolveTimeZone(string? timeZoneId)
     {
         if (!string.IsNullOrWhiteSpace(timeZoneId))
         {
@@ -63,7 +72,7 @@ public sealed class BrowserTimeZoneProvider : IBrowserTimeZoneProvider
             }
         }
 
-        // Fall back to UTC
+        _logger.LogWarning("Could not determine local browser time. Defaulting to UTC");
         return TimeZoneInfo.Utc;
     }
 }

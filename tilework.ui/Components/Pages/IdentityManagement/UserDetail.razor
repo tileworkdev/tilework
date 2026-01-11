@@ -1,5 +1,6 @@
 @using Tilework.IdentityManagement.Models
 @using Tilework.IdentityManagement.Services
+@using Tilework.Ui.Services
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -7,6 +8,7 @@
 @inject NavigationManager _navigationManager
 @inject IDialogService _dialogService
 @inject ISnackbar _snackbar
+@inject IBrowserTimeZoneProvider _browserTimezoneProvider
 
 @page "/im/users/{Id:guid}"
 
@@ -19,10 +21,6 @@
                 <MudItem xs="4">
                     <MudText Typo="Typo.subtitle2">Username</MudText>
                     <MudText Typo="Typo.body2">@_item.UserName</MudText>
-                </MudItem>
-                <MudItem xs="4">
-                    <MudText Typo="Typo.subtitle2">Email</MudText>
-                    <MudText Typo="Typo.body2">@_item.Email</MudText>
                 </MudItem>
                 <MudItem xs="4">
                     <MudText Typo="Typo.subtitle2">Status</MudText>
@@ -38,6 +36,20 @@
                         <MudText Style="@($"color:{Colors.Red.Darken2};")" Typo="Typo.body2">Disabled</MudText>
                     }
                     </MudStack>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Last login</MudText>
+                    <MudText Typo="Typo.body2">@_browserTimezoneProvider.Localize(_item.LastLoginAtUtc)</MudText>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Email</MudText>
+                    <MudText Typo="Typo.body2">@_item.Email</MudText>
+                </MudItem>
+                <MudItem xs="4">
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Creation time</MudText>
+                    <MudText Typo="Typo.body2">@_browserTimezoneProvider.Localize(_item.CreatedAtUtc)</MudText>
                 </MudItem>
             </MudGrid>
         </DetailContent>
@@ -94,6 +106,9 @@
             _navigationManager.NavigateTo("/im/users");
             return;
         }
+
+        await _browserTimezoneProvider.Initialize();
+        StateHasChanged();
     }
 
     private async Task ConfirmDelete()

@@ -59,4 +59,13 @@
     {
         _items = await _userService.GetUsers();
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _browserTimezoneProvider.Initialize();
+            StateHasChanged();
+        }
+    }
 }    
