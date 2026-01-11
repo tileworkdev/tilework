@@ -21,17 +21,22 @@ public static class AuthEndpoints
                 var form = await httpRequest.ReadFormAsync();
                 var userNameOrEmail = form["UserNameOrEmail"].ToString();
                 var password = form["Password"].ToString();
+                var returnUrl = form["ReturnUrl"].ToString();
+                if (string.IsNullOrWhiteSpace(returnUrl))
+                {
+                    returnUrl = "/";
+                }
 
                 if (string.IsNullOrWhiteSpace(userNameOrEmail) ||
                     string.IsNullOrWhiteSpace(password))
                 {
-                    return Results.Redirect("/login?error=invalid");
+                    return Results.Redirect($"/login?error=invalid&ReturnUrl={Uri.EscapeDataString(returnUrl)}");
                 }
 
                 var user = await userService.GetUserByLogin(userNameOrEmail);
                 if (user == null)
                 {
-                    return Results.Redirect("/login?error=invalid");
+                    return Results.Redirect($"/login?error=invalid&ReturnUrl={Uri.EscapeDataString(returnUrl)}");
                 }
 
                 var result = await signInManager.PasswordSignInAsync(user, password,
@@ -39,10 +44,10 @@ public static class AuthEndpoints
 
                 if (result.Succeeded)
                 {
-                    return Results.Redirect("/");
+                    return Results.LocalRedirect(returnUrl);
                 }
 
-                return Results.Redirect("/login?error=invalid");
+                return Results.Redirect($"/login?error=invalid&ReturnUrl={Uri.EscapeDataString(returnUrl)}");
             })
             .AllowAnonymous();
 

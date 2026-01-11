@@ -12,6 +12,7 @@
         <MudText Typo="Typo.h5" Class="pb-4">Sign in</MudText>
 
         <form method="post" action="/api/auth/login">
+            <input type="hidden" name="ReturnUrl" value="@_returnUrl" />
             <MudTextField T="string"
                           Variant="Variant.Outlined"
                           Label="Username or email"
@@ -43,6 +44,7 @@
 
 @code {
     private string? _error;
+    private string _returnUrl = "/";
 
     protected override void OnInitialized()
     {
@@ -53,6 +55,12 @@
             _error = value == "invalid"
                 ? "Invalid username or password."
                 : "Login failed. Please try again.";
+        }
+
+        if (query.TryGetValue("ReturnUrl", out var returnUrlValue) &&
+            !string.IsNullOrWhiteSpace(returnUrlValue))
+        {
+            _returnUrl = returnUrlValue.ToString();
         }
     }
 }
