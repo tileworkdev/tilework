@@ -8,6 +8,7 @@ using Tilework.Ui.Components;
 using Tilework.Ui.ViewModels;
 
 using Tilework.Core;
+using Tilework.Core.Commands;
 using Tilework.Core.Services;
 using Tilework.Persistence.IdentityManagement.Models;
 using Tilework.Core.Persistence;
@@ -39,7 +40,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddHttpClient();
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -53,6 +53,7 @@ builder.Services.AddMonitoring(builder.Configuration.GetSection("Monitoring"));
 builder.Services.AddLoadBalancing(builder.Configuration.GetSection("LoadBalancing"));
 builder.Services.AddCertificateManagement(builder.Configuration.GetSection("CertificateManagement"));
 builder.Services.AddIdentityManagement(builder.Configuration.GetSection("IdentityManagement"));
+builder.Services.AddCommands();
 
 builder.Services.AddUserInterface();
 
@@ -79,4 +80,16 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 
-app.Run();
+if (args.Length > 0)
+{
+    using (var serviceScope = app.Services.CreateScope())
+    {
+        var commandRunner = serviceScope.ServiceProvider.GetRequiredService<CommandRunner>();
+        return await commandRunner.RunAsync(args);
+    }
+}
+else
+{
+    app.Run();
+    return 0;
+}

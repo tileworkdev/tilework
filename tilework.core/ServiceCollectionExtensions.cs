@@ -20,6 +20,7 @@ using Tilework.CertificateManagement.Mappers;
 using Tilework.CertificateManagement.Models;
 
 using Tilework.Core.Persistence;
+using Tilework.Core.Commands;
 
 using Tilework.Monitoring.Interfaces;
 using Tilework.Monitoring.Telegraf;
@@ -30,10 +31,12 @@ using Tilework.Monitoring.Influxdb;
 using Tilework.TokenVault.Services;
 
 using Tilework.Persistence.IdentityManagement.Models;
+using Tilework.IdentityManagement.Services;
+
 
 using Tilework.Core.Jobs.CertificateManagement;
 using Tilework.Events;
-using Tilework.IdentityManagement.Services;
+
 
 namespace Tilework.Core.Services;
 
@@ -138,5 +141,13 @@ public static class ServiceCollectionExtensions
         
         return services;
     }
-    
+
+    public static IServiceCollection AddCommands(this IServiceCollection services)
+    {
+        services.AddScoped<ICommand, PrintVersionInfoCommand>();
+        services.AddScoped<ICommand, CreateUserCommand>();
+        services.AddScoped<CommandRunner>();
+
+        return services;
+    }
 }
