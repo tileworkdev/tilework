@@ -9,6 +9,11 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.subtitle2" Class="ml-3">Tilework</MudText>
         <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudText Typo="Typo.subtitle2" Class="mr-2">@context.User.Identity?.Name</MudText>
+            </Authorized>
+        </AuthorizeView>
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <form method="post" action="/api/auth/logout" class="d-inline-flex mr-1">
             <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" ButtonType="ButtonType.Submit" Edge="Edge.End" />
