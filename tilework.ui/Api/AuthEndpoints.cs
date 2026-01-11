@@ -34,7 +34,7 @@ public static class AuthEndpoints
                 }
 
                 var user = await userService.GetUserByLogin(userNameOrEmail);
-                if (user == null)
+                if (user == null || !user.Active)
                 {
                     return Results.Redirect($"/login?error=invalid&ReturnUrl={Uri.EscapeDataString(returnUrl)}");
                 }
