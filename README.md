@@ -46,4 +46,10 @@ docker-compose up -d
 docker compose up -d
 ```
 
-4. Navigate your browser to http://\<host>:5180
+4. Create an initial user
+```
+docker compose exec -it tileworkui dotnet tilework.ui.dll CreateUser
+```
+Follow the interactive prompts to set the username, email, and password.
+
+5. Navigate your browser to http://\<host>:5180
