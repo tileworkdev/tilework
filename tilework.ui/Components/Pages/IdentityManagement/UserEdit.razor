@@ -1,0 +1,70 @@
+@using System.Linq
+
+@using AutoMapper
+
+@using Tilework.IdentityManagement.Models
+@using Tilework.IdentityManagement.Services
+@using Tilework.Ui.Models
+
+
+@namespace Tilework.Ui.Components.Pages
+
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject UserService _userService
+@inject IMapper _mapper
+
+@page "/im/users/{Id:guid}/edit"
+
+<PageTitle>Edit user</PageTitle>
+
+<GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="@_item.UserName" Breadcrumbs="@_breadcrumbs"
+                 OnCancel="@(async () => NavigationManager.NavigateTo("/im/users"))"
+                 OnValidSubmit="Submit" />
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private EditUserForm form = new EditUserForm();
+    private UserDTO _item;
+
+    private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
+        new BreadcrumbItem("Users", href: "/im/users", icon: Icons.Material.Filled.AltRoute)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            _item = await _userService.GetUser(Id);
+            if (_item == null)
+                throw new KeyNotFoundException();
+
+            form = _mapper.Map<EditUserForm>(_item);
+        }
+        catch (KeyNotFoundException) {
+            NavigationManager.NavigateTo("/im/users");
+            Snackbar.Add($"User {Id} not found", Severity.Error);
+        }
+
+        _breadcrumbs.Add(new BreadcrumbItem(_item.UserName, href: $"/im/users/{Id}"));
+        _breadcrumbs.Add(new BreadcrumbItem("edit", href: null, disabled: true));
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            _item = _mapper.Map(form, _item);
+            await _userService.UpdateUser(_item);
+            NavigationManager.NavigateTo("/im/users");
+            Snackbar.Add("User saved successfully!", Severity.Success);
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"Failed to save user: {ex.Message}", Severity.Error);
+        }
+    }
+}

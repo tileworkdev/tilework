@@ -1,30 +1,11 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudLayout Class="mud-height-full">
-    <MudAppBar Elevation="0" Dense="true">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.subtitle2" Class="ml-3">Tilework</MudText>
-        <MudSpacer />
-        <AuthorizeView>
-            <Authorized>
-                <MudText Typo="Typo.subtitle2" Class="mr-2">@context.User.Identity?.Name</MudText>
-            </Authorized>
-        </AuthorizeView>
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-        <form method="post" action="/api/auth/logout" class="d-inline-flex mr-1">
-            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" ButtonType="ButtonType.Submit" Edge="Edge.End" />
-        </form>
-    </MudAppBar>
-    <MudDrawer Class="mud-height-full border-r border-solid mud-border-lines-default" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
-        <NavMenu />
-    </MudDrawer>
-    <MudMainContent Class="mud-height-full px-4">
-        @Body
-    </MudMainContent>
+    @Body
 </MudLayout>
 
 
@@ -35,7 +16,6 @@
 </div>
 
 @code {
-    private bool _drawerOpen = true;
     private bool _isDarkMode = false;
     private MudTheme? _theme = null;
 
@@ -56,11 +36,6 @@
                 }
             }
         };
-    }
-
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
     }
 
     private void DarkModeToggle()
@@ -113,3 +88,5 @@
         false => Icons.Material.Outlined.DarkMode,
     };
 }
+
+

@@ -19,6 +19,7 @@
 
             var options = ResolveOptions(prop, underlyingType);
             var label = prop.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? prop.Name;
+            var dataType = prop.GetCustomAttribute<DataTypeAttribute>()?.DataType;
 
             if (options != null)
             {
@@ -35,6 +36,7 @@
             else if (underlyingType == typeof(string))
             {
                 <MudTextField T="string" Label="@label" Variant="Variant.Outlined"
+                              InputType="@(dataType == DataType.Password ? InputType.Password : InputType.Text)"
                               For="@(CreateExpression<string>(prop))"
                               Value="@(prop.GetValue(Model) as string)"
                               ValueChanged="@(v => HandleChange(prop, v))" />

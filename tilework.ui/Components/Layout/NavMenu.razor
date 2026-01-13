@@ -1,12 +1,16 @@
 ﻿@namespace Tilework.Ui.Components.Layout
 
 <MudNavMenu>
-    <MudNavGroup Title="Load balancing" Expanded="true">
+    <MudNavGroup Title="Load balancing" Expanded="false">
         <MudNavLink Href="/lb/loadbalancers"  Match="NavLinkMatch.Prefix">Load balancers</MudNavLink>
         <MudNavLink Href="/lb/targetgroups"  Match="NavLinkMatch.Prefix">Target groups</MudNavLink>
     </MudNavGroup>
-    <MudNavGroup Title="Certificate management" Expanded="true">
+    <MudNavGroup Title="Certificates" Expanded="false">
         <MudNavLink Href="/cm/authorities"  Match="NavLinkMatch.Prefix">Certificate authorities</MudNavLink>
         <MudNavLink Href="/cm/certificates"  Match="NavLinkMatch.Prefix">Certificates</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Identity" Expanded="false">
+        @* <MudNavLink Href="/im/providers"  Match="NavLinkMatch.Prefix">Identity providers</MudNavLink> *@
+        <MudNavLink Href="/im/users"  Match="NavLinkMatch.Prefix">Users</MudNavLink>
     </MudNavGroup>
 </MudNavMenu>
