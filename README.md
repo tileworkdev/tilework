@@ -9,7 +9,7 @@ Tilework is a fully integrated reverse proxying and load balancing platform. It 
 - HTTP rules based routing, including hostname, URL path, query string
 - Certificate issuing via popular services, lifecycle management, auto-renewal
 - Realtime and historical service statistics
-- Docker based service deployment - no disruption of the host environement
+- Docker based service deployment - no disruption of the host environment
 
 
 ## Install
