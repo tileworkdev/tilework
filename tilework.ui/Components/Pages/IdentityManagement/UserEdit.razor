@@ -18,7 +18,7 @@
 
 <PageTitle>Edit user</PageTitle>
 
-<GenericEditview Models="@(new BaseForm[] { form })" Title="@_item.UserName" Breadcrumbs="@_breadcrumbs"
+<GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="@_item.UserName" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/im/users"))"
                  OnValidSubmit="Submit" />
 

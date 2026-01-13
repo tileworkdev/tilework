@@ -16,13 +16,13 @@
 
 @if (form is EditApplicationLoadBalancerForm albForm)
 {
-    <GenericEditview Models="@(new BaseForm[] { albForm })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
+    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(albForm) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
                     OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
                     OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 }
 else if (form is EditNetworkLoadBalancerForm nlbForm)
 {
-    <GenericEditview Models="@(new BaseForm[] { nlbForm })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
+    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(nlbForm) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
                     OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
                     OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 }

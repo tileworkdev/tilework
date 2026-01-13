@@ -14,15 +14,18 @@
         {
             <MudItem xs="12">
                 <MudCard Outlined="true">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudText Typo="Typo.subtitle1">@GetModelTitle(model)</MudText>
-                        </CardHeaderContent>
-                    </MudCardHeader>
+                    @if (!string.IsNullOrWhiteSpace(model.Title))
+                    {
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1">@model.Title</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                    }
                     <MudCardContent>
-                        <EditForm EditContext="@_editContexts[model]">
+                        <EditForm EditContext="@_editContexts[model.Form]">
                             <DataAnnotationsValidator />
-                            <GenericFormRenderer Model="@model" OnChange="OnChange" />
+                            <GenericFormRenderer Model="@model.Form" OnChange="OnChange" />
                         </EditForm>
                     </MudCardContent>
                 </MudCard>
@@ -48,27 +51,22 @@
     [Parameter] public Func<Task>? OnValidSubmit { get; set; }
     [Parameter] public Func<Task>? OnCancel { get; set; }
     [Parameter] public EventCallback<(string PropertyName, object? Value)> OnChange { get; set; }
-    [Parameter] public IEnumerable<BaseForm> Models { get; set; } = Enumerable.Empty<BaseForm>();
+    [Parameter] public IEnumerable<EditFormModel> Models { get; set; } = Enumerable.Empty<EditFormModel>();
 
-    private IReadOnlyList<BaseForm> _models = Array.Empty<BaseForm>();
+    private IReadOnlyList<EditFormModel> _models = Array.Empty<EditFormModel>();
     private Dictionary<BaseForm, EditContext> _editContexts = new Dictionary<BaseForm, EditContext>();
 
     protected override void OnParametersSet()
     {
-        _models = Models?.ToList() ?? new List<BaseForm>();
-        _editContexts = _models.ToDictionary(model => model, model => new EditContext(model));
-    }
-
-    private string GetModelTitle(BaseForm model)
-    {
-        return model.GetType().Name;
+        _models = Models?.ToList() ?? new List<EditFormModel>();
+        _editContexts = _models.ToDictionary(model => model.Form, model => new EditContext(model.Form));
     }
 
     private async Task OnSaveClicked()
     {
         foreach (var model in _models)
         {
-            if (_editContexts.TryGetValue(model, out var context))
+            if (_editContexts.TryGetValue(model.Form, out var context))
             {
                 if (!context.Validate())
                     return;

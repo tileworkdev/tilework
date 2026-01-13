@@ -19,13 +19,13 @@
 
 @if(form is NewApplicationLoadBalancerForm albForm)
 {
-    <GenericEditview Models="@(new BaseForm[] { albForm })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
+    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(albForm) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
                     OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
                     OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 }
 else if(form is NewNetworkLoadBalancerForm nlbForm)
 {
-    <GenericEditview Models="@(new BaseForm[] { nlbForm })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
+    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(nlbForm) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
                     OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
                     OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 }
