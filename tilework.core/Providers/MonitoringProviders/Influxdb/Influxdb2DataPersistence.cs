@@ -191,7 +191,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         return org[0].Id;
     }
 
-    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
         using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
 
@@ -215,7 +215,10 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
             query += $"\n  |> filter(fn: (r) => {filtersCombined})";
         }
 
-        query += $"  |> aggregateWindow(every: {ToFluxDuration(interval)}, fn: sum, createEmpty: true)";
+        if (interval.HasValue)
+        {
+            query += $"  |> aggregateWindow(every: {ToFluxDuration(interval.Value)}, fn: sum, createEmpty: true)";
+        }
 
 
 
@@ -285,7 +288,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
     }
 
 
-    private static bool TryConvertFieldValue(object value, Type targetType, out object? convertedValue)
+    private bool TryConvertFieldValue(object value, Type targetType, out object? convertedValue)
     {
         var destinationType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
@@ -293,6 +296,39 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         {
             convertedValue = value;
             return true;
+        }
+
+        if (destinationType.IsEnum)
+        {
+            if (value is string stringValue)
+            {
+                try
+                {
+                    convertedValue = _mapper.Map(stringValue, stringValue.GetType(), destinationType);
+                    return true;
+                }
+                catch
+                {
+                    if (Enum.TryParse(destinationType, stringValue, ignoreCase: true, out var parsedValue))
+                    {
+                        convertedValue = parsedValue;
+                        return true;
+                    }
+                }
+            }
+
+            if (value is IConvertible)
+            {
+                try
+                {
+                    convertedValue = Enum.ToObject(destinationType, value);
+                    return true;
+                }
+                catch
+                {
+                    // Ignore conversion failures so other fields can still be processed.
+                }
+            }
         }
 
         if (value is IConvertible)

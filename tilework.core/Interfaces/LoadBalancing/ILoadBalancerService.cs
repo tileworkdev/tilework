@@ -1,5 +1,6 @@
 using Tilework.LoadBalancing.Models;
 using Tilework.CertificateManagement.Models;
+using Tilework.LoadBalancing.Enums;
 
 namespace Tilework.LoadBalancing.Interfaces;
 
@@ -38,9 +39,11 @@ public interface ILoadBalancerService
 
 
     public Task<List<TargetDTO>> GetTargets(TargetGroupDTO group);
+    public Task<TargetDTO> GetTarget(Guid Id);
     public Task AddTarget(TargetGroupDTO group, TargetDTO target);
     public Task UpdateTarget(TargetGroupDTO group, TargetDTO target);
     public Task RemoveTarget(TargetGroupDTO group, TargetDTO target);
+    public Task<LoadBalancerStatus> GetTargetHealth(Guid id);
 
     public Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid Id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end);
 

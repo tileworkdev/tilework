@@ -412,6 +412,12 @@ public class LoadBalancerService : ILoadBalancerService
         return _mapper.Map<List<TargetDTO>>(entity.Targets);
     }
 
+    public async Task<TargetDTO> GetTarget(Guid id)
+    {
+        var entity = await _dbContext.Targets.FindAsync(id);
+        return _mapper.Map<TargetDTO>(entity);
+    }
+
     public async Task AddTarget(TargetGroupDTO group, TargetDTO target)
     {
         var entity = await _dbContext.TargetGroups.FindAsync(group.Id);
@@ -441,6 +447,17 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task<LoadBalancerStatus> GetTargetHealth(Guid Id)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var data = await GetTargetMonitoringData(Id, null, now.AddMinutes(-5), now);
+        var latest = data
+            .OrderByDescending(entry => entry.Timestamp)
+            .FirstOrDefault();
+
+        return latest?.Status ?? LoadBalancerStatus.UNKNOWN;
+    }
+
 
     public async Task ApplyConfiguration()
     {
@@ -467,9 +484,21 @@ public class LoadBalancerService : ILoadBalancerService
             throw new ArgumentException("Invalid load balancer id");
 
         var filters = new Dictionary<string, string>();
-        filters["instance"] = lb.Id.ToString();
         filters["type"] = "frontend";
         filters["instance"] = lb.Id.ToString();
+
+        return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
+    }
+
+    public async Task<List<LoadBalancingMonitorData>> GetTargetMonitoringData(Guid id, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end)
+    {
+        var tg = await GetTarget(id);
+        if(tg == null)
+            throw new ArgumentException("Invalid target id");
+
+        var filters = new Dictionary<string, string>();
+        filters["type"] = "server";
+        filters["sv"] = tg.Id.ToString();
 
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }

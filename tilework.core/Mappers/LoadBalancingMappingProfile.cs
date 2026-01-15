@@ -2,6 +2,8 @@ using AutoMapper;
 
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Core.Models;
+using Tilework.Core.Mappers;
+using Tilework.LoadBalancing.Enums;
 using Tilework.LoadBalancing.Models;
 
 namespace Tilework.LoadBalancing.Mappers;
@@ -10,6 +12,9 @@ public class LoadBalancingMappingProfile : Profile
 {
     public LoadBalancingMappingProfile()
     {
+        CreateMap<string, LoadBalancerStatus>()
+            .ConvertUsing(status => EnumMappers.FromHaproxyStatus(status));
+
         CreateMap<ApplicationLoadBalancer, ApplicationLoadBalancerDTO>();
         CreateMap<ApplicationLoadBalancerDTO, ApplicationLoadBalancer>()
             .ForMember(dest => dest.Enabled, opt => opt.Ignore());

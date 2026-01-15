@@ -1,3 +1,5 @@
+@using System.Linq
+@using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Interfaces
 @using Tilework.LoadBalancing.Models
 
@@ -27,6 +29,30 @@
                     <Columns>
                         <PropertyColumn Property="t => t.Host.Value" Title="Host" Editable="false" />
                         <PropertyColumn Property="t => t.Port" Title="Port" />
+                        <TemplateColumn Title="Status">
+                            <CellTemplate>
+                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                @{
+                                    _targetHealth.TryGetValue(context.Item.Id, out var status);
+                                    if (status == LoadBalancerStatus.UP)
+                                    {
+                                        <MudIcon Style="@($"color:{Colors.Green.Darken2};")"  Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small"/>
+                                        <MudText Style="@($"color:{Colors.Green.Darken2};")" Typo="Typo.body2">Up</MudText>
+                                    }
+                                    else if (status == LoadBalancerStatus.DOWN)
+                                    {
+                                        <MudIcon Style="@($"color:{Colors.Red.Darken2};")" Icon="@Icons.Material.Outlined.Cancel" Size="Size.Small"/>
+                                        <MudText Style="@($"color:{Colors.Red.Darken2};")" Typo="Typo.body2">Down</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Style="@($"color:{Colors.Gray.Darken1};")" Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small"/>
+                                        <MudText Style="@($"color:{Colors.Gray.Darken1};")" Typo="Typo.body2">Unknown</MudText>
+                                    }
+                                }
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
                                 <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditTarget(context.Item))" />
@@ -46,6 +72,7 @@
 
     private TargetGroupDTO _item;
     private List<TargetDTO> _targets;
+    private Dictionary<Guid, LoadBalancerStatus> _targetHealth = new();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -72,6 +99,7 @@
             new ActionItem() { Name="Edit", Href=$"/lb/targetgroups/{Id}/edit" },
             new ActionItem() { Name="Delete", OnClick=ConfirmDelete }
         };
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -180,6 +208,27 @@
     private async Task GetTargets()
     {
         if(_item != null)
+        {
             _targets = await _loadBalancerService.GetTargets(_item);
+            await LoadTargetHealth();
+        }
+    }
+
+    private async Task LoadTargetHealth()
+    {
+        if (_targets == null || _targets.Count == 0)
+        {
+            _targetHealth = new Dictionary<Guid, LoadBalancerStatus>();
+            return;
+        }
+
+        var healthTasks = _targets.Select(async target => new
+        {
+            target.Id,
+            Status = await _loadBalancerService.GetTargetHealth(target.Id)
+        });
+
+        var results = await Task.WhenAll(healthTasks);
+        _targetHealth = results.ToDictionary(result => result.Id, result => result.Status);
     }
 }
