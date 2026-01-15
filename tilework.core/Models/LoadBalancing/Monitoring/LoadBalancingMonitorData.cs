@@ -6,7 +6,6 @@ namespace Tilework.LoadBalancing.Models;
 
 public class LoadBalancingMonitorData : BaseMonitorData
 {
-    public LoadBalancerStatus Status { get; set; }
     public int Sessions { get; set; }
     public int Requests { get; set; }
     public int HttpResponses1xx { get; set; }

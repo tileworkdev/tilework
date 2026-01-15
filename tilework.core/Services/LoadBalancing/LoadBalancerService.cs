@@ -450,7 +450,7 @@ public class LoadBalancerService : ILoadBalancerService
     public async Task<LoadBalancerStatus> GetTargetHealth(Guid Id)
     {
         var now = DateTimeOffset.UtcNow;
-        var data = await GetTargetMonitoringData(Id, null, now.AddMinutes(-5), now);
+        var data = await GetTargetStatusData(Id, now.AddMinutes(-5), now);
         var latest = data
             .OrderByDescending(entry => entry.Timestamp)
             .FirstOrDefault();
@@ -490,7 +490,7 @@ public class LoadBalancerService : ILoadBalancerService
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
 
-    public async Task<List<LoadBalancingMonitorData>> GetTargetMonitoringData(Guid id, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end)
+    public async Task<List<LoadBalancingMonitorData>> GetTargetMonitoringData(Guid id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end)
     {
         var tg = await GetTarget(id);
         if(tg == null)
@@ -501,5 +501,18 @@ public class LoadBalancerService : ILoadBalancerService
         filters["sv"] = tg.Id.ToString();
 
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
+    }
+
+    public async Task<List<LoadBalancingStatusData>> GetTargetStatusData(Guid id, DateTimeOffset start, DateTimeOffset end)
+    {
+        var tg = await GetTarget(id);
+        if(tg == null)
+            throw new ArgumentException("Invalid target id");
+
+        var filters = new Dictionary<string, string>();
+        filters["type"] = "server";
+        filters["sv"] = tg.Id.ToString();
+
+        return await _monitoringService.GetMonitoringData<LoadBalancingStatusData>("LoadBalancing", filters, null, start, end);
     }
 }

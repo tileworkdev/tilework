@@ -202,6 +202,11 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
         var query = $"from(bucket: \"{module}\")\n  |> range(start: {startStr}, stop: {stopStr})";
 
+        var entryProperties = typeof(T)
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(p => p.CanWrite && p.Name != nameof(BaseMonitorData.Timestamp))
+            .ToArray();
+
         if (filters is { Count: > 0 })
         {
             var filterExpressions = filters.Select(filter =>
@@ -215,6 +220,14 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
             query += $"\n  |> filter(fn: (r) => {filtersCombined})";
         }
 
+        if (entryProperties.Length > 0)
+        {
+            var fieldFilters = entryProperties
+                .Select(property => $"r[\"_field\"] == \"{property.Name.ToLowerInvariant().Replace("\"", "\\\"")}\"");
+            var fieldsCombined = string.Join(" or ", fieldFilters);
+            query += $"\n  |> filter(fn: (r) => {fieldsCombined})";
+        }
+
         if (interval.HasValue)
         {
             query += $"  |> aggregateWindow(every: {ToFluxDuration(interval.Value)}, fn: sum, createEmpty: true)";
@@ -226,11 +239,6 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
         if (fluxTables is null || fluxTables.Count == 0)
             return new List<T>();
-
-        var entryProperties = typeof(T)
-            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(p => p.CanWrite && p.Name != nameof(BaseMonitorData.Timestamp))
-            .ToArray();
 
         var entryPropertyNames = entryProperties
             .Select(property => property.Name.ToLower())
