@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 
-using Tilework.LoadBalancing.Enums;
-
 namespace Tilework.Ui.Models;
 
 public class EditLoadBalancerForm : BaseForm
@@ -11,7 +9,4 @@ public class EditLoadBalancerForm : BaseForm
 
     [Required]
     public int? Port { get; set; }
-    
-    public LoadBalancerType Type { get; set; }
-    public LoadBalancerProtocol Protocol { get; set; }
 }

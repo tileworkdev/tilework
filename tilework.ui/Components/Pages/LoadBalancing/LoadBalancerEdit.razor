@@ -1,7 +1,5 @@
 @using AutoMapper
 
-@using Tilework.Core.Enums
-@using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Models
 @using Tilework.LoadBalancing.Interfaces
 @using Tilework.Ui.Models
@@ -18,7 +16,7 @@
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                OnChange="@OnChange" OnValidSubmit="OnSubmit" />
+                OnValidSubmit="OnSubmit" />
 
 @code {
     [Parameter]
@@ -44,7 +42,6 @@
         }
 
         form = _mapper.Map<EditLoadBalancerForm>(_item);
-        ConfigureProtocolOptions();
 
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: $"/lb/loadbalancers/{Id}"));
@@ -68,29 +65,4 @@
         }
     }
 
-    private Task OnChange((string PropertyName, object? Value) change)
-    {
-        if (change.PropertyName == nameof(EditLoadBalancerForm.Type))
-        {
-            ConfigureProtocolOptions();
-            StateHasChanged();
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private void ConfigureProtocolOptions()
-    {
-        var allowed = LoadBalancerProtocolRules.GetAllowedProtocols(form.Type);
-        var options = allowed.Select(protocol => new SelectOptionItem
-        {
-            Value = protocol,
-            Text = protocol.GetDescription()
-        }).ToList();
-
-        form.SetOptions(nameof(EditLoadBalancerForm.Protocol), options);
-
-        if (!allowed.Contains(form.Protocol))
-            form.Protocol = allowed[0];
-    }
 }
