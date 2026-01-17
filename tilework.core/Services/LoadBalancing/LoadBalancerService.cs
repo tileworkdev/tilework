@@ -97,6 +97,7 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task<LoadBalancerDTO> AddLoadBalancer(LoadBalancerDTO balancer)
     {
+        EnsureProtocolAllowed(balancer);
         var entity = _mapper.Map<LoadBalancer>(balancer);
 
         await _dbContext.LoadBalancers.AddAsync(entity);
@@ -106,6 +107,7 @@ public class LoadBalancerService : ILoadBalancerService
 
     public async Task<LoadBalancerDTO> UpdateLoadBalancer(LoadBalancerDTO balancer)
     {
+        EnsureProtocolAllowed(balancer);
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         entity = _mapper.Map(balancer, entity);
 
@@ -315,6 +317,16 @@ public class LoadBalancerService : ILoadBalancerService
         entity.Certificates.Remove(c);
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
+    }
+
+    private static void EnsureProtocolAllowed(LoadBalancerDTO balancer)
+    {
+        if (!LoadBalancerProtocolRules.IsAllowed(balancer.Type, balancer.Protocol))
+        {
+            throw new ArgumentException(
+                $"Protocol {balancer.Protocol} is not valid for load balancer type {balancer.Type}",
+                nameof(balancer));
+        }
     }
 
 

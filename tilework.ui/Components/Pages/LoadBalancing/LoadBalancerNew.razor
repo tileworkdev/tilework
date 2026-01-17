@@ -2,9 +2,11 @@
 
 @using AutoMapper
 
+@using Tilework.Core.Enums
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Models
 @using Tilework.LoadBalancing.Interfaces
+@using Tilework.Ui.Models
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -18,7 +20,8 @@
 <PageTitle>New balancer</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
-                OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))" OnValidSubmit="OnSubmit" />
+                OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
+                OnChange="@OnChange" OnValidSubmit="OnSubmit" />
 
 @code {
     NewLoadBalancerForm form = new NewLoadBalancerForm();
@@ -30,6 +33,23 @@
         new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
     };
 
+
+    protected override Task OnInitializedAsync()
+    {
+        ConfigureProtocolOptions();
+        return Task.CompletedTask;
+    }
+
+    private Task OnChange((string PropertyName, object? Value) change)
+    {
+        if (change.PropertyName == nameof(NewLoadBalancerForm.Type))
+        {
+            ConfigureProtocolOptions();
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
 
     private async Task OnSubmit()
     {
@@ -46,5 +66,20 @@
         {
             Snackbar.Add($"Failed to add load balancer: {ex.Message}", Severity.Error);
         }
+    }
+
+    private void ConfigureProtocolOptions()
+    {
+        var allowed = LoadBalancerProtocolRules.GetAllowedProtocols(form.Type);
+        var options = allowed.Select(protocol => new SelectOptionItem
+        {
+            Value = protocol,
+            Text = protocol.GetDescription()
+        }).ToList();
+
+        form.SetOptions(nameof(NewLoadBalancerForm.Protocol), options);
+
+        if (!allowed.Contains(form.Protocol))
+            form.Protocol = allowed[0];
     }
 }
