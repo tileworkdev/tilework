@@ -1,7 +1,9 @@
+using Tilework.LoadBalancing.Enums;
+
 namespace Tilework.LoadBalancing.Models;
 
 
-public class BaseLoadBalancerDTO
+public class LoadBalancerDTO
 {
     public Guid Id { get; set; }
 
@@ -10,4 +12,6 @@ public class BaseLoadBalancerDTO
     public int Port { get; set; }
 
     public bool Enabled { get; set; }
+    public LoadBalancerType Type { get; set; }
+    public LoadBalancerProtocol Protocol { get; set; }
 }

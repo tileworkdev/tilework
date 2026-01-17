@@ -14,26 +14,16 @@
 
 <PageTitle>Edit load balancer</PageTitle>
 
-@if (form is EditApplicationLoadBalancerForm albForm)
-{
-    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(albForm) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
-                    OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
-}
-else if (form is EditNetworkLoadBalancerForm nlbForm)
-{
-    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(nlbForm) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
-                    OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
-}
+<GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
+                OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))" OnValidSubmit="OnSubmit" />
 
 @code {
     [Parameter]
     public Guid Id { get; set; }
 
-    private EditBaseLoadBalancerForm form = new EditBaseLoadBalancerForm();
+    private EditLoadBalancerForm form = new EditLoadBalancerForm();
 
-    private BaseLoadBalancerDTO _item;
+    private LoadBalancerDTO _item;
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -50,45 +40,11 @@ else if (form is EditNetworkLoadBalancerForm nlbForm)
             Snackbar.Add($"Load balancer {Id} not found", Severity.Error);
         }
 
-        if(_item is ApplicationLoadBalancerDTO alb)
-        {
-            form = _mapper.Map<EditApplicationLoadBalancerForm>(alb);
-        }
-        else if(_item is NetworkLoadBalancerDTO nlb)
-        {
-            form = _mapper.Map<EditNetworkLoadBalancerForm>(nlb);
-        }
+        form = _mapper.Map<EditLoadBalancerForm>(_item);
 
 
         _breadcrumbs.Add(new BreadcrumbItem(_item.Name, href: $"/lb/loadbalancers/{Id}"));
         _breadcrumbs.Add(new BreadcrumbItem("edit", href: null, disabled: true));        
-    }
-
-    private async Task OnChange((string PropertyName, object? Value) change)
-    {
-        if(change.PropertyName == "Type")
-        {
-            LoadBalancerType? value = (LoadBalancerType?) change.Value;
-            if(value == LoadBalancerType.NETWORK && form is EditApplicationLoadBalancerForm albForm)
-            {
-                form = _mapper.Map<EditNetworkLoadBalancerForm>(albForm);
-
-                var targetGroupOptions = (await _loadBalancerService.GetNlbTargetGroups()).Select(tg =>
-                    new SelectOptionItem()
-                    {
-                        Value = tg.Id,
-                        Text = tg.Name
-                    }
-                ).ToList();
-                form.SetOptions(nameof(EditNetworkLoadBalancerForm.TargetGroup), targetGroupOptions);
-            }
-            else if(value == LoadBalancerType.APPLICATION && form is EditNetworkLoadBalancerForm nlbForm)
-            {
-                form = _mapper.Map<EditApplicationLoadBalancerForm>(nlbForm);
-            }
-                
-            StateHasChanged();
-        }
     }
 
     private async Task OnSubmit()

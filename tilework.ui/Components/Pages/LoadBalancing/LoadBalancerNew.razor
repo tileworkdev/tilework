@@ -17,22 +17,11 @@
 
 <PageTitle>New balancer</PageTitle>
 
-@if(form is NewApplicationLoadBalancerForm albForm)
-{
-    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(albForm) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
-                    OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
-}
-else if(form is NewNetworkLoadBalancerForm nlbForm)
-{
-    <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(nlbForm) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
-                    OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
-                    OnChange="@OnChange" OnValidSubmit="OnSubmit" />
-}
-
+<GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
+                OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))" OnValidSubmit="OnSubmit" />
 
 @code {
-    NewBaseLoadBalancerForm form = new NewBaseLoadBalancerForm();
+    NewLoadBalancerForm form = new NewLoadBalancerForm();
 
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
@@ -41,50 +30,12 @@ else if(form is NewNetworkLoadBalancerForm nlbForm)
         new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
     };
 
-    protected override async Task OnInitializedAsync()
-    {
-        form = new NewApplicationLoadBalancerForm();
-    }
-
-    private async Task OnChange((string PropertyName, object? Value) change)
-    {
-        if(change.PropertyName == "Type")
-        {
-            LoadBalancerType? value = (LoadBalancerType?) change.Value;
-            if(value == LoadBalancerType.NETWORK && form is NewApplicationLoadBalancerForm albForm)
-            {
-                form = Mapper.Map<NewNetworkLoadBalancerForm>(albForm);
-
-                var targetGroupOptions = (await _loadBalancerService.GetNlbTargetGroups()).Select(tg =>
-                    new SelectOptionItem()
-                    {
-                        Value = tg.Id,
-                        Text = tg.Name
-                    }
-                ).ToList();
-                form.SetOptions(nameof(NewNetworkLoadBalancerForm.TargetGroup), targetGroupOptions);
-            }
-            else if(value == LoadBalancerType.APPLICATION && form is NewNetworkLoadBalancerForm nlbForm)
-            {
-                form = Mapper.Map<NewApplicationLoadBalancerForm>(nlbForm);
-            }
-                
-            StateHasChanged();
-        }
-    }
 
     private async Task OnSubmit()
     {
         try
         {
-            BaseLoadBalancerDTO item;
-            if(form is NewApplicationLoadBalancerForm albForm)
-                item = Mapper.Map<ApplicationLoadBalancerDTO>(albForm);
-            else if(form is NewNetworkLoadBalancerForm nlbForm)
-                item = Mapper.Map<NetworkLoadBalancerDTO>(nlbForm);
-            else
-                throw new ArgumentException();
-
+            var item = Mapper.Map<LoadBalancerDTO>(form);
             item = await _loadBalancerService.AddLoadBalancer(item);
             await _loadBalancerService.ApplyConfiguration(item.Id);
 

@@ -222,13 +222,21 @@
             return;
         }
 
-        var healthTasks = _targets.Select(async target => new
+        try
         {
-            target.Id,
-            Status = await _loadBalancerService.GetTargetHealth(target.Id)
-        });
+            var healthTasks = _targets.Select(async target => new
+            {
+                target.Id,
+                Status = await _loadBalancerService.GetTargetHealth(target.Id)
+            });
 
-        var results = await Task.WhenAll(healthTasks);
-        _targetHealth = results.ToDictionary(result => result.Id, result => result.Status);
+            var results = await Task.WhenAll(healthTasks);
+            _targetHealth = results.ToDictionary(result => result.Id, result => result.Status);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Failed to load target health: {ex.Message}", Severity.Error);
+            _targetHealth = _targets.ToDictionary(target => target.Id, _ => LoadBalancerStatus.UNKNOWN);
+        }
     }
 }

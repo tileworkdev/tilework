@@ -10,23 +10,21 @@ public class HAProxyConfigurationProfile : Profile
 {
     public HAProxyConfigurationProfile()
     {
-        CreateMap<BaseLoadBalancer, FrontendSection>()
+        CreateMap<LoadBalancer, FrontendSection>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Id.ToString()))
             .ForPath(dest => dest.Bind.Address, opt => opt.MapFrom(src => "*"))
             .ForPath(dest => dest.Bind.Port, opt => opt.MapFrom(src => src.Port))
             .AfterMap((src, dest) =>
             {
-                if (src is ApplicationLoadBalancer alb)
-                {
-                    if (alb.Protocol == AlbProtocol.HTTPS)
-                    {
-                        dest.Bind.EnableTls = true;
-                    }
+                if (src.Protocol == LoadBalancerProtocol.HTTPS || src.Protocol == LoadBalancerProtocol.TLS)
+                    dest.Bind.EnableTls = true;
 
+                if (src.Type == LoadBalancerType.APPLICATION)
+                {
                     dest.AddHeaders.Add(new HttpHeader()
                     {
                         Name = "X-Forwarded-Proto",
-                        Value = alb.Protocol == AlbProtocol.HTTPS ? "https" : "http"
+                        Value = src.Protocol == LoadBalancerProtocol.HTTPS ? "https" : "http"
                     });
 
                     dest.AddHeaders.Add(new HttpHeader()
@@ -34,52 +32,43 @@ public class HAProxyConfigurationProfile : Profile
                         Name = "X-Forwarded-Port",
                         Value = src.Port.ToString()
                     });
-                        
-
-                    dest.Mode = Mode.HTTP;
-                    if (alb.Rules != null)
-                    {
-                        foreach (var rule in alb.Rules.OrderBy(r => r.Priority))
-                        {
-                            var acls = new List<Acl>();
-                            for (int i = 0; i < rule.Conditions.Count; i++)
-                            {
-                                var condition = rule.Conditions[i];
-
-                                var acl = new Acl()
-                                {
-                                    Name = $"{rule.Id.ToString()}-{i}",
-                                    Type = condition.Type,
-                                    Values = condition.Values
-                                };
-
-                                acls.Add(acl);
-                            }
-
-                            dest.Acls.AddRange(acls);
-
-                            var usebe = new UseBackend()
-                            {
-                                Acls = acls.Select(a => a.Name).ToList(),
-                                Target = rule.TargetGroup.Id.ToString(),
-                            };
-                            dest.UseBackends.Add(usebe);
-                        }
-                    }
                 }
-                else if (src is NetworkLoadBalancer nlb)
-                {
-                    if (nlb.Protocol == NlbProtocol.TLS)
-                        dest.Bind.EnableTls = true;
 
-                    dest.Mode = Mode.TCP;
-                    dest.DefaultBackend = nlb.TargetGroup.Id.ToString();
+                dest.Mode = src.Type == LoadBalancerType.APPLICATION ? Mode.HTTP : Mode.TCP;
+                if (src.Rules != null)
+                {
+                    foreach (var rule in src.Rules.OrderBy(r => r.Priority))
+                    {
+                        var acls = new List<Acl>();
+                        for (int i = 0; i < rule.Conditions.Count; i++)
+                        {
+                            var condition = rule.Conditions[i];
+
+                            var acl = new Acl()
+                            {
+                                Name = $"{rule.Id.ToString()}-{i}",
+                                Type = condition.Type,
+                                Values = condition.Values
+                            };
+
+                            acls.Add(acl);
+                        }
+
+                        dest.Acls.AddRange(acls);
+
+                        var usebe = new UseBackend()
+                        {
+                            Acls = acls.Select(a => a.Name).ToList(),
+                            Target = rule.TargetGroup.Id.ToString(),
+                        };
+                        dest.UseBackends.Add(usebe);
+                    }
                 }
             });
 
-        CreateMap<BaseLoadBalancer, PortType>()
-            .ConvertUsing((BaseLoadBalancer src) =>
-                src is NetworkLoadBalancer && ((NetworkLoadBalancer)src).Protocol == NlbProtocol.UDP
+        CreateMap<LoadBalancer, PortType>()
+            .ConvertUsing(src =>
+                src.Protocol == LoadBalancerProtocol.UDP
                     ? PortType.UDP
                     : PortType.TCP);
 
@@ -92,6 +81,9 @@ public class HAProxyConfigurationProfile : Profile
                     TargetGroupProtocol.HTTP => Mode.HTTP,
                     TargetGroupProtocol.HTTPS => Mode.HTTP,
                     TargetGroupProtocol.TCP => Mode.TCP,
+                    TargetGroupProtocol.UDP => Mode.TCP,
+                    TargetGroupProtocol.TCP_UDP => Mode.TCP,
+                    TargetGroupProtocol.TLS => Mode.TCP,
                     _ => throw new NotImplementedException(),
                 };
 
@@ -105,4 +97,3 @@ public class HAProxyConfigurationProfile : Profile
             });
     }
 }
-

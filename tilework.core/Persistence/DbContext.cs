@@ -21,9 +21,7 @@ public class TileworkContext : IdentityDbContext<User, Role, Guid>
     }
 
     // Load balancing
-    public DbSet<BaseLoadBalancer> LoadBalancers { get; set; }
-    public DbSet<ApplicationLoadBalancer> ApplicationLoadBalancers { get; set; }
-    public DbSet<NetworkLoadBalancer> NetworkLoadBalancers { get; set; }
+    public DbSet<LoadBalancer> LoadBalancers { get; set; }
     public DbSet<Rule> Rules { get; set; }
     public DbSet<TargetGroup> TargetGroups { get; set; }
     public DbSet<Target> Targets { get; set; }
@@ -63,7 +61,7 @@ public class TileworkContext : IdentityDbContext<User, Role, Guid>
                 v => v.Value.GetHashCode(),
                 v => new Host(v.Value)));
 
-        modelBuilder.Entity<BaseLoadBalancer>()
+        modelBuilder.Entity<LoadBalancer>()
             .HasMany(s => s.Certificates)
             .WithMany()
             .UsingEntity<Dictionary<string, object>>(
@@ -73,7 +71,7 @@ public class TileworkContext : IdentityDbContext<User, Role, Guid>
                     .HasForeignKey("CertificateId")
                     .OnDelete(DeleteBehavior.Restrict),
 
-                l => l.HasOne<BaseLoadBalancer>()
+                l => l.HasOne<LoadBalancer>()
                     .WithMany()
                     .HasForeignKey("BalancerId")
                     .OnDelete(DeleteBehavior.Cascade)

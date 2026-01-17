@@ -11,15 +11,15 @@ using Tilework.Core.Persistence;
 namespace tilework.core.Migrations
 {
     [DbContext(typeof(TileworkContext))]
-    [Migration("20251127185719_TokenVault")]
-    partial class TokenVault
+    [Migration("20260117084701_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Proxies:ChangeTracking", false)
                 .HasAnnotation("Proxies:CheckEquality", false)
                 .HasAnnotation("Proxies:LazyLoading", true);
@@ -37,6 +37,105 @@ namespace tilework.core.Migrations
                     b.HasIndex("CertificateId");
 
                     b.ToTable("LoadBalancerCertificates");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("Tilework.Persistence.CertificateManagement.Models.Certificate", b =>
@@ -90,9 +189,10 @@ namespace tilework.core.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Parameters")
+                    b.Property<string>("ParametersString")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Parameters");
 
                     b.Property<int>("Type")
                         .HasColumnType("INTEGER");
@@ -123,15 +223,111 @@ namespace tilework.core.Migrations
                     b.ToTable("PrivateKeys");
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", b =>
+            modelBuilder.Entity("Tilework.Persistence.IdentityManagement.Models.Role", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(34)
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Tilework.Persistence.IdentityManagement.Models.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("LastLoginAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Enabled")
@@ -144,16 +340,18 @@ namespace tilework.core.Migrations
                     b.Property<int>("Port")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Protocol")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("LoadBalancers");
-
-                    b.HasDiscriminator().HasValue("BaseLoadBalancer");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.Rule", b =>
@@ -251,40 +449,9 @@ namespace tilework.core.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", b =>
-                {
-                    b.HasBaseType("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer");
-
-                    b.Property<int>("Protocol")
-                        .HasColumnType("INTEGER");
-
-                    b.HasDiscriminator().HasValue("ApplicationLoadBalancer");
-                });
-
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.NetworkLoadBalancer", b =>
-                {
-                    b.HasBaseType("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer");
-
-                    b.Property<int>("Protocol")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<Guid>("TargetGroupId")
-                        .HasColumnType("TEXT");
-
-                    b.HasIndex("TargetGroupId");
-
-                    b.ToTable("LoadBalancers", t =>
-                        {
-                            t.Property("Protocol")
-                                .HasColumnName("NetworkLoadBalancer_Protocol");
-                        });
-
-                    b.HasDiscriminator().HasValue("NetworkLoadBalancer");
-                });
-
             modelBuilder.Entity("LoadBalancerCertificates", b =>
                 {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", null)
+                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", null)
                         .WithMany()
                         .HasForeignKey("BalancerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -294,6 +461,57 @@ namespace tilework.core.Migrations
                         .WithMany()
                         .HasForeignKey("CertificateId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.HasOne("Tilework.Persistence.IdentityManagement.Models.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.HasOne("Tilework.Persistence.IdentityManagement.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.HasOne("Tilework.Persistence.IdentityManagement.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("Tilework.Persistence.IdentityManagement.Models.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tilework.Persistence.IdentityManagement.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.HasOne("Tilework.Persistence.IdentityManagement.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -318,7 +536,7 @@ namespace tilework.core.Migrations
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.Rule", b =>
                 {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", "LoadBalancer")
+                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", "LoadBalancer")
                         .WithMany("Rules")
                         .HasForeignKey("LoadBalancerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -332,19 +550,15 @@ namespace tilework.core.Migrations
 
                     b.OwnsMany("Tilework.LoadBalancing.Models.Condition", "Conditions", b1 =>
                         {
-                            b1.Property<Guid>("RuleId")
-                                .HasColumnType("TEXT");
+                            b1.Property<Guid>("RuleId");
 
                             b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAddOrUpdate()
-                                .HasColumnType("INTEGER");
+                                .ValueGeneratedOnAddOrUpdate();
 
-                            b1.Property<int>("Type")
-                                .HasColumnType("INTEGER");
+                            b1.Property<int>("Type");
 
                             b1.PrimitiveCollection<string>("Values")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
+                                .IsRequired();
 
                             b1.HasKey("RuleId", "__synthesizedOrdinal");
 
@@ -374,25 +588,14 @@ namespace tilework.core.Migrations
                     b.Navigation("TargetGroup");
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.NetworkLoadBalancer", b =>
+            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", b =>
                 {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.TargetGroup", "TargetGroup")
-                        .WithMany()
-                        .HasForeignKey("TargetGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TargetGroup");
+                    b.Navigation("Rules");
                 });
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.TargetGroup", b =>
                 {
                     b.Navigation("Targets");
-                });
-
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", b =>
-                {
-                    b.Navigation("Rules");
                 });
 #pragma warning restore 612, 618
         }

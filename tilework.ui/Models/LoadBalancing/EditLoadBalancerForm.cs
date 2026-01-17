@@ -4,7 +4,7 @@ using Tilework.LoadBalancing.Enums;
 
 namespace Tilework.Ui.Models;
 
-public class EditBaseLoadBalancerForm : BaseForm
+public class EditLoadBalancerForm : BaseForm
 {
     [Required]
     public string Name { get; set; }
@@ -13,26 +13,5 @@ public class EditBaseLoadBalancerForm : BaseForm
     public int? Port { get; set; }
     
     public LoadBalancerType Type { get; set; }
-}
-
-public class EditNetworkLoadBalancerForm : EditBaseLoadBalancerForm
-{
-    public EditNetworkLoadBalancerForm()
-    {
-        Type = LoadBalancerType.NETWORK;
-    }
-    public NlbProtocol Protocol { get; set; }
-
-    [Display(Name = "Target group")]
-    public Guid TargetGroup { get; set; }
-}
-
-public class EditApplicationLoadBalancerForm : EditBaseLoadBalancerForm
-{
-    public EditApplicationLoadBalancerForm()
-    {
-        Type = LoadBalancerType.APPLICATION;
-    }
-
-    public AlbProtocol Protocol { get; set; }
+    public LoadBalancerProtocol Protocol { get; set; }
 }

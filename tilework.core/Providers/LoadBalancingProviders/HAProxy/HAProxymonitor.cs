@@ -108,7 +108,7 @@ public class HAProxyMonitor
         return JsonSerializer.Deserialize<T>(jsonString);
     }
 
-    public async Task GetRealtimeStatistics(BaseLoadBalancer balancer)
+    public async Task GetRealtimeStatistics(LoadBalancer balancer)
     {
         if (await _configurator.CheckLoadBalancerStatus(balancer) == false)
             throw new ArgumentOutOfRangeException($"Cannot get statistics for balancer {balancer}: Balancer is not running");

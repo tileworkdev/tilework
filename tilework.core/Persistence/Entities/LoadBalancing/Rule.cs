@@ -14,7 +14,7 @@ public class Rule
     public virtual TargetGroup TargetGroup { get; set; }
 
     public Guid LoadBalancerId { get; set; }
-    public virtual ApplicationLoadBalancer LoadBalancer { get; set; }
+    public virtual LoadBalancer LoadBalancer { get; set; }
 
     public List<Condition> Conditions { get; set; } = new();
 }
