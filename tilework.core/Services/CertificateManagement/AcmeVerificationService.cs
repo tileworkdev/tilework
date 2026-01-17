@@ -145,31 +145,39 @@ public class AcmeVerificationService
     private async Task CheckRemoveLoadBalancer(string certId)
     {
         var balancers = await _loadBalancerService.GetLoadBalancers();
-        var balancer = balancers.FirstOrDefault(lb => lb.Port == 80);
-
-        if (balancer == null)
+        if (balancers.Count == 0)
             return;
 
         var targetGroups = await _loadBalancerService.GetTargetGroups();
+        var targetGroupName = $"AcmeVerification-{certId}";
+        var hasChanges = false;
 
-        foreach (var rule in await _loadBalancerService.GetRules(balancer))
+        foreach (var balancer in balancers)
         {
-            var tg = targetGroups.FirstOrDefault(tg => tg.Id == rule.TargetGroup);
-
-            if (tg != null && tg.Name == $"AcmeVerification-{certId}")
+            var rules = await _loadBalancerService.GetRules(balancer);
+            foreach (var rule in rules)
             {
-                await _loadBalancerService.RemoveRule(balancer, rule);
-                await _loadBalancerService.DeleteTargetGroup(tg.Id);
+                var tg = targetGroups.FirstOrDefault(tg => tg.Id == rule.TargetGroup);
+                if (tg != null && tg.Name == targetGroupName)
+                {
+                    await _loadBalancerService.RemoveRule(balancer, rule);
+                    await _loadBalancerService.DeleteTargetGroup(tg.Id);
+                    hasChanges = true;
+                }
             }
-
         }
 
-        if (balancer.Name == "AcmeVerification" && (await _loadBalancerService.GetRules(balancer)).Count == 0)
+        foreach (var balancer in balancers.Where(lb => lb.Name == "AcmeVerification"))
         {
-            await _loadBalancerService.DeleteLoadBalancer(balancer.Id);
+            if ((await _loadBalancerService.GetRules(balancer)).Count == 0)
+            {
+                await _loadBalancerService.DeleteLoadBalancer(balancer.Id);
+                hasChanges = true;
+            }
         }
 
-        await _loadBalancerService.ApplyConfiguration();
+        if (hasChanges)
+            await _loadBalancerService.ApplyConfiguration();
     }
 
     public async Task StartVerification(string id, string host, string filename, string data)
