@@ -9,6 +9,7 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject ICertificateManagementService CertificateManagementService
+@inject ILogger<CertificateNew> Logger
 
 @page "/cm/certificates/new"
 
@@ -50,6 +51,7 @@
         }
         catch(Exception ex)
         {
+            Logger.LogError(ex, "Failed to add certificate.");
             Snackbar.Add($"Failed to add certificate: {ex.Message}", Severity.Error);
         }
     }
