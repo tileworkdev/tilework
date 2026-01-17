@@ -36,7 +36,7 @@ public class AcmeVerificationService
     private async Task<Container> CreateContainer(string name, string filename, string fileData)
     {
         var container = await _containerManager.CreateContainer(
-            $"AcmeVerification-{name}",
+            $"certificatemanagement.acmeverification.{name}",
             _settings.AcmeVerificationImage,
             "certificatemanagement.tile",
             null
@@ -67,7 +67,13 @@ public class AcmeVerificationService
     private async Task DeleteContainer(string name)
     {
         var containers = await _containerManager.ListContainers("certificatemanagement.tile");
-        var container = containers.First(cnt => cnt.Name == $"AcmeVerification-{name}");
+        var container = containers.FirstOrDefault(cnt => cnt.Name == $"certificatemanagement.acmeverification.{name}");
+
+        if (container == null)
+        {
+            _logger.LogWarning("ACME verification container not found for {Name}", name);
+            return;
+        }
 
         if (container.State == ContainerState.Running)
             await _containerManager.StopContainer(container.Id);
