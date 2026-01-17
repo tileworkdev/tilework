@@ -321,15 +321,10 @@ namespace tilework.core.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", b =>
+            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(34)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Enabled")
@@ -342,16 +337,18 @@ namespace tilework.core.Migrations
                     b.Property<int>("Port")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Protocol")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("LoadBalancers");
-
-                    b.HasDiscriminator().HasValue("BaseLoadBalancer");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.Rule", b =>
@@ -449,40 +446,9 @@ namespace tilework.core.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", b =>
-                {
-                    b.HasBaseType("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer");
-
-                    b.Property<int>("Protocol")
-                        .HasColumnType("INTEGER");
-
-                    b.HasDiscriminator().HasValue("ApplicationLoadBalancer");
-                });
-
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.NetworkLoadBalancer", b =>
-                {
-                    b.HasBaseType("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer");
-
-                    b.Property<int>("Protocol")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<Guid>("TargetGroupId")
-                        .HasColumnType("TEXT");
-
-                    b.HasIndex("TargetGroupId");
-
-                    b.ToTable("LoadBalancers", t =>
-                        {
-                            t.Property("Protocol")
-                                .HasColumnName("NetworkLoadBalancer_Protocol");
-                        });
-
-                    b.HasDiscriminator().HasValue("NetworkLoadBalancer");
-                });
-
             modelBuilder.Entity("LoadBalancerCertificates", b =>
                 {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.BaseLoadBalancer", null)
+                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", null)
                         .WithMany()
                         .HasForeignKey("BalancerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -567,7 +533,7 @@ namespace tilework.core.Migrations
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.Rule", b =>
                 {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", "LoadBalancer")
+                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", "LoadBalancer")
                         .WithMany("Rules")
                         .HasForeignKey("LoadBalancerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -619,25 +585,14 @@ namespace tilework.core.Migrations
                     b.Navigation("TargetGroup");
                 });
 
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.NetworkLoadBalancer", b =>
+            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.LoadBalancer", b =>
                 {
-                    b.HasOne("Tilework.Persistence.LoadBalancing.Models.TargetGroup", "TargetGroup")
-                        .WithMany()
-                        .HasForeignKey("TargetGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TargetGroup");
+                    b.Navigation("Rules");
                 });
 
             modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.TargetGroup", b =>
                 {
                     b.Navigation("Targets");
-                });
-
-            modelBuilder.Entity("Tilework.Persistence.LoadBalancing.Models.ApplicationLoadBalancer", b =>
-                {
-                    b.Navigation("Rules");
                 });
 #pragma warning restore 612, 618
         }

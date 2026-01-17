@@ -69,17 +69,31 @@ public class LoadBalancerService : ILoadBalancerService
         }
     }
 
-    private static bool RequiresCertificate(BaseLoadBalancer balancer)
+    private static void EnsureRuleConditionsAllowed(LoadBalancer balancer, RuleDTO rule)
     {
-        return balancer switch
+        var invalid = rule.Conditions
+            .Select(condition => condition.Type)
+            .Distinct()
+            .Where(conditionType => !LoadBalancerConditionRules.IsAllowed(balancer.Protocol, conditionType))
+            .ToList();
+
+        if (invalid.Count == 0)
         {
-            ApplicationLoadBalancer appBalancer => appBalancer.Protocol == AlbProtocol.HTTPS,
-            NetworkLoadBalancer netBalancer => netBalancer.Protocol == NlbProtocol.TLS,
-            _ => false
-        };
+            return;
+        }
+
+        var invalidList = string.Join(", ", invalid);
+        throw new ArgumentException(
+            $"Rule contains condition types not supported by {balancer.Protocol}: {invalidList}.",
+            nameof(rule));
     }
 
-    private static void EnsureCertificatesPresentIfRequired(BaseLoadBalancer balancer)
+    private static bool RequiresCertificate(LoadBalancer balancer)
+    {
+        return balancer.Protocol == LoadBalancerProtocol.HTTPS || balancer.Protocol == LoadBalancerProtocol.TLS;
+    }
+
+    private static void EnsureCertificatesPresentIfRequired(LoadBalancer balancer)
     {
         if (RequiresCertificate(balancer) && (balancer.Certificates == null || balancer.Certificates.Count == 0))
         {
@@ -87,62 +101,39 @@ public class LoadBalancerService : ILoadBalancerService
         }
     }
 
-    
 
-    private BaseLoadBalancerDTO MapBalancerToDto(BaseLoadBalancer entity)
-    {
-        return entity switch
-        {
-            ApplicationLoadBalancer appBalancer => _mapper.Map<ApplicationLoadBalancerDTO>(appBalancer),
-            NetworkLoadBalancer netBalancer => _mapper.Map<NetworkLoadBalancerDTO>(netBalancer),
-            _ => throw new InvalidOperationException("Invalid balancer type")
-        };
-    }
-
-    private BaseLoadBalancer MapDtoToBalancer(BaseLoadBalancerDTO dto, BaseLoadBalancer? entity = null)
-    {
-        return dto switch
-        {
-            ApplicationLoadBalancerDTO appBalancer =>
-                entity == null ? _mapper.Map<ApplicationLoadBalancer>(appBalancer) : _mapper.Map(appBalancer, (ApplicationLoadBalancer)entity),
-
-            NetworkLoadBalancerDTO netBalancer =>
-                entity == null ? _mapper.Map<NetworkLoadBalancer>(netBalancer) : _mapper.Map(netBalancer, (NetworkLoadBalancer)entity),
-
-            _ => throw new InvalidOperationException("Invalid balancer type")
-        };
-    }
-
-    public async Task<List<BaseLoadBalancerDTO>> GetLoadBalancers()
+    public async Task<List<LoadBalancerDTO>> GetLoadBalancers()
     {
         var entities = await _dbContext.LoadBalancers.ToListAsync();
-        return entities.Select(e => MapBalancerToDto(e)).ToList();
+        return _mapper.Map<List<LoadBalancerDTO>>(entities);
     }
 
-    public async Task<BaseLoadBalancerDTO?> GetLoadBalancer(Guid Id)
+    public async Task<LoadBalancerDTO?> GetLoadBalancer(Guid Id)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(Id);
-        return entity != null ? MapBalancerToDto(entity) : null;
+        return _mapper.Map<LoadBalancerDTO>(entity);
     }
 
-    public async Task<BaseLoadBalancerDTO> AddLoadBalancer(BaseLoadBalancerDTO balancer)
+    public async Task<LoadBalancerDTO> AddLoadBalancer(LoadBalancerDTO balancer)
     {
-        var entity = MapDtoToBalancer(balancer);
+        EnsureProtocolAllowed(balancer);
+        var entity = _mapper.Map<LoadBalancer>(balancer);
 
         await _dbContext.LoadBalancers.AddAsync(entity);
         await _dbContext.SaveChangesAsync();
-        return MapBalancerToDto(entity);
+        return _mapper.Map<LoadBalancerDTO>(entity);
     }
 
-    public async Task<BaseLoadBalancerDTO> UpdateLoadBalancer(BaseLoadBalancerDTO balancer)
+    public async Task<LoadBalancerDTO> UpdateLoadBalancer(LoadBalancerDTO balancer)
     {
+        EnsureProtocolAllowed(balancer);
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
-        entity = MapDtoToBalancer(balancer, entity);
+        entity = _mapper.Map(balancer, entity);
 
         _dbContext.LoadBalancers.Update(entity);
         await _dbContext.SaveChangesAsync();
 
-        return MapBalancerToDto(entity);
+        return _mapper.Map<LoadBalancerDTO>(entity);
     }
 
     public async Task DeleteLoadBalancer(Guid Id)
@@ -203,19 +194,20 @@ public class LoadBalancerService : ILoadBalancerService
     }
 
 
-    public async Task<List<RuleDTO>> GetRules(ApplicationLoadBalancerDTO balancer)
+    public async Task<List<RuleDTO>> GetRules(LoadBalancerDTO balancer)
     {
-        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         return _mapper.Map<List<RuleDTO>>(entity.Rules.OrderBy(r => r.Priority));
     }
 
-    public async Task AddRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
+    public async Task AddRule(LoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         if (entity == null)
             throw new ArgumentNullException(nameof(balancer));
 
         ValidateRulePriority(entity.Rules, rule.Priority);
+        EnsureRuleConditionsAllowed(entity, rule);
         
         foreach (var existingRule in entity.Rules.Where(r => r.Priority >= rule.Priority))
         {
@@ -227,9 +219,9 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task UpdateRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
+    public async Task UpdateRule(LoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         if (entity == null)
             throw new ArgumentNullException(nameof(balancer));
 
@@ -238,6 +230,7 @@ public class LoadBalancerService : ILoadBalancerService
             return;
 
         ValidateRulePriority(entity.Rules, rule.Priority);
+        EnsureRuleConditionsAllowed(entity, rule);
 
         await using var tx = await _dbContext.Database.BeginTransactionAsync();
 
@@ -301,9 +294,9 @@ public class LoadBalancerService : ILoadBalancerService
         }
     }
 
-    public async Task RemoveRule(ApplicationLoadBalancerDTO balancer, RuleDTO rule)
+    public async Task RemoveRule(LoadBalancerDTO balancer, RuleDTO rule)
     {
-        var entity = (ApplicationLoadBalancer?)await _dbContext.LoadBalancers.FindAsync(balancer.Id);
+        var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         if (entity == null)
             throw new ArgumentNullException();
 
@@ -323,13 +316,13 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<List<CertificateDTO>> GetCertificates(BaseLoadBalancerDTO balancer)
+    public async Task<List<CertificateDTO>> GetCertificates(LoadBalancerDTO balancer)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         return _mapper.Map<List<CertificateDTO>>(entity.Certificates);
     }
 
-    public async Task AddCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
+    public async Task AddCertificate(LoadBalancerDTO balancer, Guid certificateId)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         var cert = await _dbContext.Certificates.FindAsync(certificateId);
@@ -338,7 +331,7 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task RemoveCertificate(BaseLoadBalancerDTO balancer, Guid certificateId)
+    public async Task RemoveCertificate(LoadBalancerDTO balancer, Guid certificateId)
     {
         var entity = await _dbContext.LoadBalancers.FindAsync(balancer.Id);
         var c = entity.Certificates.FirstOrDefault(t => t.Id == certificateId);
@@ -347,31 +340,21 @@ public class LoadBalancerService : ILoadBalancerService
         await _dbContext.SaveChangesAsync();
     }
 
+    private static void EnsureProtocolAllowed(LoadBalancerDTO balancer)
+    {
+        if (!LoadBalancerProtocolRules.IsAllowed(balancer.Type, balancer.Protocol))
+        {
+            throw new ArgumentException(
+                $"Protocol {balancer.Protocol} is not valid for load balancer type {balancer.Type}",
+                nameof(balancer));
+        }
+    }
+
 
     public async Task<List<TargetGroupDTO>> GetTargetGroups()
     {
         var entities = await _dbContext.TargetGroups.ToListAsync();
         return _mapper.Map<List<TargetGroupDTO>>(entities);
-    }
-
-    public async Task<List<TargetGroupDTO>> GetNlbTargetGroups()
-    {
-        var protocols = new List<TargetGroupProtocol> {
-            TargetGroupProtocol.TCP,
-            TargetGroupProtocol.UDP,
-            TargetGroupProtocol.TCP_UDP,
-            TargetGroupProtocol.TLS
-        };
-        return (await GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
-    }
-
-    public async Task<List<TargetGroupDTO>> GetAlbTargetGroups()
-    {
-        var protocols = new List<TargetGroupProtocol> {
-            TargetGroupProtocol.HTTP,
-            TargetGroupProtocol.HTTPS
-        };
-        return (await GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
     }
 
     public async Task<TargetGroupDTO?> GetTargetGroup(Guid Id)

@@ -2,8 +2,12 @@ using System.ComponentModel;
 
 namespace Tilework.LoadBalancing.Enums;
 
-public enum NlbProtocol
+public enum LoadBalancerProtocol
 {
+    [Description("HTTP")]
+    HTTP,
+    [Description("HTTPS")]
+    HTTPS,
     [Description("TCP")]
     TCP,
     [Description("UDP")]

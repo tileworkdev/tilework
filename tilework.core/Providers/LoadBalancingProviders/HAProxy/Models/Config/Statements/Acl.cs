@@ -21,7 +21,8 @@ public class Acl
         {
             ConditionType.HostHeader => $"{Name} hdr(host) -i {string.Join(" ", Values)}",
             ConditionType.Path => $"{Name} path_beg -i {string.Join(" ", Values)}",
-            ConditionType.QueryString => $"{Name} {String.Join(" or ", Values.Select(v => $"url_param(plan) -i {v}"))}"
+            ConditionType.QueryString => $"{Name} {String.Join(" or ", Values.Select(v => $"url_param(plan) -i {v}"))}",
+            ConditionType.SNI => $"{Name} req.ssl_sni -i {string.Join(" ", Values)}"
         };
     }
 }

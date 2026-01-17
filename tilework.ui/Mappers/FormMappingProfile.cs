@@ -19,23 +19,10 @@ public class FormMappingProfile : Profile
         CreateMap<TargetGroupDTO, EditTargetGroupForm>();
 
         // Load balancers
-        CreateMap<NewApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
-        CreateMap<NewNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
-            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
+        CreateMap<NewLoadBalancerForm, LoadBalancerDTO>();
 
-        CreateMap<EditApplicationLoadBalancerForm, ApplicationLoadBalancerDTO>();
-        CreateMap<EditNetworkLoadBalancerForm, NetworkLoadBalancerDTO>()
-            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
-
-        CreateMap<ApplicationLoadBalancerDTO, EditApplicationLoadBalancerForm>();
-        CreateMap<NetworkLoadBalancerDTO, EditNetworkLoadBalancerForm>()
-            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroup));
-
-        CreateMap<NewNetworkLoadBalancerForm, NewApplicationLoadBalancerForm>();
-        CreateMap<NewApplicationLoadBalancerForm, NewNetworkLoadBalancerForm>();
-
-        CreateMap<EditNetworkLoadBalancerForm, EditApplicationLoadBalancerForm>();
-        CreateMap<EditApplicationLoadBalancerForm, EditNetworkLoadBalancerForm>();
+        CreateMap<EditLoadBalancerForm, LoadBalancerDTO>();
+        CreateMap<LoadBalancerDTO, EditLoadBalancerForm>();
 
         // Identity management
         CreateMap<NewUserForm, UserDTO>()

@@ -15,6 +15,12 @@
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
+            @if (!AllowedConditionTypes.Any())
+            {
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    This protocol does not support rule conditions.
+                </MudText>
+            }
             @foreach (var condition in Rule.Conditions)
             {
                 <ConditionForm Condition="condition"
@@ -58,6 +64,7 @@
 
     [Parameter] public RuleDTO Rule { get; set; } = new();
     [Parameter] public List<TargetGroupDTO> TargetGroups { get; set; } = new();
+    [Parameter] public LoadBalancerProtocol Protocol { get; set; }
     [Parameter] public string Title { get; set; } = "Add rule";
     [Parameter] public string ButtonText { get; set; } = "Add";
     [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Add;
@@ -89,7 +96,10 @@
 
     void Cancel() => MudDialog.Cancel();
 
-    IEnumerable<ConditionType> AvailableConditionTypes => Enum.GetValues<ConditionType>().Except(Rule.Conditions.Select(c => c.Type));
+    IEnumerable<ConditionType> AllowedConditionTypes => LoadBalancerConditionRules.GetAllowedConditions(Protocol);
+
+    IEnumerable<ConditionType> AvailableConditionTypes =>
+        AllowedConditionTypes.Except(Rule.Conditions.Select(c => c.Type));
 
     bool CanAddCondition => AvailableConditionTypes.Any();
 
@@ -103,4 +113,3 @@
         Rule.Conditions.Remove(condition);
     }
 }
-

@@ -9,6 +9,8 @@ public enum ConditionType
     [Description("Path")]
     Path,
     [Description("Query string")]
-    QueryString
+    QueryString,
+    [Description("SNI FQDN")]
+    SNI
 }
 

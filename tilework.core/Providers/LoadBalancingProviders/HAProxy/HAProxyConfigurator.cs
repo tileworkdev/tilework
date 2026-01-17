@@ -50,12 +50,12 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         _mapper = mapper;
     }
 
-    public List<BaseLoadBalancer> LoadConfiguration()
+    public List<LoadBalancer> LoadConfiguration()
     {
         return null;
     }
 
-    private void UpdateConfigFile(string path, BaseLoadBalancer balancer)
+    private void UpdateConfigFile(string path, LoadBalancer balancer)
     {
         var haproxyConfig = new Configuration(path);
         haproxyConfig.Load();
@@ -67,18 +67,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         haproxyConfig.Frontends.Add(fe);
 
 
-        List<TargetGroup> targetGroups;
-
-        if (balancer is ApplicationLoadBalancer appLoadBalancer)
-        {
-            targetGroups = appLoadBalancer.Rules != null ? appLoadBalancer.Rules.Select(r => r.TargetGroup).ToList() : new List<TargetGroup>();
-        }
-        else if (balancer is NetworkLoadBalancer netLoadBalancer)
-        {
-            targetGroups = new List<TargetGroup>() { netLoadBalancer.TargetGroup };
-        }
-        else
-            throw new ArgumentException("Invalid load balancer type");
+        var targetGroups = balancer.Rules != null ? balancer.Rules.Select(r => r.TargetGroup).ToList() : new List<TargetGroup>();
 
 
         haproxyConfig.Backends = targetGroups
@@ -89,7 +78,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         haproxyConfig.Save();
     }
 
-    private async Task<List<ContainerFile>> GetCertificateFiles(BaseLoadBalancer loadBalancer)
+    private async Task<List<ContainerFile>> GetCertificateFiles(LoadBalancer loadBalancer)
     {
         var containerFiles = new List<ContainerFile>();
 
@@ -148,7 +137,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
     }
 
 
-    public async Task ConfigureMonitoring(BaseLoadBalancer loadBalancer)
+    public async Task ConfigureMonitoring(LoadBalancer loadBalancer)
     {
         if (loadBalancer.Enabled == true && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == false)
         {
@@ -168,7 +157,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         }
     }
 
-    public async Task ApplyConfiguration(BaseLoadBalancer loadBalancer)
+    public async Task ApplyConfiguration(LoadBalancer loadBalancer)
     {
         if(loadBalancer.Enabled == true)
         {
@@ -229,7 +218,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         await ConfigureMonitoring(loadBalancer);
     }
 
-    public async Task ApplyConfiguration(List<BaseLoadBalancer> loadBalancers)
+    public async Task ApplyConfiguration(List<LoadBalancer> loadBalancers)
     {
         foreach(var lb in loadBalancers)
         {
@@ -252,7 +241,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         }
     }
 
-    private async Task<Container> GetContainer(BaseLoadBalancer balancer)
+    private async Task<Container> GetContainer(LoadBalancer balancer)
     {
         var container = await GetContainer(balancer.Name);
         if (container == null)
@@ -260,14 +249,14 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         return container;
     }
 
-    public async Task<string> GetLoadBalancerHostname(BaseLoadBalancer balancer)
+    public async Task<string> GetLoadBalancerHostname(LoadBalancer balancer)
     {
         var container = await GetContainer(balancer);
         return (await _containerManager.GetContainerAddress(container.Id)).ToString();
     }
 
 
-    public async Task<bool> CheckLoadBalancerStatus(BaseLoadBalancer balancer)
+    public async Task<bool> CheckLoadBalancerStatus(LoadBalancer balancer)
     {
         var container = await GetContainer(balancer);
         return container.State == ContainerState.Running;
