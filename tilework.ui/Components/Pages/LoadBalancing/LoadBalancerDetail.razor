@@ -224,6 +224,7 @@
 
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
+        parameters.Add(x => x.Protocol, _item.Protocol);
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
@@ -270,6 +271,7 @@
         var parameters = new DialogParameters<RuleDialog>();
         parameters.Add(x => x.Rule, ruleEdit);
         parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
+        parameters.Add(x => x.Protocol, _item.Protocol);
         parameters.Add(x => x.Title, "Edit rule");
         parameters.Add(x => x.ButtonText, "Save");
         parameters.Add(x => x.Icon, Icons.Material.Filled.Edit);

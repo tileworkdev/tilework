@@ -69,6 +69,25 @@ public class LoadBalancerService : ILoadBalancerService
         }
     }
 
+    private static void EnsureRuleConditionsAllowed(LoadBalancer balancer, RuleDTO rule)
+    {
+        var invalid = rule.Conditions
+            .Select(condition => condition.Type)
+            .Distinct()
+            .Where(conditionType => !LoadBalancerConditionRules.IsAllowed(balancer.Protocol, conditionType))
+            .ToList();
+
+        if (invalid.Count == 0)
+        {
+            return;
+        }
+
+        var invalidList = string.Join(", ", invalid);
+        throw new ArgumentException(
+            $"Rule contains condition types not supported by {balancer.Protocol}: {invalidList}.",
+            nameof(rule));
+    }
+
     private static bool RequiresCertificate(LoadBalancer balancer)
     {
         return balancer.Protocol == LoadBalancerProtocol.HTTPS || balancer.Protocol == LoadBalancerProtocol.TLS;
@@ -188,6 +207,7 @@ public class LoadBalancerService : ILoadBalancerService
             throw new ArgumentNullException(nameof(balancer));
 
         ValidateRulePriority(entity.Rules, rule.Priority);
+        EnsureRuleConditionsAllowed(entity, rule);
         
         foreach (var existingRule in entity.Rules.Where(r => r.Priority >= rule.Priority))
         {
@@ -210,6 +230,7 @@ public class LoadBalancerService : ILoadBalancerService
             return;
 
         ValidateRulePriority(entity.Rules, rule.Priority);
+        EnsureRuleConditionsAllowed(entity, rule);
 
         await using var tx = await _dbContext.Database.BeginTransactionAsync();
 
