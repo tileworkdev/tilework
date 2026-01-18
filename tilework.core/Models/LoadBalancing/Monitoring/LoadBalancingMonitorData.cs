@@ -14,4 +14,7 @@ public class LoadBalancingMonitorData : BaseMonitorData
     public int HttpResponses4xx { get; set; }
     public int HttpResponses5xx { get; set; }
     public int HttpResponsesOther { get; set; }
+
+    public int BytesIn { get; set; }
+    public int BytesOut { get; set; }
 }

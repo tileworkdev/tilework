@@ -429,33 +429,46 @@
     private async Task<List<TimeSeriesChartData>> LoadMonitoringCharts(DateTimeOffset from, DateTimeOffset to, TimeSpan interval)
     {
         var charts = new List<TimeSeriesChartData>();
+        var includeHttpMetrics = _item?.Type == LoadBalancerType.APPLICATION;
         List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, from, to)
             ?? new List<LoadBalancingMonitorData>();
 
         Dictionary<string, Dictionary<DateTimeOffset, double>> chartData = new()
         {
             ["Sessions"] = new Dictionary<DateTimeOffset, double>(),
-            ["Requests"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 1xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 2xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 3xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 4xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 5xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP Other"] = new Dictionary<DateTimeOffset, double>(),
+            ["Bytes in"] = new Dictionary<DateTimeOffset, double>(),
+            ["Bytes out"] = new Dictionary<DateTimeOffset, double>(),
         };
+
+        if (includeHttpMetrics)
+        {
+            chartData["Requests"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 1xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 2xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 3xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 4xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 5xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP Other"] = new Dictionary<DateTimeOffset, double>();
+        }
 
         foreach (var entry in data.OrderBy(d => d.Timestamp))
         {
             var timestamp = entry.Timestamp.ToUniversalTime();
             
             chartData["Sessions"][timestamp] = entry.Sessions;
-            chartData["Requests"][timestamp] = entry.Requests;
-            chartData["HTTP 1xx"][timestamp] = entry.HttpResponses1xx;
-            chartData["HTTP 2xx"][timestamp] = entry.HttpResponses2xx;
-            chartData["HTTP 3xx"][timestamp] = entry.HttpResponses3xx;
-            chartData["HTTP 4xx"][timestamp] = entry.HttpResponses4xx;
-            chartData["HTTP 5xx"][timestamp] = entry.HttpResponses5xx;
-            chartData["HTTP Other"][timestamp] = entry.HttpResponsesOther;
+            chartData["Bytes in"][timestamp] = entry.BytesIn;
+            chartData["Bytes out"][timestamp] = entry.BytesOut;
+
+            if (includeHttpMetrics)
+            {
+                chartData["Requests"][timestamp] = entry.Requests;
+                chartData["HTTP 1xx"][timestamp] = entry.HttpResponses1xx;
+                chartData["HTTP 2xx"][timestamp] = entry.HttpResponses2xx;
+                chartData["HTTP 3xx"][timestamp] = entry.HttpResponses3xx;
+                chartData["HTTP 4xx"][timestamp] = entry.HttpResponses4xx;
+                chartData["HTTP 5xx"][timestamp] = entry.HttpResponses5xx;
+                chartData["HTTP Other"][timestamp] = entry.HttpResponsesOther;
+            }
         }
 
         foreach(var datapoint in chartData)
