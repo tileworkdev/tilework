@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
@@ -96,32 +97,32 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
     private async Task CheckRunSetup()
     {
-        var service = await GetApiService();
-        for(int i=0; i<5; i++)
+        var initialized = await IsInitialized();
+
+        if(!initialized)
         {
-            try
-            {
-                var resp = await service.ApiGet<SetupResponse>("/setup");
-
-                if(resp.Allowed == true)
-                {
-                    var container = await GetContainer(_defaultName);
-
-                    await _tokenService.DeleteToken(GetFullName(_defaultName));
-
-                    await GetAdminToken();
-                }
-                break;
-            }
-            catch
-            {
-                await Task.Delay(2000);
-                continue;
-            }
+            await _tokenService.DeleteToken(GetFullName(_defaultName));
+            await GetAdminToken();
         }
     }
 
+    private async Task<bool> IsInitialized()
+    {
+        var container = await GetContainer(_defaultName);
+        var result = await _containerManager.ExecuteContainerCommand(
+            container.Id, "test -e /etc/influxdb2/influx-configs");
 
+        return result.ExitCode == 0;
+    }
+
+    private async Task InitializeDatabase(string token, string orgName)
+    {
+        var container = await GetContainer(_defaultName);
+        
+        await _containerManager.ExecuteContainerCommand(
+            container.Id,
+            $"influx setup --username admin --password \"{token}\" --org \"{orgName}\" --bucket tilework --token \"{token}\" --force");
+    }
 
     private async Task<HttpApiService> GetApiService()
     {
@@ -139,21 +140,67 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
     private async Task<string> GetAdminToken()
     {
         var container = await GetContainer(_defaultName);
-
         var token = await _tokenService.GetToken(GetFullName(_defaultName));
 
-        if(token == null)
+        if(token != null)
+            return token;
+
+        var initialized = await IsInitialized();
+        if(!initialized)
         {
             _logger.LogInformation("Generating a new admin token for influxdb2");
             token = TokenService.GenerateToken(16);
 
+            await InitializeDatabase(token, _orgName);
+            await _tokenService.SetToken(GetFullName(_defaultName), token);
+            return token;
+        }
+        else
+        {
+            token = await TryRecoverAdminToken();
+            await _tokenService.SetToken(GetFullName(_defaultName), token);
+            return token;
+        }
+    }
+
+    private async Task<string?> TryRecoverAdminToken()
+    {
+        var container = await GetContainer(_defaultName);
+
+        try
+        {
             var result = await _containerManager.ExecuteContainerCommand(
                 container.Id,
-                $"influx setup --username admin --password \"{token}\" --org \"{_orgName}\" --bucket tilework --token \"{token}\" --force");
+                "cat /etc/influxdb2/influx-configs");
+
+            if (result.ExitCode != 0 || string.IsNullOrWhiteSpace(result.Stdout))
+            {
+                _logger.LogWarning("Failed to read influxdb2 config for token recovery: {Error}", result.Stderr);
+                return null;
+            }
+
+            var token = ExtractTokenFromConfig(result.Stdout);
+            if (string.IsNullOrWhiteSpace(token))
+                return null;
 
             await _tokenService.SetToken(GetFullName(_defaultName), token);
+            _logger.LogInformation("Recovered admin token from influxdb2 config");
+            return token;
         }
-        return token;
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to recover admin token from influxdb2 config");
+            return null;
+        }
+    }
+
+    private static string? ExtractTokenFromConfig(string config)
+    {
+        if (string.IsNullOrWhiteSpace(config))
+            return null;
+
+        var match = Regex.Match(config, @"(?i)token\s*[:=]\s*""?([^\s""]+)""?");
+        return match.Success ? match.Groups[1].Value : null;
     }
 
     private async Task CheckCreateBucket(string orgName, string bucketName)
@@ -191,7 +238,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         return org[0].Id;
     }
 
-    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
         using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
 
@@ -201,6 +248,11 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         var stopStr = end.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
 
         var query = $"from(bucket: \"{module}\")\n  |> range(start: {startStr}, stop: {stopStr})";
+
+        var entryProperties = typeof(T)
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(p => p.CanWrite && p.Name != nameof(BaseMonitorData.Timestamp))
+            .ToArray();
 
         if (filters is { Count: > 0 })
         {
@@ -215,7 +267,18 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
             query += $"\n  |> filter(fn: (r) => {filtersCombined})";
         }
 
-        query += $"  |> aggregateWindow(every: {ToFluxDuration(interval)}, fn: sum, createEmpty: true)";
+        if (entryProperties.Length > 0)
+        {
+            var fieldFilters = entryProperties
+                .Select(property => $"r[\"_field\"] == \"{property.Name.ToLowerInvariant().Replace("\"", "\\\"")}\"");
+            var fieldsCombined = string.Join(" or ", fieldFilters);
+            query += $"\n  |> filter(fn: (r) => {fieldsCombined})";
+        }
+
+        if (interval.HasValue)
+        {
+            query += $"  |> aggregateWindow(every: {ToFluxDuration(interval.Value)}, fn: sum, createEmpty: true)";
+        }
 
 
 
@@ -223,11 +286,6 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
 
         if (fluxTables is null || fluxTables.Count == 0)
             return new List<T>();
-
-        var entryProperties = typeof(T)
-            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(p => p.CanWrite && p.Name != nameof(BaseMonitorData.Timestamp))
-            .ToArray();
 
         var entryPropertyNames = entryProperties
             .Select(property => property.Name.ToLower())
@@ -285,7 +343,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
     }
 
 
-    private static bool TryConvertFieldValue(object value, Type targetType, out object? convertedValue)
+    private bool TryConvertFieldValue(object value, Type targetType, out object? convertedValue)
     {
         var destinationType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
@@ -293,6 +351,39 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
         {
             convertedValue = value;
             return true;
+        }
+
+        if (destinationType.IsEnum)
+        {
+            if (value is string stringValue)
+            {
+                try
+                {
+                    convertedValue = _mapper.Map(stringValue, stringValue.GetType(), destinationType);
+                    return true;
+                }
+                catch
+                {
+                    if (Enum.TryParse(destinationType, stringValue, ignoreCase: true, out var parsedValue))
+                    {
+                        convertedValue = parsedValue;
+                        return true;
+                    }
+                }
+            }
+
+            if (value is IConvertible)
+            {
+                try
+                {
+                    convertedValue = Enum.ToObject(destinationType, value);
+                    return true;
+                }
+                catch
+                {
+                    // Ignore conversion failures so other fields can still be processed.
+                }
+            }
         }
 
         if (value is IConvertible)

@@ -31,7 +31,7 @@
         <MudGrid>
             <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Type</MudText>
-                <MudText Typo="Typo.body2">@(_item is ApplicationLoadBalancerDTO appBalancer ? "Application" : "Network")</MudText>
+                <MudText Typo="Typo.body2">@(_item.Type == LoadBalancerType.APPLICATION ? "Application" : "Network")</MudText>
             </MudItem>
             <MudItem xs="4">
                 <MudText Typo="Typo.subtitle2">Status</MudText>
@@ -51,60 +51,57 @@
         </MudGrid>
     </DetailContent>
     <TabContent>
-        @if(_item is ApplicationLoadBalancerDTO appBalancer)
-        {
-            <MudTabPanel Text="Rules">
-                <MudDataGrid T="RuleDTO" Outlined="true" Items="_rules" Hover="true">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Rules</MudText>
-                        <MudSpacer />
-                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddRule">Add rule</MudButton>
-                    </ToolBarContent>
-                    <Columns>
-                        <TemplateColumn Title="Priority">
-                            <CellTemplate>
-                                <MudLink Href="@($"/lb/loadbalancers/{Id}/rules/{context.Item.Id}")" Underline="Underline.Hover">
-                                    @context.Item.Priority
-                                </MudLink>
-                            </CellTemplate>
-                        </TemplateColumn>
-                        <TemplateColumn Title="Conditions">
-                            <CellTemplate>
-                                @for (int i = 0; i < context.Item.Conditions.Count; i++)
-                                {
-                                    var condition = context.Item.Conditions[i];
+        <MudTabPanel Text="Rules">
+            <MudDataGrid T="RuleDTO" Outlined="true" Items="_rules" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Rules</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="AddRule">Add rule</MudButton>
+                </ToolBarContent>
+                <Columns>
+                    <TemplateColumn Title="Priority">
+                        <CellTemplate>
+                            <MudLink Href="@($"/lb/loadbalancers/{Id}/rules/{context.Item.Id}")" Underline="Underline.Hover">
+                                @context.Item.Priority
+                            </MudLink>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Conditions">
+                        <CellTemplate>
+                            @for (int i = 0; i < context.Item.Conditions.Count; i++)
+                            {
+                                var condition = context.Item.Conditions[i];
 
-                                    <div>
-                                        <strong>@condition.Type.GetDescription()</strong>
-                                        &#61;
-                                        @for (int j = 0; j < condition.Values.Count; j++)
-                                        {
-                                            @condition.Values[j]
-                                            @if (j != condition.Values.Count - 1)
-                                            {
-                                                <strong> OR </strong>
-                                            }
-                                        }
-                                    </div>
-
-                                    @if (i != context.Item.Conditions.Count - 1)
+                                <div>
+                                    <strong>@condition.Type.GetDescription()</strong>
+                                    &#61;
+                                    @for (int j = 0; j < condition.Values.Count; j++)
                                     {
-                                        <div><strong>AND</strong></div>
+                                        @condition.Values[j]
+                                        @if (j != condition.Values.Count - 1)
+                                        {
+                                            <strong> OR </strong>
+                                        }
                                     }
+                                </div>
+
+                                @if (i != context.Item.Conditions.Count - 1)
+                                {
+                                    <div><strong>AND</strong></div>
                                 }
-                            </CellTemplate>
-                        </TemplateColumn>
-                        <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup).Result.Name" Title="Target group" />
-                        <TemplateColumn CellClass="d-flex justify-end">
-                            <CellTemplate>
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditRule(context.Item))" />
-                                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteRule(context.Item))" />
-                            </CellTemplate>
-                        </TemplateColumn>
-                    </Columns>
-                </MudDataGrid>
-            </MudTabPanel>
-        }
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup).Result.Name" Title="Target group" />
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditRule(context.Item))" />
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => ConfirmDeleteRule(context.Item))" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudTabPanel>
         @if(_showCertificates)
         {
             <MudTabPanel Text="Certificates">
@@ -140,7 +137,7 @@
     [Parameter]
     public Guid Id { get; set; }
 
-    private BaseLoadBalancerDTO _item;
+    private LoadBalancerDTO _item;
     private List<RuleDTO> _rules = new();
     private List<CertificateDTO> _certificates = new();
     private bool _showCertificates;
@@ -163,9 +160,7 @@
             return;
         }
 
-        _showCertificates =
-            (_item is ApplicationLoadBalancerDTO alb && alb.Protocol == AlbProtocol.HTTPS) ||
-            (_item is NetworkLoadBalancerDTO nlb && nlb.Protocol == NlbProtocol.TLS);
+        _showCertificates = _item.Protocol == LoadBalancerProtocol.HTTPS || _item.Protocol == LoadBalancerProtocol.TLS;
 
         await GetRules();
         if(_showCertificates)
@@ -228,7 +223,8 @@
         rule.Priority = GetMaxRulePriority();
 
         parameters.Add(x => x.Rule, rule);
-        parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
+        parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
+        parameters.Add(x => x.Protocol, _item.Protocol);
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
@@ -236,28 +232,21 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            if(_item is ApplicationLoadBalancerDTO appBalancer)
+            try
             {
-                try
-                {
-                    if(rule.Priority < 0)
-                        rule.Priority = 0;
-                    if(rule.Priority > maxPriorty)
-                        rule.Priority = maxPriorty;
+                if(rule.Priority < 0)
+                    rule.Priority = 0;
+                if(rule.Priority > maxPriorty)
+                    rule.Priority = maxPriorty;
 
-                    await _loadBalancerService.AddRule(appBalancer, rule);
-                    await GetRules();
-                    await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
-                    _snackbar.Add("Rule added successfully!", Severity.Success);
-                }
-                catch(Exception ex)
-                {
-                    _snackbar.Add($"Failed to add rule: {ex.Message}", Severity.Error);
-                }
+                await _loadBalancerService.AddRule(_item, rule);
+                await GetRules();
+                await _loadBalancerService.ApplyConfiguration(_item.Id);
+                _snackbar.Add("Rule added successfully!", Severity.Success);
             }
-            else
+            catch(Exception ex)
             {
-                _snackbar.Add("Can only add rules to application load balancers", Severity.Error);
+                _snackbar.Add($"Failed to add rule: {ex.Message}", Severity.Error);
             }
         }
     }
@@ -281,7 +270,8 @@
 
         var parameters = new DialogParameters<RuleDialog>();
         parameters.Add(x => x.Rule, ruleEdit);
-        parameters.Add(x => x.TargetGroups, await GetAlbTargetGroups());
+        parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
+        parameters.Add(x => x.Protocol, _item.Protocol);
         parameters.Add(x => x.Title, "Edit rule");
         parameters.Add(x => x.ButtonText, "Save");
         parameters.Add(x => x.Icon, Icons.Material.Filled.Edit);
@@ -292,28 +282,21 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
-            if (_item is ApplicationLoadBalancerDTO appBalancer)
+            try
             {
-                try
-                {
-                    if(ruleEdit.Priority < 0)
-                        ruleEdit.Priority = 0;
-                    if(ruleEdit.Priority > maxPriorty)
-                        ruleEdit.Priority = maxPriorty;
+                if(ruleEdit.Priority < 0)
+                    ruleEdit.Priority = 0;
+                if(ruleEdit.Priority > maxPriorty)
+                    ruleEdit.Priority = maxPriorty;
 
-                    await _loadBalancerService.UpdateRule(appBalancer, ruleEdit);
-                    await GetRules();
-                    await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
-                    _snackbar.Add("Rule updated successfully!", Severity.Success);
-                }
-                catch(Exception ex)
-                {
-                    _snackbar.Add($"Failed to update rule: {ex.Message}", Severity.Error);
-                }
+                await _loadBalancerService.UpdateRule(_item, ruleEdit);
+                await GetRules();
+                await _loadBalancerService.ApplyConfiguration(_item.Id);
+                _snackbar.Add("Rule updated successfully!", Severity.Success);
             }
-            else
+            catch(Exception ex)
             {
-                _snackbar.Add("Can only edit rules on application load balancers", Severity.Error);
+                _snackbar.Add($"Failed to update rule: {ex.Message}", Severity.Error);
             }
         }
     }
@@ -329,11 +312,11 @@
 
         var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Delete", parameters, options);
         var result = await dialog.Result;
-        if (!result.Canceled && _item is ApplicationLoadBalancerDTO appBalancer)
+        if (!result.Canceled)
         {
-            await _loadBalancerService.RemoveRule(appBalancer, rule);
+            await _loadBalancerService.RemoveRule(_item, rule);
             await GetRules();
-            await _loadBalancerService.ApplyConfiguration(appBalancer.Id);
+            await _loadBalancerService.ApplyConfiguration(_item.Id);
         }
     }
 
@@ -381,13 +364,25 @@
         return all.Where(c => !installed.Select(ic => ic.Id).Contains(c.Id)).ToList();
     }
 
-    private async Task<List<TargetGroupDTO>> GetAlbTargetGroups()
+    private async Task<List<TargetGroupDTO>> GetRuleTargetGroups()
     {
-        var protocols = new List<TargetGroupProtocol> {
-            TargetGroupProtocol.HTTP,
-            TargetGroupProtocol.HTTPS
-        };
-        return (await _loadBalancerService.GetTargetGroups()).Where(tg => protocols.Contains(tg.Protocol)).ToList();
+        var protocols = _item.Type == LoadBalancerType.NETWORK
+            ? new List<TargetGroupProtocol>
+            {
+                TargetGroupProtocol.TCP,
+                TargetGroupProtocol.UDP,
+                TargetGroupProtocol.TCP_UDP,
+                TargetGroupProtocol.TLS
+            }
+            : new List<TargetGroupProtocol>
+            {
+                TargetGroupProtocol.HTTP,
+                TargetGroupProtocol.HTTPS
+            };
+
+        return (await _loadBalancerService.GetTargetGroups())
+            .Where(tg => protocols.Contains(tg.Protocol))
+            .ToList();
     }
 
     private async Task Enable()
@@ -435,10 +430,7 @@
 
     private async Task GetRules()
     {
-        if(_item is ApplicationLoadBalancerDTO appBalancer)
-        {
-            _rules = await _loadBalancerService.GetRules(appBalancer);
-        }
+        _rules = await _loadBalancerService.GetRules(_item);
     }
 
     private async Task GetCertificates()

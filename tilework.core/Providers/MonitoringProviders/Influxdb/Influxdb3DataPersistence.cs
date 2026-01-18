@@ -115,7 +115,7 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
         return token;
     }
 
-    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
+    public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
         // This method has not been maintained and tested. Disable it for now
         throw new NotImplementedException();
