@@ -23,7 +23,7 @@ public class Server
     public override string ToString()
     {
         var checkStr = Check == true ? "check" : "";
-        var tlsStr = Tls == true ? "ssl verify required" : "";
+        var tlsStr = Tls == true ? "ssl verify none" : "";
         return $"{Name} {Address}:{Port} {tlsStr} {checkStr}";
     }
 }
