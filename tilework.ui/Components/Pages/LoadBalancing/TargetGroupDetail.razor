@@ -17,6 +17,12 @@
 {
     <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
         <DetailContent>
+            <MudGrid>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Protocol</MudText>
+                    <MudText Typo="Typo.body2">@_item.Protocol</MudText>
+                </MudItem>
+            </MudGrid>
         </DetailContent>
         <TabContent>
             <MudTabPanel Text="Targets">
