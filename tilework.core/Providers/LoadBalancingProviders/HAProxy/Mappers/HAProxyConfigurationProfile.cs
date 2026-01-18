@@ -93,6 +93,7 @@ public class HAProxyConfigurationProfile : Profile
                     Address = target.Host.Value,
                     Port = target.Port,
                     Check = true,
+                    Tls = src.Protocol == TargetGroupProtocol.HTTPS || src.Protocol == TargetGroupProtocol.TLS
                 }).ToList();
             });
     }

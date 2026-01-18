@@ -6,6 +6,7 @@ public class Server
     public string Address { get; set; }
     public int Port { get; set; }
     public bool Check { get; set; }
+    public bool Tls { get; set; }
 
     public Server() {}
 
@@ -22,6 +23,7 @@ public class Server
     public override string ToString()
     {
         var checkStr = Check == true ? "check" : "";
-        return $"{Name} {Address}:{Port} {checkStr}";
+        var tlsStr = Tls == true ? "ssl verify required" : "";
+        return $"{Name} {Address}:{Port} {tlsStr} {checkStr}";
     }
 }
