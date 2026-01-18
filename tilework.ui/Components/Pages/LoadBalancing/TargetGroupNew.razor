@@ -1,3 +1,5 @@
+@using System.Linq
+@using Tilework.Core.Enums
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Models
 @using Tilework.LoadBalancing.Interfaces
@@ -31,6 +33,12 @@
         new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
     };
 
+    protected override Task OnInitializedAsync()
+    {
+        ConfigureProtocolOptions();
+        return Task.CompletedTask;
+    }
+
     private async Task Submit()
     {
         try
@@ -44,5 +52,20 @@
         {
             _snackbar.Add($"Failed to add target group: {ex.Message}", Severity.Error);
         }
+    }
+
+    private void ConfigureProtocolOptions()
+    {
+        var allowed = TargetGroupProtocolRules.GetAllowedProtocols();
+        var options = allowed.Select(protocol => new SelectOptionItem
+        {
+            Value = protocol,
+            Text = protocol.GetDescription()
+        }).ToList();
+
+        form.SetOptions(nameof(NewTargetGroupForm.Protocol), options);
+
+        if (!allowed.Contains(form.Protocol))
+            form.Protocol = allowed[0];
     }
 }

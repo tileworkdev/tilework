@@ -366,19 +366,7 @@
 
     private async Task<List<TargetGroupDTO>> GetRuleTargetGroups()
     {
-        var protocols = _item.Type == LoadBalancerType.NETWORK
-            ? new List<TargetGroupProtocol>
-            {
-                TargetGroupProtocol.TCP,
-                TargetGroupProtocol.UDP,
-                TargetGroupProtocol.TCP_UDP,
-                TargetGroupProtocol.TLS
-            }
-            : new List<TargetGroupProtocol>
-            {
-                TargetGroupProtocol.HTTP,
-                TargetGroupProtocol.HTTPS
-            };
+        var protocols = TargetGroupProtocolRules.GetAllowedProtocols(_item.Type);
 
         return (await _loadBalancerService.GetTargetGroups())
             .Where(tg => protocols.Contains(tg.Protocol))
