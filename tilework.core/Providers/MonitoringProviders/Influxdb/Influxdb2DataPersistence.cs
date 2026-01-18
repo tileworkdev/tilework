@@ -119,7 +119,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
     {
         var container = await GetContainer(_defaultName);
         
-        var result = await _containerManager.ExecuteContainerCommand(
+        await _containerManager.ExecuteContainerCommand(
             container.Id,
             $"influx setup --username admin --password \"{token}\" --org \"{orgName}\" --bucket tilework --token \"{token}\" --force");
     }
