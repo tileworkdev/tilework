@@ -1,6 +1,7 @@
 @using Tilework.IdentityManagement.Models
 @using Tilework.IdentityManagement.Services
 @using Tilework.Ui.Services
+@using Tilework.Ui.Utilities
 
 @namespace Tilework.Ui.Components.Pages
 @inject UserService _userService
@@ -36,8 +37,8 @@
             }
             </MudStack>
         </MudTd>
-        <MudTd DataLabel="Last login">@_browserTimezoneProvider.Localize(context.LastLoginAtUtc)</MudTd>
-        <MudTd DataLabel="Creation time">@_browserTimezoneProvider.Localize(context.CreatedAtUtc)</MudTd>
+        <MudTd DataLabel="Last login">@DateTimeFormatting.FormatTimestamp(_browserTimezoneProvider.Localize(context.LastLoginAtUtc))</MudTd>
+        <MudTd DataLabel="Creation time">@DateTimeFormatting.FormatTimestamp(_browserTimezoneProvider.Localize(context.CreatedAtUtc))</MudTd>
     </RowContent>
 </GenericListview>
 

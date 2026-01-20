@@ -2,6 +2,8 @@
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Enums
 @using Tilework.Core.Enums
+@using Tilework.Ui.Services
+@using Tilework.Ui.Utilities
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -9,6 +11,7 @@
 @inject NavigationManager _navigationManager
 @inject IDialogService _dialogService
 @inject ISnackbar _snackbar
+@inject IBrowserTimeZoneProvider _browserTimezoneProvider
 
 @page "/cm/certificates/{Id:guid}"
 
@@ -24,7 +27,7 @@
                 </MudItem>
                 <MudItem xs="4">
                     <MudText Typo="Typo.subtitle2">Not before</MudText>
-                    <MudText Typo="Typo.body2">@_item.CertificateData[0].NotBefore</MudText>
+                    <MudText Typo="Typo.body2">@DateTimeFormatting.FormatTimestamp(_browserTimezoneProvider.Localize(new DateTimeOffset(_item.CertificateData[0].NotBefore.ToUniversalTime())))</MudText>
                 </MudItem>
                 <MudItem xs="4">
                     <MudText Typo="Typo.subtitle2">Key algorithm</MudText>
@@ -36,7 +39,7 @@
                 </MudItem>
                 <MudItem xs="4">
                     <MudText Typo="Typo.subtitle2">Expires at</MudText>
-                    <MudText Typo="Typo.body2">@_item.ExpiresAtUtc</MudText>
+                    <MudText Typo="Typo.body2">@DateTimeFormatting.FormatTimestamp(_browserTimezoneProvider.Localize(_item.ExpiresAtUtc))</MudText>
                 </MudItem>
                 <MudItem xs="4">
                     <MudText Typo="Typo.subtitle2">Serial number</MudText>
@@ -123,6 +126,9 @@
             _navigationManager.NavigateTo("/cm/certificates");
             return;
         }
+
+        await _browserTimezoneProvider.Initialize();
+        StateHasChanged();
     }
 
     private async Task ConfirmRevoke()

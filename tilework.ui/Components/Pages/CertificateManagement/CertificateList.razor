@@ -2,12 +2,15 @@
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Enums
 @using Tilework.Core.Enums
+@using Tilework.Ui.Services
+@using Tilework.Ui.Utilities
 
 
 @namespace Tilework.Ui.Components.Pages
 
 @inject ICertificateManagementService _certificateManagementService
 @inject NavigationManager _navigationManager
+@inject IBrowserTimeZoneProvider _browserTimezoneProvider
 
 
 @page "/cm/certificates"
@@ -52,7 +55,7 @@
             </MudStack>
         </MudTd>
         <MudTd DataLabel="Key algorithm">@_certificateManagementService.GetPrivateKey(context.PrivateKey).Result?.Algorithm.GetDescription()</MudTd>
-        <MudTd DataLabel="Expiration">@context.ExpiresAtUtc</MudTd>
+        <MudTd DataLabel="Expiration">@DateTimeFormatting.FormatTimestamp(_browserTimezoneProvider.Localize(context.ExpiresAtUtc))</MudTd>
         <MudTd DataLabel="Intermediate certificates">@(context.CertificateData.Count > 0 ? context.CertificateData.Count - 1 : 0)</MudTd>
         <MudTd DataLabel="CA">@_certificateManagementService.GeCertificateAuthority(context.Authority).Result?.Name</MudTd>
     </RowContent>
@@ -75,5 +78,14 @@
     protected override async Task OnInitializedAsync()
     {
         _items = await _certificateManagementService.GetCertificates();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _browserTimezoneProvider.Initialize();
+            StateHasChanged();
+        }
     }
 }    
