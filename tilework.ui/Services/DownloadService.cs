@@ -25,7 +25,7 @@ public sealed class DownloadService
         if (stream.CanSeek)
             stream.Position = 0;
 
-        await using var streamRef = new DotNetStreamReference(stream);
+        using var streamRef = new DotNetStreamReference(stream);
         await _jsRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, contentType, streamRef);
 
         if (!leaveOpen)
