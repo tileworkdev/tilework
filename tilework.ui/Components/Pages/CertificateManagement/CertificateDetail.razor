@@ -1,3 +1,6 @@
+@using System.Security.Cryptography
+@using System.Security.Cryptography.X509Certificates
+@using System.Text
 @using Tilework.CertificateManagement.Models
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Enums
@@ -12,6 +15,7 @@
 @inject IDialogService _dialogService
 @inject ISnackbar _snackbar
 @inject IBrowserTimeZoneProvider _browserTimezoneProvider
+@inject DownloadService _downloadService
 
 @page "/cm/certificates/{Id:guid}"
 
@@ -206,10 +210,47 @@
         }
     }
 
+    private async Task DownloadBundle()
+    {
+        if (_item == null || _item.CertificateData == null || _item.CertificateData.Count == 0)
+        {
+            _snackbar.Add("No certificate chain available to download.", Severity.Warning);
+            return;
+        }
+
+        var bundle = new StringBuilder();
+        foreach (var cert in _item.CertificateData)
+        {
+            var der = cert.Export(X509ContentType.Cert);
+            var pem = PemEncoding.Write("CERTIFICATE", der);
+            bundle.AppendLine(new string(pem));
+        }
+
+        var fileName = $"{SanitizeFileName(_item.Name)}.pem";
+        var data = Encoding.UTF8.GetBytes(bundle.ToString());
+        await _downloadService.DownloadAsync(fileName, "application/x-pem-file", data);
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "certificate";
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new StringBuilder(name.Length);
+        foreach (var ch in name)
+        {
+            sanitized.Append(invalidChars.Contains(ch) ? '_' : ch);
+        }
+
+        return sanitized.ToString();
+    }
+
     private void SetActions()
     {
         _actions = new List<ActionItem>();
 
+        _actions.Add(new ActionItem() { Name = "Download", OnClick = DownloadBundle });
         _actions.Add(new ActionItem() { Name = "Renew", OnClick = ConfirmRenew });
 
         if(_item.Status == CertificateStatus.ACTIVE)

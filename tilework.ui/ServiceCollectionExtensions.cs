@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddAutoMapper(typeof(FormMappingProfile));
         services.AddScoped<IBrowserTimeZoneProvider, BrowserTimeZoneProvider>();
+        services.AddScoped<DownloadService>();
 
         return services;
     }
