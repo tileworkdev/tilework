@@ -61,9 +61,7 @@
                 <Columns>
                     <TemplateColumn Title="Priority">
                         <CellTemplate>
-                            <MudLink Href="@($"/lb/loadbalancers/{Id}/rules/{context.Item.Id}")" Underline="Underline.Hover">
-                                @context.Item.Priority
-                            </MudLink>
+                            @context.Item.Priority
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Conditions">
