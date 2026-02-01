@@ -15,12 +15,6 @@
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
-            @if (!AllowedConditionTypes.Any())
-            {
-                <MudText Typo="Typo.body2" Class="mb-2">
-                    This protocol does not support rule conditions.
-                </MudText>
-            }
             @foreach (var condition in Rule.Conditions)
             {
                 <ConditionForm Condition="condition"
@@ -30,9 +24,11 @@
             <MudStack AlignItems="AlignItems.Start" Row>
                 <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
                     <ActivatorContent>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-                            Add condition
-                        </MudButton>
+                        <MudTooltip Disabled="@(CanAddCondition)" Text="This protocol does not support rule conditions.">
+                            <MudButton Disabled="@(!CanAddCondition)" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+                                Add condition
+                            </MudButton>
+                        </MudTooltip>
                     </ActivatorContent>
                     <ChildContent>
                         @foreach (var type in AvailableConditionTypes)
@@ -42,7 +38,6 @@
                     </ChildContent>
                 </MudMenu>
             </MudStack>
-
             <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
 
             <MudSelect T="Guid?" @bind-Value="SelectedTargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
