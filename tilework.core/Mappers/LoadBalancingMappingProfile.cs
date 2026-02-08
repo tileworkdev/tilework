@@ -27,10 +27,12 @@ public class LoadBalancingMappingProfile : Profile
 
         CreateMap<Rule, RuleDTO>()
             .ForMember(dest => dest.LoadBalancer, opt => opt.MapFrom(src => src.LoadBalancerId))
-            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroupId));
+            .ForMember(dest => dest.TargetGroup, opt => opt.MapFrom(src => src.TargetGroupId))
+            .ForMember(dest => dest.Action, opt => opt.MapFrom(src => src.Action ?? new RuleAction()));
         CreateMap<RuleDTO, Rule>()
             .ForMember(dest => dest.LoadBalancerId, opt => opt.MapFrom(src => src.LoadBalancer))
             .ForMember(dest => dest.TargetGroupId, opt => opt.MapFrom(src => src.TargetGroup))
+            .ForMember(dest => dest.Action, opt => opt.MapFrom(src => src.Action ?? new RuleAction()))
             .ForMember(dest => dest.LoadBalancer, opt => opt.Ignore())
             .ForMember(dest => dest.TargetGroup, opt => opt.Ignore());
     }

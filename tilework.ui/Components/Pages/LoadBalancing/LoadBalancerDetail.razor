@@ -90,7 +90,30 @@
                             }
                         </CellTemplate>
                     </TemplateColumn>
-                    <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup).Result.Name" Title="Target group" />
+                    <TemplateColumn Title="Action">
+                        <CellTemplate>
+                            @if(context.Item.Action?.Type == RuleActionType.Forward)
+                            {
+                                var targetGroup = _loadBalancerService.GetTargetGroup(context.Item.TargetGroup.Value).Result;
+                                <span>Forward to <strong>@targetGroup.Name</strong></span>
+                            }
+                            else if(context.Item.Action?.Type == RuleActionType.Redirect)
+                            {
+                                <span>
+                                    Redirect <strong>@context.Item.Action?.RedirectStatusCode</strong>
+                                    to <strong>@context.Item.Action?.RedirectUrl</strong>
+                                </span>
+                            }
+                            else if(context.Item.Action?.Type == RuleActionType.FixedResponse)
+                            {
+                                <span>Fixed response <strong>@context.Item.Action?.FixedResponseStatusCode</strong></span>
+                            }
+                            else if(context.Item.Action?.Type == RuleActionType.Reject)
+                            {
+                                <span>Reject connection</span>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
                     <TemplateColumn CellClass="d-flex justify-end">
                         <CellTemplate>
                             <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditRule(context.Item))" />
@@ -223,6 +246,7 @@
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
         parameters.Add(x => x.Protocol, _item.Protocol);
+        parameters.Add(x => x.Type, _item.Type);
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
@@ -259,6 +283,15 @@
             Priority = rule.Priority,
             LoadBalancer = rule.LoadBalancer,
             TargetGroup = rule.TargetGroup,
+            Action = new RuleAction
+            {
+                Type = rule.Action.Type,
+                RedirectUrl = rule.Action.RedirectUrl,
+                RedirectStatusCode = rule.Action.RedirectStatusCode,
+                FixedResponseStatusCode = rule.Action.FixedResponseStatusCode,
+                FixedResponseContentType = rule.Action.FixedResponseContentType,
+                FixedResponseBody = rule.Action.FixedResponseBody
+            },
             Conditions = rule.Conditions.Select(c => new Condition
             {
                 Type = c.Type,
@@ -270,6 +303,7 @@
         parameters.Add(x => x.Rule, ruleEdit);
         parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
         parameters.Add(x => x.Protocol, _item.Protocol);
+        parameters.Add(x => x.Type, _item.Type);
         parameters.Add(x => x.Title, "Edit rule");
         parameters.Add(x => x.ButtonText, "Save");
         parameters.Add(x => x.Icon, Icons.Material.Filled.Edit);

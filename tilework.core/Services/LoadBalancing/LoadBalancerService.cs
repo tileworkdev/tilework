@@ -88,6 +88,66 @@ public class LoadBalancerService : ILoadBalancerService
             nameof(rule));
     }
 
+    private static void EnsureRuleActionAllowed(LoadBalancer balancer, RuleDTO rule)
+    {
+        if (rule.Action == null)
+        {
+            rule.Action = new RuleAction();
+        }
+
+        if (!LoadBalancerActionRules.IsAllowed(balancer.Type, rule.Action.Type))
+        {
+            throw new ArgumentException(
+                $"Rule action {rule.Action.Type} is not valid for load balancer type {balancer.Type}",
+                nameof(rule));
+        }
+
+        switch (rule.Action.Type)
+        {
+            case RuleActionType.Forward:
+                if (rule.TargetGroup == null || rule.TargetGroup == Guid.Empty)
+                {
+                    throw new ArgumentException("Forward actions require a target group.", nameof(rule));
+                }
+                break;
+            case RuleActionType.Redirect:
+                rule.TargetGroup = null;
+                if (string.IsNullOrWhiteSpace(rule.Action.RedirectUrl))
+                {
+                    throw new ArgumentException("Redirect actions require a destination URL.", nameof(rule));
+                }
+                if (rule.Action.RedirectStatusCode == null)
+                {
+                    rule.Action.RedirectStatusCode = 302;
+                }
+                else if (rule.Action.RedirectStatusCode < 300 || rule.Action.RedirectStatusCode > 399)
+                {
+                    throw new ArgumentException("Redirect status code must be in the 300-399 range.", nameof(rule));
+                }
+                break;
+            case RuleActionType.FixedResponse:
+                rule.TargetGroup = null;
+                if (rule.Action.FixedResponseStatusCode == null)
+                {
+                    rule.Action.FixedResponseStatusCode = 200;
+                }
+                else if (rule.Action.FixedResponseStatusCode < 100 || rule.Action.FixedResponseStatusCode > 599)
+                {
+                    throw new ArgumentException("Fixed response status code must be in the 100-599 range.", nameof(rule));
+                }
+                if (string.IsNullOrWhiteSpace(rule.Action.FixedResponseContentType))
+                {
+                    rule.Action.FixedResponseContentType = "text/plain";
+                }
+                break;
+            case RuleActionType.Reject:
+                rule.TargetGroup = null;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(rule.Action.Type), rule.Action.Type, "Unknown rule action type.");
+        }
+    }
+
     private static bool RequiresCertificate(LoadBalancer balancer)
     {
         return balancer.Protocol == LoadBalancerProtocol.HTTPS || balancer.Protocol == LoadBalancerProtocol.TLS;
@@ -208,6 +268,7 @@ public class LoadBalancerService : ILoadBalancerService
 
         ValidateRulePriority(entity.Rules, rule.Priority);
         EnsureRuleConditionsAllowed(entity, rule);
+        EnsureRuleActionAllowed(entity, rule);
         
         foreach (var existingRule in entity.Rules.Where(r => r.Priority >= rule.Priority))
         {
@@ -231,6 +292,7 @@ public class LoadBalancerService : ILoadBalancerService
 
         ValidateRulePriority(entity.Rules, rule.Priority);
         EnsureRuleConditionsAllowed(entity, rule);
+        EnsureRuleActionAllowed(entity, rule);
 
         await using var tx = await _dbContext.Database.BeginTransactionAsync();
 

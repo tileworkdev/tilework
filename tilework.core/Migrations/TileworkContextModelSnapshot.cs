@@ -363,7 +363,7 @@ namespace tilework.core.Migrations
                     b.Property<int>("Priority")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("TargetGroupId")
+                    b.Property<Guid?>("TargetGroupId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -541,9 +541,7 @@ namespace tilework.core.Migrations
 
                     b.HasOne("Tilework.Persistence.LoadBalancing.Models.TargetGroup", "TargetGroup")
                         .WithMany()
-                        .HasForeignKey("TargetGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TargetGroupId");
 
                     b.OwnsMany("Tilework.LoadBalancing.Models.Condition", "Conditions", b1 =>
                         {
@@ -566,6 +564,35 @@ namespace tilework.core.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("RuleId");
                         });
+
+                    b.OwnsOne("Tilework.LoadBalancing.Models.RuleAction", "Action", b1 =>
+                        {
+                            b1.Property<Guid>("RuleId");
+
+                            b1.Property<string>("FixedResponseBody");
+
+                            b1.Property<string>("FixedResponseContentType");
+
+                            b1.Property<int?>("FixedResponseStatusCode");
+
+                            b1.Property<int?>("RedirectStatusCode");
+
+                            b1.Property<string>("RedirectUrl");
+
+                            b1.Property<int>("Type");
+
+                            b1.HasKey("RuleId");
+
+                            b1.ToTable("Rules");
+
+                            b1.ToJson("Action");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RuleId");
+                        });
+
+                    b.Navigation("Action")
+                        .IsRequired();
 
                     b.Navigation("Conditions");
 

@@ -40,12 +40,33 @@
             </MudStack>
             <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
 
-            <MudSelect T="Guid?" @bind-Value="SelectedTargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                @foreach (var group in TargetGroups)
+            <MudSelect T="RuleActionType" @bind-Value="Rule.Action.Type" Label="Action" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true" Class="mb-4">
+                @foreach (var type in AllowedActionTypes)
                 {
-                    <MudSelectItem T="Guid?" Value="@group.Id">@group.Name</MudSelectItem>
+                    <MudSelectItem T="RuleActionType" Value="@type">@type.GetDescription()</MudSelectItem>
                 }
             </MudSelect>
+
+            @if (Rule.Action?.Type == RuleActionType.Forward)
+            {
+                <MudSelect T="Guid?" @bind-Value="SelectedTargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                    @foreach (var group in TargetGroups)
+                    {
+                        <MudSelectItem T="Guid?" Value="@group.Id">@group.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else if (Rule.Action?.Type == RuleActionType.Redirect)
+            {
+                <MudTextField T="string" @bind-Value="Rule.Action.RedirectUrl" Label="Redirect URL" Variant="Variant.Outlined" Required="true" Class="mb-4" />
+                <MudNumericField T="int?" @bind-Value="Rule.Action.RedirectStatusCode" Label="Redirect status code" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" />
+            }
+            else if (Rule.Action?.Type == RuleActionType.FixedResponse)
+            {
+                <MudNumericField T="int?" @bind-Value="Rule.Action.FixedResponseStatusCode" Label="Response status code" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
+                <MudTextField T="string" @bind-Value="Rule.Action.FixedResponseContentType" Label="Content type" Variant="Variant.Outlined" Class="mb-4" />
+                <MudTextField T="string" @bind-Value="Rule.Action.FixedResponseBody" Label="Response body" Variant="Variant.Outlined" Lines="3" />
+            }
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -60,6 +81,7 @@
     [Parameter] public RuleDTO Rule { get; set; } = new();
     [Parameter] public List<TargetGroupDTO> TargetGroups { get; set; } = new();
     [Parameter] public LoadBalancerProtocol Protocol { get; set; }
+    [Parameter] public LoadBalancerType Type { get; set; }
     [Parameter] public string Title { get; set; } = "Add rule";
     [Parameter] public string ButtonText { get; set; } = "Add";
     [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Add;
@@ -70,11 +92,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (Rule.TargetGroup != Guid.Empty)
-        {
-            SelectedTargetGroup = Rule.TargetGroup;
-        }
-
+        SelectedTargetGroup = Rule.TargetGroup;
         await base.OnInitializedAsync();
     }
 
@@ -84,7 +102,14 @@
 
         if (form.IsValid)
         {
-            Rule.TargetGroup = (Guid) SelectedTargetGroup!;
+            if (Rule.Action?.Type == RuleActionType.Forward)
+            {
+                Rule.TargetGroup = (Guid) SelectedTargetGroup!;
+            }
+            else
+            {
+                Rule.TargetGroup = null;
+            }
             MudDialog.Close(DialogResult.Ok(true));
         }
     }
@@ -92,6 +117,7 @@
     void Cancel() => MudDialog.Cancel();
 
     IEnumerable<ConditionType> AllowedConditionTypes => LoadBalancerConditionRules.GetAllowedConditions(Protocol);
+    IEnumerable<RuleActionType> AllowedActionTypes => LoadBalancerActionRules.GetAllowedActions(Type);
 
     IEnumerable<ConditionType> AvailableConditionTypes =>
         AllowedConditionTypes.Except(Rule.Conditions.Select(c => c.Type));
