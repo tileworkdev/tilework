@@ -134,16 +134,17 @@ public class DockerServiceManager : IContainerManager
 
     public async Task<IPAddress?> GetContainerAddress(string id)
     {
+        return await GetContainerAddress(id, defaultNetworkName);
+    }
 
+    public async Task<IPAddress?> GetContainerAddress(string id, string networkName)
+    {
         var info = await _client.Containers.InspectContainerAsync(id);
 
         if (info.NetworkSettings.Networks.Count == 0)
             return null;
 
-        if (info.NetworkSettings.Networks.Count > 1)
-            _logger.LogWarning("Container is attached on multiple networks. Getting address on first");
-
-        var network = info.NetworkSettings.Networks.First();
+        var network = info.NetworkSettings.Networks.First(n => n.Key == networkName);
 
         return IPAddress.Parse(network.Value.IPAddress);
     }

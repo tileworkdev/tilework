@@ -13,7 +13,8 @@ public interface IContainerManager
     public Task<ContainerNetwork> CreateNetwork(string name);
     public Task DeleteNetwork(string id);
 
-    public Task<IPAddress> GetContainerAddress(string id);
+    public Task<IPAddress?> GetContainerAddress(string id);
+    public Task<IPAddress?> GetContainerAddress(string id, string networkName);
     public Task<List<ContainerPort>> GetContainerPorts(string id);
 
     public Task<List<Container>> ListContainers(string? module);
