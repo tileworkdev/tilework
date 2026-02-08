@@ -47,6 +47,12 @@ public class TileworkContext : IdentityDbContext<User, Role, Guid>
                 b.ToJson();
             });
 
+        modelBuilder.Entity<Rule>()
+            .OwnsOne(r => r.Action, b =>
+            {
+                b.ToJson();
+            });
+
         modelBuilder.Entity<Target>()
             .Property(e => e.Host)
             .HasConversion(

@@ -10,11 +10,12 @@ public class Rule
     public Guid Id { get; set; }
     public int Priority { get; set; }
 
-    public Guid TargetGroupId { get; set; }
-    public virtual TargetGroup TargetGroup { get; set; }
+    public Guid? TargetGroupId { get; set; }
+    public virtual TargetGroup? TargetGroup { get; set; }
 
     public Guid LoadBalancerId { get; set; }
     public virtual LoadBalancer LoadBalancer { get; set; }
 
     public List<Condition> Conditions { get; set; } = new();
+    public RuleAction Action { get; set; } = new();
 }

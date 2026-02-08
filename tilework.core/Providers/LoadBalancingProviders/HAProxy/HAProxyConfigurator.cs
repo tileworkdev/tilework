@@ -8,6 +8,7 @@ using AutoMapper;
 
 using Tilework.LoadBalancing.Interfaces;
 using Tilework.LoadBalancing.Models;
+using Tilework.LoadBalancing.Enums;
 
 using Tilework.Core.Interfaces;
 using Tilework.Core.Enums;
@@ -67,7 +68,12 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         haproxyConfig.Frontends.Add(fe);
 
 
-        var targetGroups = balancer.Rules != null ? balancer.Rules.Select(r => r.TargetGroup).ToList() : new List<TargetGroup>();
+        var targetGroups = balancer.Rules?
+            .Where(r => r.Action!.Type == RuleActionType.Forward)
+            .Select(r => r.TargetGroup)
+            .Where(tg => tg != null)
+            .Select(tg => tg!)
+            .ToList() ?? new List<TargetGroup>();
 
 
         haproxyConfig.Backends = targetGroups

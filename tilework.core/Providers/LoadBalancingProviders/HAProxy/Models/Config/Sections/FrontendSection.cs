@@ -11,6 +11,12 @@ public class FrontendSection : ConfigSection
     [Statement("acl")]
     public List<Acl> Acls { get; set; } = new List<Acl>();
 
+    [Statement("http-request")]
+    public List<HttpRequest> HttpRequests { get; set; } = new List<HttpRequest>();
+
+    [Statement("tcp-request")]
+    public List<TcpRequest> TcpRequests { get; set; } = new List<TcpRequest>();
+
     [Statement("use_backend")]
     public List<UseBackend> UseBackends { get; set; } = new List<UseBackend>();
 
