@@ -35,8 +35,8 @@ else if(form is NewPredefinedAcmeCertificateAuthorityForm pdAcmeForm)
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Certificate authorities", href: "/cm/authorities", icon: Icons.Material.Filled.AltRoute),
-        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Certificate authorities", href: "/cm/authorities", icon: Icons.Material.Filled.AccountBalance),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Outlined.AddCircleOutline)
     };
 
     private static Type GetFormType(CertificateAuthorityType type)
