@@ -1,3 +1,5 @@
+@using System.Linq
+@using Tilework.Core.Enums
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Models
 @using Tilework.LoadBalancing.Interfaces
@@ -27,9 +29,15 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute),
-        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.Storage),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Outlined.AddCircleOutline)
     };
+
+    protected override Task OnInitializedAsync()
+    {
+        ConfigureProtocolOptions();
+        return Task.CompletedTask;
+    }
 
     private async Task Submit()
     {
@@ -44,5 +52,20 @@
         {
             _snackbar.Add($"Failed to add target group: {ex.Message}", Severity.Error);
         }
+    }
+
+    private void ConfigureProtocolOptions()
+    {
+        var allowed = TargetGroupProtocolRules.GetAllowedProtocols();
+        var options = allowed.Select(protocol => new SelectOptionItem
+        {
+            Value = protocol,
+            Text = protocol.GetDescription()
+        }).ToList();
+
+        form.SetOptions(nameof(NewTargetGroupForm.Protocol), options);
+
+        if (!allowed.Contains(form.Protocol))
+            form.Protocol = allowed[0];
     }
 }

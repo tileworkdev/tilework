@@ -56,12 +56,52 @@ public class HAProxyConfigurationProfile : Profile
 
                         dest.Acls.AddRange(acls);
 
-                        var usebe = new UseBackend()
+                        if (rule.Action == null)
+                            throw new InvalidOperationException($"Rule {rule.Id} is missing an action.");
+
+                        var actionType = rule.Action.Type;
+                        switch (actionType)
                         {
-                            Acls = acls.Select(a => a.Name).ToList(),
-                            Target = rule.TargetGroup.Id.ToString(),
-                        };
-                        dest.UseBackends.Add(usebe);
+                            case RuleActionType.Forward:
+                                var targetGroup = rule.TargetGroup;
+                                if (targetGroup != null)
+                                {
+                                    var usebe = new UseBackend()
+                                    {
+                                        Acls = acls.Select(a => a.Name).ToList(),
+                                        Target = targetGroup.Id.ToString(),
+                                    };
+                                    dest.UseBackends.Add(usebe);
+                                }
+                                break;
+                            case RuleActionType.Redirect:
+                                dest.HttpRequests.Add(new HttpRequest()
+                                {
+                                    ActionType = RuleActionType.Redirect,
+                                    RedirectUrl = rule.Action?.RedirectUrl,
+                                    RedirectStatusCode = rule.Action?.RedirectStatusCode,
+                                    Acls = acls.Select(a => a.Name).ToList()
+                                });
+                                break;
+                            case RuleActionType.FixedResponse:
+                                dest.HttpRequests.Add(new HttpRequest()
+                                {
+                                    ActionType = RuleActionType.FixedResponse,
+                                    FixedResponseStatusCode = rule.Action?.FixedResponseStatusCode,
+                                    FixedResponseContentType = rule.Action?.FixedResponseContentType,
+                                    FixedResponseBody = rule.Action?.FixedResponseBody,
+                                    Acls = acls.Select(a => a.Name).ToList()
+                                });
+                                break;
+                            case RuleActionType.Reject:
+                                dest.TcpRequests.Add(new TcpRequest()
+                                {
+                                    Acls = acls.Select(a => a.Name).ToList()
+                                });
+                                break;
+                            default:
+                                throw new NotSupportedException($"Unsupported rule action: {actionType}");
+                        }
                     }
                 }
             });
@@ -93,6 +133,7 @@ public class HAProxyConfigurationProfile : Profile
                     Address = target.Host.Value,
                     Port = target.Port,
                     Check = true,
+                    Tls = src.Protocol == TargetGroupProtocol.HTTPS || src.Protocol == TargetGroupProtocol.TLS
                 }).ToList();
             });
     }

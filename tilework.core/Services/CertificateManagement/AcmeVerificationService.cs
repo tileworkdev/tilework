@@ -120,8 +120,9 @@ public class AcmeVerificationService
 
         var rule = new RuleDTO()
         {
-            TargetGroup = tg.Id,
             Priority = 0,
+            TargetGroup = tg.Id,
+            Action = new RuleAction { Type = RuleActionType.Forward },
             Conditions = new List<Condition>()
             {
                 new Condition() {
@@ -157,7 +158,9 @@ public class AcmeVerificationService
             var rules = await _loadBalancerService.GetRules(balancer);
             foreach (var rule in rules)
             {
-                var tg = targetGroups.FirstOrDefault(tg => tg.Id == rule.TargetGroup);
+                var tg = rule.TargetGroup == null
+                    ? null
+                    : targetGroups.FirstOrDefault(tg => tg.Id == rule.TargetGroup.Value);
                 if (tg != null && tg.Name == targetGroupName)
                 {
                     await _loadBalancerService.RemoveRule(balancer, rule);

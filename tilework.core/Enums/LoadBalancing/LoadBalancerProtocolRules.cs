@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Tilework.LoadBalancing.Enums;
@@ -13,8 +14,8 @@ public static class LoadBalancerProtocolRules
     private static readonly LoadBalancerProtocol[] NetworkProtocols =
     {
         LoadBalancerProtocol.TCP,
-        LoadBalancerProtocol.UDP,
-        LoadBalancerProtocol.TCP_UDP,
+        // LoadBalancerProtocol.UDP,
+        // LoadBalancerProtocol.TCP_UDP,
         LoadBalancerProtocol.TLS
     };
 

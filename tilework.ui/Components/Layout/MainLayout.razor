@@ -9,15 +9,20 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.subtitle2" Class="ml-3">Tilework</MudText>
         <MudSpacer />
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <AuthorizeView>
             <Authorized>
-                <MudText Typo="Typo.subtitle2" Class="mr-2">@context.User.Identity?.Name</MudText>
+            <MudMenu Label="@context.User.Identity?.Name" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter" Dense="true">
+                <MudMenuItem>
+                    <form method="post" action="/api/auth/logout">
+                        <MudButton ButtonType="ButtonType.Submit" StartIcon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Variant="Variant.Text" FullWidth="true">
+                            Logout
+                        </MudButton>
+                    </form>
+                </MudMenuItem>
+            </MudMenu>
             </Authorized>
         </AuthorizeView>
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-        <form method="post" action="/api/auth/logout" class="d-inline-flex mr-1">
-            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" ButtonType="ButtonType.Submit" Edge="Edge.End" />
-        </form>
     </MudAppBar>
     <MudDrawer Class="mud-height-full border-r border-solid mud-border-lines-default" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
         <NavMenu />

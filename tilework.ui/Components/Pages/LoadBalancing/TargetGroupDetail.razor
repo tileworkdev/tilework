@@ -17,6 +17,12 @@
 {
     <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
         <DetailContent>
+            <MudGrid>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.subtitle2">Protocol</MudText>
+                    <MudText Typo="Typo.body2">@_item.Protocol</MudText>
+                </MudItem>
+            </MudGrid>
         </DetailContent>
         <TabContent>
             <MudTabPanel Text="Targets">
@@ -77,7 +83,7 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.Storage)
     };
 
     private List<ActionItem> _actions = new List<ActionItem> {};

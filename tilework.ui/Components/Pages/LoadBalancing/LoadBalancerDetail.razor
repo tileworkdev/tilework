@@ -61,9 +61,7 @@
                 <Columns>
                     <TemplateColumn Title="Priority">
                         <CellTemplate>
-                            <MudLink Href="@($"/lb/loadbalancers/{Id}/rules/{context.Item.Id}")" Underline="Underline.Hover">
-                                @context.Item.Priority
-                            </MudLink>
+                            @context.Item.Priority
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Conditions">
@@ -92,7 +90,30 @@
                             }
                         </CellTemplate>
                     </TemplateColumn>
-                    <PropertyColumn Property="t => _loadBalancerService.GetTargetGroup(t.TargetGroup).Result.Name" Title="Target group" />
+                    <TemplateColumn Title="Action">
+                        <CellTemplate>
+                            @if(context.Item.Action?.Type == RuleActionType.Forward)
+                            {
+                                var targetGroup = _loadBalancerService.GetTargetGroup(context.Item.TargetGroup.Value).Result;
+                                <span>Forward to <strong>@targetGroup.Name</strong></span>
+                            }
+                            else if(context.Item.Action?.Type == RuleActionType.Redirect)
+                            {
+                                <span>
+                                    Redirect <strong>@context.Item.Action?.RedirectStatusCode</strong>
+                                    to <strong>@context.Item.Action?.RedirectUrl</strong>
+                                </span>
+                            }
+                            else if(context.Item.Action?.Type == RuleActionType.FixedResponse)
+                            {
+                                <span>Fixed response <strong>@context.Item.Action?.FixedResponseStatusCode</strong></span>
+                            }
+                            else if(context.Item.Action?.Type == RuleActionType.Reject)
+                            {
+                                <span>Reject connection</span>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
                     <TemplateColumn CellClass="d-flex justify-end">
                         <CellTemplate>
                             <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@(() => EditRule(context.Item))" />
@@ -225,6 +246,7 @@
         parameters.Add(x => x.Rule, rule);
         parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
         parameters.Add(x => x.Protocol, _item.Protocol);
+        parameters.Add(x => x.Type, _item.Type);
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
@@ -261,6 +283,15 @@
             Priority = rule.Priority,
             LoadBalancer = rule.LoadBalancer,
             TargetGroup = rule.TargetGroup,
+            Action = new RuleAction
+            {
+                Type = rule.Action.Type,
+                RedirectUrl = rule.Action.RedirectUrl,
+                RedirectStatusCode = rule.Action.RedirectStatusCode,
+                FixedResponseStatusCode = rule.Action.FixedResponseStatusCode,
+                FixedResponseContentType = rule.Action.FixedResponseContentType,
+                FixedResponseBody = rule.Action.FixedResponseBody
+            },
             Conditions = rule.Conditions.Select(c => new Condition
             {
                 Type = c.Type,
@@ -272,6 +303,7 @@
         parameters.Add(x => x.Rule, ruleEdit);
         parameters.Add(x => x.TargetGroups, await GetRuleTargetGroups());
         parameters.Add(x => x.Protocol, _item.Protocol);
+        parameters.Add(x => x.Type, _item.Type);
         parameters.Add(x => x.Title, "Edit rule");
         parameters.Add(x => x.ButtonText, "Save");
         parameters.Add(x => x.Icon, Icons.Material.Filled.Edit);
@@ -366,19 +398,7 @@
 
     private async Task<List<TargetGroupDTO>> GetRuleTargetGroups()
     {
-        var protocols = _item.Type == LoadBalancerType.NETWORK
-            ? new List<TargetGroupProtocol>
-            {
-                TargetGroupProtocol.TCP,
-                TargetGroupProtocol.UDP,
-                TargetGroupProtocol.TCP_UDP,
-                TargetGroupProtocol.TLS
-            }
-            : new List<TargetGroupProtocol>
-            {
-                TargetGroupProtocol.HTTP,
-                TargetGroupProtocol.HTTPS
-            };
+        var protocols = TargetGroupProtocolRules.GetAllowedProtocols(_item.Type);
 
         return (await _loadBalancerService.GetTargetGroups())
             .Where(tg => protocols.Contains(tg.Protocol))
@@ -441,33 +461,46 @@
     private async Task<List<TimeSeriesChartData>> LoadMonitoringCharts(DateTimeOffset from, DateTimeOffset to, TimeSpan interval)
     {
         var charts = new List<TimeSeriesChartData>();
+        var includeHttpMetrics = _item?.Type == LoadBalancerType.APPLICATION;
         List<LoadBalancingMonitorData>? data = await _loadBalancerService.GetLoadBalancerMonitoringData(_item.Id, interval, from, to)
             ?? new List<LoadBalancingMonitorData>();
 
         Dictionary<string, Dictionary<DateTimeOffset, double>> chartData = new()
         {
             ["Sessions"] = new Dictionary<DateTimeOffset, double>(),
-            ["Requests"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 1xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 2xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 3xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 4xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP 5xx"] = new Dictionary<DateTimeOffset, double>(),
-            ["HTTP Other"] = new Dictionary<DateTimeOffset, double>(),
+            ["Bytes in"] = new Dictionary<DateTimeOffset, double>(),
+            ["Bytes out"] = new Dictionary<DateTimeOffset, double>(),
         };
+
+        if (includeHttpMetrics)
+        {
+            chartData["Requests"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 1xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 2xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 3xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 4xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP 5xx"] = new Dictionary<DateTimeOffset, double>();
+            chartData["HTTP Other"] = new Dictionary<DateTimeOffset, double>();
+        }
 
         foreach (var entry in data.OrderBy(d => d.Timestamp))
         {
             var timestamp = entry.Timestamp.ToUniversalTime();
             
             chartData["Sessions"][timestamp] = entry.Sessions;
-            chartData["Requests"][timestamp] = entry.Requests;
-            chartData["HTTP 1xx"][timestamp] = entry.HttpResponses1xx;
-            chartData["HTTP 2xx"][timestamp] = entry.HttpResponses2xx;
-            chartData["HTTP 3xx"][timestamp] = entry.HttpResponses3xx;
-            chartData["HTTP 4xx"][timestamp] = entry.HttpResponses4xx;
-            chartData["HTTP 5xx"][timestamp] = entry.HttpResponses5xx;
-            chartData["HTTP Other"][timestamp] = entry.HttpResponsesOther;
+            chartData["Bytes in"][timestamp] = entry.BytesIn;
+            chartData["Bytes out"][timestamp] = entry.BytesOut;
+
+            if (includeHttpMetrics)
+            {
+                chartData["Requests"][timestamp] = entry.Requests;
+                chartData["HTTP 1xx"][timestamp] = entry.HttpResponses1xx;
+                chartData["HTTP 2xx"][timestamp] = entry.HttpResponses2xx;
+                chartData["HTTP 3xx"][timestamp] = entry.HttpResponses3xx;
+                chartData["HTTP 4xx"][timestamp] = entry.HttpResponses4xx;
+                chartData["HTTP 5xx"][timestamp] = entry.HttpResponses5xx;
+                chartData["HTTP Other"][timestamp] = entry.HttpResponsesOther;
+            }
         }
 
         foreach(var datapoint in chartData)
