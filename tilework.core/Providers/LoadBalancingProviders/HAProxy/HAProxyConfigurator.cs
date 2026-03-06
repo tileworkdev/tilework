@@ -13,9 +13,9 @@ using Tilework.LoadBalancing.Enums;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Enums;
 using Tilework.Core.Models;
+using Tilework.Core.Services;
 
 using Tilework.CertificateManagement.Interfaces;
-using Tilework.CertificateManagement.Enums;
 using Tilework.Monitoring.Enums;
 using Tilework.Monitoring.Models;
 using Tilework.Persistence.LoadBalancing.Models;

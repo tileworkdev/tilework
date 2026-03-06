@@ -12,9 +12,8 @@ using Tilework.LoadBalancing.Enums;
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.LoadBalancing.Haproxy;
 
-using Tilework.CertificateManagement.Interfaces;
 using Tilework.CertificateManagement.Models;
-
+using Tilework.Monitoring.Services;
 using Tilework.Core.Persistence;
 
 

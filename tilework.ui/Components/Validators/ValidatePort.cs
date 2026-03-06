@@ -1,3 +1,5 @@
+namespace Tilework.Ui.Components.Validators;
+
 public static partial class Validators
 {
     public static string? ValidatePort(int? value)
