@@ -130,7 +130,7 @@ public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigu
         }
 
 
-        var localConfigPath = Path.GetTempFileName();
+        var localConfigPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "telegraf.conf");
 
         if (!File.Exists(configPath))

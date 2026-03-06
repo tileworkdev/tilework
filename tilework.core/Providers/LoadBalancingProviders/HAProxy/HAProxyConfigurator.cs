@@ -99,7 +99,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
 
             var keyType = cert.PrivateKey.KeyData is RSA ? "rsa" : "ecdsa";
 
-            var certFilePath = Path.GetTempFileName();
+            var certFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
             File.WriteAllText(certFilePath, $"{keyData}\n{certData}");
 
@@ -115,7 +115,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
         }
 
 
-        var certListFilePath = Path.GetTempFileName();
+        var certListFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         File.WriteAllText(certListFilePath, certlist.ToString());
 
         containerFiles.Add(new ContainerFile()
@@ -175,7 +175,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
             };
 
 
-            var localConfigPath = Path.GetTempFileName();
+            var localConfigPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "haproxy.cfg");
 
             if (!File.Exists(configPath))
