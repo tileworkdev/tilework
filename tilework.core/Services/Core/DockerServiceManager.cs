@@ -332,7 +332,7 @@ public class DockerServiceManager : IContainerManager
             throw new FileNotFoundException($"The file at path '{localPath}' does not exist.");
 
 
-        string tempTarPath = Path.GetTempFileName();
+        string tempTarPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         try
         {
