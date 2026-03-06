@@ -1,9 +1,6 @@
 services:
   tileworkui:
-    image: registry.solarspy.net/tilework:latest
-    build:
-      context: .
-      dockerfile: tilework.ui/Dockerfile
+    image: tilework/tilework:latest
     ports:
       - 5180:5180
     environment:
