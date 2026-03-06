@@ -87,7 +87,6 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ILoadBalancerService, LoadBalancerService>();
         services.AddScoped<HAProxyConfigurator>();
-        services.AddScoped<HAProxyMonitor>();
 
         services.AddHostedService<LoadBalancingInitializer>();
 

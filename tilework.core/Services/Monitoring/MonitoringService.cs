@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
 
 using Tilework.Monitoring.Interfaces;
+using Tilework.Monitoring.Models;
+
+namespace Tilework.Monitoring.Services;
 
 public class MonitoringService
 {
