@@ -5,6 +5,13 @@
 
 @namespace Tilework.Ui.Components.Forms
 
+<style>
+.condition-prefix {
+    display:inline-block;
+    width:2ch;
+    text-align:center;
+}
+</style>
 
 <MudStack Spacing="1" Class="ma-1" StretchItems="StretchItems.Start" Row>
     <MudText Typo="Typo.subtitle2">@Condition.Type.GetDescription()</MudText>
@@ -16,14 +23,15 @@
     {
         var index = i;
         <MudStack AlignItems="AlignItems.Center" StretchItems="StretchItems.Middle" Row>
-            <MudText Typo="Typo.subtitle2" Style="display:inline-block; width:2ch; text-align:center;"><strong>@(index == 0 ? "=" : "or")</strong></MudText>
+            <MudText Typo="Typo.subtitle2" Class="condition-prefix"><strong>@(index == 0 ? "=" : "or")</strong></MudText>
             <MudTextField @bind-Value="Condition.Values[index]" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Text" Size="Size.Small" OnClick="@(() => RemoveValue(index))" />
         </MudStack>
     }
     <MudStack AlignItems="AlignItems.Start" Row>
+        <MudText Typo="Typo.subtitle2" Class="condition-prefix"></MudText>
         <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddValue">
-            Add OR condition value
+            Add
         </MudButton>
     </MudStack>
 </MudStack>
