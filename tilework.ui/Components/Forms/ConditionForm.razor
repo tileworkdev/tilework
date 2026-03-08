@@ -13,9 +13,9 @@
 }
 </style>
 
-<MudStack Spacing="1" Class="ma-1" StretchItems="StretchItems.Start" Row>
-    <MudText Typo="Typo.subtitle2">@Condition.Type.GetDescription()</MudText>
-    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="OnDelete" />
+<MudStack Spacing="1" Class="ma-2" StretchItems="StretchItems.Start" Row>
+    <MudText Typo="Typo.subtitle2"><strong>@Condition.Type.GetDescription()</strong></MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="OnDelete"/>
 </MudStack>
 
 <MudStack Spacing="1" Class="ma-2">
@@ -25,7 +25,7 @@
         <MudStack AlignItems="AlignItems.Center" StretchItems="StretchItems.Middle" Row>
             <MudText Typo="Typo.subtitle2" Class="condition-prefix"><strong>@(index == 0 ? "=" : "or")</strong></MudText>
             <MudTextField @bind-Value="Condition.Values[index]" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Text" Size="Size.Small" OnClick="@(() => RemoveValue(index))" />
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Variant="Variant.Text" Size="Size.Small" OnClick="@(() => RemoveValue(index))" />
         </MudStack>
     }
     <MudStack AlignItems="AlignItems.Start" Row>
