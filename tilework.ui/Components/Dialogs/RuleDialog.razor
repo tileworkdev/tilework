@@ -15,58 +15,95 @@
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form">
-            @foreach (var condition in Rule.Conditions)
-            {
-                <ConditionForm Condition="condition"
-                               OnDelete="@(() => RemoveCondition(condition))" />
-            }
+            <MudGrid Spacing="3">
+                <MudItem xs="12">
+                    <MudCard Outlined="true">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1"><strong>Details</strong></MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined"
+                                            HideSpinButtons="true" Required="true" Class="mb-4" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudCard Outlined="true">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1"><strong>Conditions</strong></MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @foreach (var condition in Rule.Conditions)
+                            {
+                                <ConditionForm Condition="condition"
+                                            OnDelete="@(() => RemoveCondition(condition))" />
+                            }
 
-            <MudStack AlignItems="AlignItems.Start" Row>
-                <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
-                    <ActivatorContent>
-                        <MudTooltip Disabled="@(AllowedConditionTypes.Any())" Text="This protocol does not support rule conditions.">
-                            <MudButton Disabled="@(!CanAddCondition)" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-                                Add condition
-                            </MudButton>
-                        </MudTooltip>
-                    </ActivatorContent>
-                    <ChildContent>
-                        @foreach (var type in AvailableConditionTypes)
-                        {
-                            <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
-                        }
-                    </ChildContent>
-                </MudMenu>
-            </MudStack>
-            <MudNumericField T="int" @bind-Value="Rule.Priority" Label="Priority" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
+                            <MudStack AlignItems="AlignItems.Start" Row>
+                                <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
+                                    <ActivatorContent>
+                                        <MudTooltip Disabled="@(AllowedConditionTypes.Any())" Text="This protocol does not support rule conditions.">
+                                            <MudButton Disabled="@(!CanAddCondition)" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+                                                Add condition
+                                            </MudButton>
+                                        </MudTooltip>
+                                    </ActivatorContent>
+                                    <ChildContent>
+                                        @foreach (var type in AvailableConditionTypes)
+                                        {
+                                            <MudMenuItem OnClick="@(() => AddCondition(type))">@type.GetDescription()</MudMenuItem>
+                                        }
+                                    </ChildContent>
+                                </MudMenu>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
 
-            <MudSelect T="RuleActionType" @bind-Value="Rule.Action.Type" Label="Action" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true" Class="mb-4">
-                @foreach (var type in AllowedActionTypes)
-                {
-                    <MudSelectItem T="RuleActionType" Value="@type">@type.GetDescription()</MudSelectItem>
-                }
-            </MudSelect>
+                <MudItem xs="12">
+                    <MudCard Outlined="true">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1"><strong>Action</strong></MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudSelect T="RuleActionType" @bind-Value="Rule.Action.Type" Label="Action" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true" Class="mb-4">
+                                @foreach (var type in AllowedActionTypes)
+                                {
+                                    <MudSelectItem T="RuleActionType" Value="@type">@type.GetDescription()</MudSelectItem>
+                                }
+                            </MudSelect>
 
-            @if (Rule.Action?.Type == RuleActionType.Forward)
-            {
-                <MudSelect T="Guid?" @bind-Value="SelectedTargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
-                    @foreach (var group in TargetGroups)
-                    {
-                        <MudSelectItem T="Guid?" Value="@group.Id">@group.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            }
-            else if (Rule.Action?.Type == RuleActionType.Redirect)
-            {
-                <MudTextField T="string" @bind-Value="Rule.Action.RedirectUrl" Label="Redirect URL" Variant="Variant.Outlined" Required="true" Class="mb-4" />
-                <MudNumericField T="int?" @bind-Value="Rule.Action.RedirectStatusCode" Label="Redirect status code" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" />
-            }
-            else if (Rule.Action?.Type == RuleActionType.FixedResponse)
-            {
-                <MudNumericField T="int?" @bind-Value="Rule.Action.FixedResponseStatusCode" Label="Response status code" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
-                <MudTextField T="string" @bind-Value="Rule.Action.FixedResponseContentType" Label="Content type" Variant="Variant.Outlined" Class="mb-4" />
-                <MudTextField T="string" @bind-Value="Rule.Action.FixedResponseBody" Label="Response body" Variant="Variant.Outlined" Lines="3" />
-            }
+                            @if (Rule.Action?.Type == RuleActionType.Forward)
+                            {
+                                <MudSelect T="Guid?" @bind-Value="SelectedTargetGroup" Label="Target group" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Required="true">
+                                    @foreach (var group in TargetGroups)
+                                    {
+                                        <MudSelectItem T="Guid?" Value="@group.Id">@group.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            }
+                            else if (Rule.Action?.Type == RuleActionType.Redirect)
+                            {
+                                <MudTextField T="string" @bind-Value="Rule.Action.RedirectUrl" Label="Redirect URL" Variant="Variant.Outlined" Required="true" Class="mb-4" />
+                                <MudNumericField T="int?" @bind-Value="Rule.Action.RedirectStatusCode" Label="Redirect status code" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" />
+                            }
+                            else if (Rule.Action?.Type == RuleActionType.FixedResponse)
+                            {
+                                <MudNumericField T="int?" @bind-Value="Rule.Action.FixedResponseStatusCode" Label="Response status code" Variant="Variant.Outlined" HideSpinButtons="true" Required="true" Class="mb-4" />
+                                <MudTextField T="string" @bind-Value="Rule.Action.FixedResponseContentType" Label="Content type" Variant="Variant.Outlined" Class="mb-4" />
+                                <MudTextField T="string" @bind-Value="Rule.Action.FixedResponseBody" Label="Response body" Variant="Variant.Outlined" Lines="3" />
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
         </MudForm>
     </DialogContent>
     <DialogActions>
