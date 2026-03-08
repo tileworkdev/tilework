@@ -42,10 +42,11 @@
                             {
                                 <ConditionForm Condition="condition"
                                             OnDelete="@(() => RemoveCondition(condition))" />
+                                <MudDivider/>
                             }
 
                             <MudStack AlignItems="AlignItems.Start" Row>
-                                <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mb-4">
+                                <MudMenu Disabled="@(!CanAddCondition)" AnchorOrigin="Origin.BottomCenter" Class="mt-4">
                                     <ActivatorContent>
                                         <MudTooltip Disabled="@(AllowedConditionTypes.Any())" Text="This protocol does not support rule conditions.">
                                             <MudButton Disabled="@(!CanAddCondition)" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
