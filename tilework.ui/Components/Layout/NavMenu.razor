@@ -1,16 +1,31 @@
 ﻿@namespace Tilework.Ui.Components.Layout
+@using System.Reflection
 
-<MudNavMenu>
-    <MudNavGroup Title="Load balancing" Expanded="false">
-        <MudNavLink Href="/lb/loadbalancers"  Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AltRoute">Load balancers</MudNavLink>
-        <MudNavLink Href="/lb/targetgroups"  Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storage">Target groups</MudNavLink>
-    </MudNavGroup>
-    <MudNavGroup Title="Certificates" Expanded="false">
-        <MudNavLink Href="/cm/authorities"  Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBalance">Certificate authorities</MudNavLink>
-        <MudNavLink Href="/cm/certificates"  Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VerifiedUser">Certificates</MudNavLink>
-    </MudNavGroup>
-    <MudNavGroup Title="Identity" Expanded="false">
-        @* <MudNavLink Href="/im/providers"  Match="NavLinkMatch.Prefix">Identity providers</MudNavLink> *@
-        <MudNavLink Href="/im/users"  Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Users</MudNavLink>
-    </MudNavGroup>
-</MudNavMenu>
+<MudStack Class="d-flex flex-grow-1" StretchItems="StretchItems.Start">
+    <MudNavMenu>
+        <MudNavGroup Title="Load balancing" Expanded="false">
+            <MudNavLink Href="/lb/loadbalancers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AltRoute">Load balancers</MudNavLink>
+            <MudNavLink Href="/lb/targetgroups" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storage">Target groups</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Certificates" Expanded="false">
+            <MudNavLink Href="/cm/authorities" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBalance">Certificate authorities</MudNavLink>
+            <MudNavLink Href="/cm/certificates" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VerifiedUser">Certificates</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Identity" Expanded="false">
+            @* <MudNavLink Href="/im/providers" Match="NavLinkMatch.Prefix">Identity providers</MudNavLink> *@
+            <MudNavLink Href="/im/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Users</MudNavLink>
+        </MudNavGroup>
+    </MudNavMenu>
+    <MudStack StretchItems="StretchItems.End" Spacing="0">
+        <MudDivider />
+        <MudText Align="Align.Center" Typo="Typo.caption" Class="pa-2 mud-text-secondary text-center"><strong>@AppVersion</strong></MudText>
+    </MudStack>
+</MudStack>
+
+@code {
+    private static readonly string AppVersion =
+        "v" + Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion?
+            .Split('+')[0] ?? "0.0.0";
+}
