@@ -1,45 +1,15 @@
-using System.Linq;
-using Tilework.LoadBalancing.Enums;
-
 namespace Tilework.LoadBalancing.Haproxy;
 
-public class HttpRequest
+public abstract class HttpRequest
 {
-    public RuleActionType ActionType { get; set; }
-    public string? RedirectUrl { get; set; }
-    public int? RedirectStatusCode { get; set; }
-    public int? FixedResponseStatusCode { get; set; }
-    public string? FixedResponseContentType { get; set; }
-    public string? FixedResponseBody { get; set; }
     public List<string> Acls { get; set; } = new();
-
-    public HttpRequest() { }
-
-    public HttpRequest(string[] parameters)
-    {
-    }
+    public abstract HttpRequestAction Action { get; }
 
     public override string ToString()
     {
-        return ActionType switch
-        {
-            RuleActionType.Redirect => BuildRedirect(),
-            RuleActionType.FixedResponse => BuildReturn(),
-            _ => throw new NotSupportedException($"Unsupported HTTP action type: {ActionType}")
-        };
-    }
+        var parts = BuildParts();
 
-    private string BuildRedirect()
-    {
-        var parts = new List<string> { "redirect", "location", RedirectUrl ?? string.Empty };
-
-        if (RedirectStatusCode.HasValue)
-        {
-            parts.Add("code");
-            parts.Add(RedirectStatusCode.Value.ToString());
-        }
-
-        if (Acls != null && Acls.Count > 0)
+        if (Acls.Count > 0)
         {
             parts.Add("if");
             parts.AddRange(Acls);
@@ -48,90 +18,9 @@ public class HttpRequest
         return string.Join(" ", parts);
     }
 
-    private string BuildReturn()
-    {
-        var parts = new List<string>
-        {
-            "return",
-            "status",
-            FixedResponseStatusCode!.ToString()
-        };
+    protected abstract List<string> BuildParts();
 
-        if (!string.IsNullOrWhiteSpace(FixedResponseContentType))
-        {
-            parts.Add("content-type");
-            parts.Add(FixedResponseContentType);
-        }
-
-        if (!string.IsNullOrWhiteSpace(FixedResponseBody))
-        {
-            parts.Add("lf-string");
-            parts.Add(Quote(FixedResponseBody));
-        }
-
-        if (Acls != null && Acls.Count > 0)
-        {
-            parts.Add("if");
-            parts.AddRange(Acls);
-        }
-
-        return string.Join(" ", parts);
-    }
-
-    private void ParseRedirect(string[] parameters)
-    {
-        RedirectUrl = GetValueAfter(parameters, "location");
-        var code = GetValueAfter(parameters, "code");
-        if (int.TryParse(code, out var parsed))
-        {
-            RedirectStatusCode = parsed;
-        }
-        Acls = GetAcls(parameters);
-    }
-
-    private void ParseReturn(string[] parameters)
-    {
-        var status = GetValueAfter(parameters, "status");
-        if (int.TryParse(status, out var parsed))
-        {
-            FixedResponseStatusCode = parsed;
-        }
-        FixedResponseContentType = GetValueAfter(parameters, "content-type");
-        var body = GetValueAfter(parameters, "lf-string");
-        if (!string.IsNullOrWhiteSpace(body))
-        {
-            FixedResponseBody = body.Trim('"');
-        }
-        Acls = GetAcls(parameters);
-    }
-
-    private static string? GetValueAfter(string[] parameters, string token)
-    {
-        for (int i = 0; i < parameters.Length - 1; i++)
-        {
-            if (string.Equals(parameters[i], token, StringComparison.OrdinalIgnoreCase))
-            {
-                return parameters[i + 1];
-            }
-        }
-
-        return null;
-    }
-
-    private static List<string> GetAcls(string[] parameters)
-    {
-        for (int i = 0; i < parameters.Length; i++)
-        {
-            if (string.Equals(parameters[i], "if", StringComparison.OrdinalIgnoreCase))
-            {
-                return parameters.Skip(i + 1).ToList();
-            }
-        }
-
-        return new List<string>();
-    }
-
-    private static string Quote(string value)
+    protected static string Quote(string value)
     {
         var escaped = value
             .Replace("\\", "\\\\")
@@ -139,5 +28,74 @@ public class HttpRequest
             .Replace("\r", string.Empty)
             .Replace("\n", "\\n");
         return $"\"{escaped}\"";
+    }
+}
+
+public sealed class RedirectHttpRequest(string url) : HttpRequest
+{
+    public string Url { get; set; } = url;
+    public int? StatusCode { get; set; }
+    public override HttpRequestAction Action => HttpRequestAction.Redirect;
+
+    protected override List<string> BuildParts()
+    {
+        var parts = new List<string> { "redirect", "location", Url };
+
+        if (StatusCode.HasValue)
+        {
+            parts.Add("code");
+            parts.Add(StatusCode.Value.ToString());
+        }
+
+        return parts;
+    }
+}
+
+public sealed class ReturnHttpRequest(int statusCode) : HttpRequest
+{
+    public int StatusCode { get; set; } = statusCode;
+    public string? ContentType { get; set; }
+    public string? Body { get; set; }
+    public override HttpRequestAction Action => HttpRequestAction.Return;
+
+    protected override List<string> BuildParts()
+    {
+        var parts = new List<string> { "return", "status", StatusCode.ToString() };
+
+        if (!string.IsNullOrWhiteSpace(ContentType))
+        {
+            parts.Add("content-type");
+            parts.Add(ContentType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(Body))
+        {
+            parts.Add("lf-string");
+            parts.Add(Quote(Body));
+        }
+
+        return parts;
+    }
+}
+
+public sealed class SetVariableHttpRequest(string variableName, string variableValue) : HttpRequest
+{
+    public string VariableName { get; set; } = variableName;
+    public string VariableValue { get; set; } = variableValue;
+    public override HttpRequestAction Action => HttpRequestAction.SetVariable;
+
+    protected override List<string> BuildParts()
+    {
+        return new List<string> { $"set-var({VariableName}) str({VariableValue})" };
+    }
+}
+
+public sealed class DenyHttpRequest : HttpRequest
+{
+    public override HttpRequestAction Action => HttpRequestAction.Deny;
+
+    protected override List<string> BuildParts()
+    {
+        return new List<string> { "deny" };
     }
 }
