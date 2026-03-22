@@ -19,7 +19,7 @@
 
 @page "/cm/certificates/{Id:guid}"
 
-<PageTitle>Certificate details</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Certificate details")</PageTitle>
 @if(_item != null)
 {
     <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">

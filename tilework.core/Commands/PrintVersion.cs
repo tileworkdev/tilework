@@ -1,5 +1,4 @@
 using Tilework.Core.Interfaces;
-using System.Reflection;
 
 namespace Tilework.Core.Commands;
 
@@ -14,9 +13,7 @@ public class PrintVersionInfoCommand : ICommand
 
     public async Task<int> run(string[] args)
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        Console.WriteLine(informationalVersion);
+        Console.WriteLine(AppMetadata.InformationalVersion);
         return 0;
     }
 }

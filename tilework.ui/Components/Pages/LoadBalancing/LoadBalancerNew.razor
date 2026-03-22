@@ -17,7 +17,7 @@
 
 @page "/lb/loadbalancers/new"
 
-<PageTitle>New balancer</PageTitle>
+<PageTitle>@PageTitleHelper.Format("New balancer")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"

@@ -7,7 +7,7 @@
 <MudLayout Class="mud-height-full">
     <MudAppBar Elevation="0" Dense="true">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.subtitle2" Class="ml-3">Tilework</MudText>
+        <MudText Typo="Typo.subtitle2" Class="ml-3">@AppMetadata.Name</MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <AuthorizeView>

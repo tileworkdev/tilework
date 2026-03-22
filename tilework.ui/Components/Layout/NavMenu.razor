@@ -1,5 +1,4 @@
 ﻿@namespace Tilework.Ui.Components.Layout
-@using System.Reflection
 
 <MudStack Class="d-flex flex-grow-1" StretchItems="StretchItems.Start">
     <MudNavMenu>
@@ -18,14 +17,6 @@
     </MudNavMenu>
     <MudStack StretchItems="StretchItems.End" Spacing="0">
         <MudDivider />
-        <MudText Align="Align.Center" Typo="Typo.caption" Class="pa-2 mud-text-secondary text-center"><strong>@AppVersion</strong></MudText>
+        <MudText Align="Align.Center" Typo="Typo.caption" Class="pa-2 mud-text-secondary text-center"><strong>@AppMetadata.DisplayVersion</strong></MudText>
     </MudStack>
 </MudStack>
-
-@code {
-    private static readonly string AppVersion =
-        "v" + Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            ?.InformationalVersion?
-            .Split('+')[0] ?? "0.0.0";
-}

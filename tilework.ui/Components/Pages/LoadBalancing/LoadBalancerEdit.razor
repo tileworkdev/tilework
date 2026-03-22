@@ -12,7 +12,7 @@
 @inject ISnackbar Snackbar
 @page "/lb/loadbalancers/{Id:guid}/edit"
 
-<PageTitle>Edit load balancer</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Edit load balancer")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="Edit load balancer" Breadcrumbs="@_breadcrumbs"
                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
