@@ -74,6 +74,7 @@ public class HAProxyConfigurationProfile : Profile
             ConditionType.Path => AclCondition.Path,
             ConditionType.QueryString => AclCondition.QueryString,
             ConditionType.SNI => AclCondition.SNI,
+            ConditionType.SourceIp => AclCondition.SourceIp,
             _ => throw new NotSupportedException($"Unsupported condition type for HAProxy ACL mapping: {conditionType}")
         };
     }

@@ -23,7 +23,8 @@ public class Acl
             AclCondition.Path => $"{Name} path_beg -i {string.Join(" ", Values)}",
             AclCondition.QueryString => $"{Name} {String.Join(" or ", Values.Select(v => $"url_param(plan) -i {v}"))}",
             AclCondition.SNI => $"{Name} req.ssl_sni -i {string.Join(" ", Values)}",
-            AclCondition.VariableSet => $"{Name} {String.Join(" or ", Values.Select(v => $"var({v}) -m found"))}"
+            AclCondition.SourceIp => $"{Name} src {string.Join(" ", Values)}",
+            AclCondition.VariableSet => $"{Name} {String.Join(" or ", Values.Select(v => $"var({v}) -m found"))}",
         };
     }
 }

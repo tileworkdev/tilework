@@ -8,5 +8,6 @@ public enum AclCondition
     Path,
     QueryString,
     SNI,
+    SourceIp,
     VariableSet,
 }

@@ -11,5 +11,7 @@ public enum ConditionType
     [Description("Query string")]
     QueryString,
     [Description("SNI FQDN")]
-    SNI
+    SNI,
+    [Description("Source IP")]
+    SourceIp
 }
