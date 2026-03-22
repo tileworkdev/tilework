@@ -75,21 +75,23 @@ public class HAProxyConfigurationProfile : Profile
                                 }
                                 break;
                             case RuleActionType.Redirect:
-                                dest.HttpRequests.Add(new HttpRequest()
+                                if (string.IsNullOrWhiteSpace(rule.Action.RedirectUrl))
+                                    throw new InvalidOperationException($"Rule {rule.Id} redirect action is missing RedirectUrl.");
+
+                                dest.HttpRequests.Add(new RedirectHttpRequest(rule.Action.RedirectUrl)
                                 {
-                                    ActionType = RuleActionType.Redirect,
-                                    RedirectUrl = rule.Action?.RedirectUrl,
-                                    RedirectStatusCode = rule.Action?.RedirectStatusCode,
+                                    StatusCode = rule.Action.RedirectStatusCode,
                                     Acls = acls.Select(a => a.Name).ToList()
                                 });
                                 break;
                             case RuleActionType.FixedResponse:
-                                dest.HttpRequests.Add(new HttpRequest()
+                                if (rule.Action.FixedResponseStatusCode == null)
+                                    throw new InvalidOperationException($"Rule {rule.Id} fixed response action is missing FixedResponseStatusCode.");
+
+                                dest.HttpRequests.Add(new ReturnHttpRequest(rule.Action.FixedResponseStatusCode.Value)
                                 {
-                                    ActionType = RuleActionType.FixedResponse,
-                                    FixedResponseStatusCode = rule.Action?.FixedResponseStatusCode,
-                                    FixedResponseContentType = rule.Action?.FixedResponseContentType,
-                                    FixedResponseBody = rule.Action?.FixedResponseBody,
+                                    ContentType = rule.Action.FixedResponseContentType,
+                                    Body = rule.Action.FixedResponseBody,
                                     Acls = acls.Select(a => a.Name).ToList()
                                 });
                                 break;
