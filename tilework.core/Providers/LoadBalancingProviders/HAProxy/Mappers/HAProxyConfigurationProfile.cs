@@ -209,7 +209,7 @@ public class HAProxyConfigurationProfile : Profile
             var condition = rule.Conditions[i];
             ruleAcls.Add(new Acl()
             {
-                Name = $"{rule.Id.ToString()}-{i}",
+                Name = $"{rule.Id}-{i}",
                 Type = context.Mapper.Map<AclCondition>(condition.Type),
                 Values = condition.Values
             });
