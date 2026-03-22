@@ -28,10 +28,8 @@ public class HAProxyConfigurationProfile : Profile
                 dest.Mode = src.Type == LoadBalancerType.APPLICATION ? Mode.HTTP : Mode.TCP;
                 if (dest.Mode == Mode.HTTP)
                     MapHttpLoadBalancerRules(src, dest, context);
-                else if (dest.Mode == Mode.TCP)
-                    MapTcpLoadBalancerRules(src, dest, context);
                 else
-                    throw new NotSupportedException($"Unsupported HAProxy frontend mode: {dest.Mode}");
+                    MapTcpLoadBalancerRules(src, dest, context);
             });
 
         CreateMap<LoadBalancer, PortType>()
