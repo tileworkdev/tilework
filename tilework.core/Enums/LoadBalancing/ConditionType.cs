@@ -13,4 +13,3 @@ public enum ConditionType
     [Description("SNI FQDN")]
     SNI
 }
-

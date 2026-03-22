@@ -10,11 +10,14 @@ public class HAProxyConfigurationProfile : Profile
 {
     public HAProxyConfigurationProfile()
     {
+        CreateMap<ConditionType, AclCondition>()
+            .ConvertUsing(src => MapToAclCondition(src));
+
         CreateMap<LoadBalancer, FrontendSection>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Id.ToString()))
             .ForPath(dest => dest.Bind.Address, opt => opt.MapFrom(src => "*"))
             .ForPath(dest => dest.Bind.Port, opt => opt.MapFrom(src => src.Port))
-            .AfterMap((src, dest) =>
+            .AfterMap((src, dest, context) =>
             {
                 if (src.Protocol == LoadBalancerProtocol.HTTPS || src.Protocol == LoadBalancerProtocol.TLS)
                     dest.Bind.EnableTls = true;
@@ -47,7 +50,7 @@ public class HAProxyConfigurationProfile : Profile
                             var acl = new Acl()
                             {
                                 Name = $"{rule.Id.ToString()}-{i}",
-                                Type = condition.Type,
+                                Type = context.Mapper.Map<AclCondition>(condition.Type),
                                 Values = condition.Values
                             };
 
@@ -138,5 +141,17 @@ public class HAProxyConfigurationProfile : Profile
                     Tls = src.Protocol == TargetGroupProtocol.HTTPS || src.Protocol == TargetGroupProtocol.TLS
                 }).ToList();
             });
+    }
+
+    private static AclCondition MapToAclCondition(ConditionType conditionType)
+    {
+        return conditionType switch
+        {
+            ConditionType.HostHeader => AclCondition.HostHeader,
+            ConditionType.Path => AclCondition.Path,
+            ConditionType.QueryString => AclCondition.QueryString,
+            ConditionType.SNI => AclCondition.SNI,
+            _ => throw new NotSupportedException($"Unsupported condition type for HAProxy ACL mapping: {conditionType}")
+        };
     }
 }
