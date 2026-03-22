@@ -81,17 +81,13 @@ public class HAProxyConfigurationProfile : Profile
 
     private static void MapHttpLoadBalancerRules(LoadBalancer src, FrontendSection dest, ResolutionContext context)
     {
-        dest.AddHeaders.Add(new HttpHeader()
-        {
-            Name = "X-Forwarded-Proto",
-            Value = src.Protocol == LoadBalancerProtocol.HTTPS ? "https" : "http"
-        });
+        dest.HttpRequests.Add(new AddHeaderHttpRequest(
+            "X-Forwarded-Proto",
+            src.Protocol == LoadBalancerProtocol.HTTPS ? "https" : "http"));
 
-        dest.AddHeaders.Add(new HttpHeader()
-        {
-            Name = "X-Forwarded-Port",
-            Value = src.Port.ToString()
-        });
+        dest.HttpRequests.Add(new AddHeaderHttpRequest(
+            "X-Forwarded-Port",
+            src.Port.ToString()));
 
         if (src.Rules is not { Count: > 0 })
             return;

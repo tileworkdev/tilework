@@ -31,6 +31,18 @@ public abstract class HttpRequest
     }
 }
 
+public sealed class AddHeaderHttpRequest(string name, string value) : HttpRequest
+{
+    public string Name { get; set; } = name;
+    public string Value { get; set; } = value;
+    public override HttpRequestAction Action => HttpRequestAction.AddHeader;
+
+    protected override List<string> BuildParts()
+    {
+        return new List<string> { "add-header", Name, Value };
+    }
+}
+
 public sealed class RedirectHttpRequest(string url) : HttpRequest
 {
     public string Url { get; set; } = url;
