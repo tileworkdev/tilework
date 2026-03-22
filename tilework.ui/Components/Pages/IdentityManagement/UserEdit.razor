@@ -16,7 +16,7 @@
 
 @page "/im/users/{Id:guid}/edit"
 
-<PageTitle>Edit user</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Edit user")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="@_item.UserName" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/im/users"))"

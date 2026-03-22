@@ -12,7 +12,7 @@
 
 @page "/im/users/{Id:guid}"
 
-<PageTitle>User details</PageTitle>
+<PageTitle>@PageTitleHelper.Format("User details")</PageTitle>
 @if(_item != null)
 {
     <GenericDetailview Title="@_item.UserName" Breadcrumbs="@_breadcrumbs" Actions="@_actions">

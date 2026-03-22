@@ -10,7 +10,7 @@
 
 @page "/im/users"
 
-<PageTitle>Users</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Users")</PageTitle>
 
 <GenericListview Title="Users" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>

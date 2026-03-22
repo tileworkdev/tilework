@@ -12,7 +12,7 @@
 
 @page "/lb/targetgroups/{Id:guid}"
 
-<PageTitle>Target group details</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Target group details")</PageTitle>
 @if(_item != null)
 {
     <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">

@@ -5,11 +5,11 @@
 
 @inject NavigationManager NavigationManager
 
-<PageTitle>Login</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Login")</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="d-flex align-center justify-center" Style="min-height: 100vh;">
     <MudPaper Class="pa-6" Outlined="true" Width="100%">
-        <MudText Typo="Typo.h5" Class="pb-4">Sign in</MudText>
+        <MudText Align="Align.Center" Typo="Typo.h6" Class="pb-6">Sign in to <strong>tilework</strong></MudText>
 
         <form method="post" action="/api/auth/login">
             <input type="hidden" name="ReturnUrl" value="@_returnUrl" />
