@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
-using System.Linq;
 
 
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
 using Tilework.Core.Enums;
 
+namespace Tilework.Core.Services;
 
 public abstract class BaseContainerProvider
 {

@@ -94,7 +94,7 @@ public class CollectdConfigurator : IDataCollectorConfigurator
         if (container == null)
             container = await CreateContainer();
 
-        var localConfigPath = Path.GetTempFileName();
+        var localConfigPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "collectd.conf");
 
         if (!File.Exists(configPath))

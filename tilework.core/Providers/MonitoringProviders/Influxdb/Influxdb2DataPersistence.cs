@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -9,8 +8,6 @@ using Microsoft.Extensions.Logging;
 using AutoMapper;
 using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
-using InfluxDB.Client.Core;
-using InfluxDB.Client.Writes;
 
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;

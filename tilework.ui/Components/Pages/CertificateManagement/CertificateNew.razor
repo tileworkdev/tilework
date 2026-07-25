@@ -13,7 +13,7 @@
 
 @page "/cm/certificates/new"
 
-<PageTitle>New certificate</PageTitle>
+<PageTitle>@PageTitleHelper.Format("New certificate")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="New certificate" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/cm/certificates"))"
@@ -25,8 +25,8 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Certificates", href: "/cm/certificates", icon: Icons.Material.Filled.AltRoute),
-        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Certificates", href: "/cm/certificates", icon: Icons.Material.Filled.VerifiedUser),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Outlined.AddCircleOutline)
     };
 
     protected override async Task OnInitializedAsync()

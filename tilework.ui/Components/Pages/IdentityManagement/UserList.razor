@@ -10,7 +10,7 @@
 
 @page "/im/users"
 
-<PageTitle>Users</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Users")</PageTitle>
 
 <GenericListview Title="Users" Items="@_items" Actions="@_actions" Breadcrumbs="@_breadcrumbs">
     <HeaderContent>
@@ -48,7 +48,7 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Users", href: "/im/users/", disabled: true, icon: Icons.Material.Filled.AltRoute),
+        new BreadcrumbItem("Users", href: "/im/users/", disabled: true, icon: Icons.Material.Filled.Person),
     };
 
     private List<ActionItem> _actions = new List<ActionItem>

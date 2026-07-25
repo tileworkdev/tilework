@@ -12,7 +12,7 @@
 
 @page "/lb/targetgroups/{Id:guid}"
 
-<PageTitle>Target group details</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Target group details")</PageTitle>
 @if(_item != null)
 {
     <GenericDetailview Title="@_item.Name" Breadcrumbs="@_breadcrumbs" Actions="@_actions">
@@ -83,7 +83,7 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.Storage)
     };
 
     private List<ActionItem> _actions = new List<ActionItem> {};

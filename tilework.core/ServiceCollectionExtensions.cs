@@ -82,16 +82,15 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<LoadBalancerConfiguration>(configuration);
 
-        services.AddAutoMapper(typeof(HAProxyConfigurationProfile));
-        services.AddAutoMapper(typeof(HAProxyMonitoringProfile));
+        services.AddAutoMapper(_ => { },
+            typeof(HAProxyConfigurationProfile),
+            typeof(HAProxyMonitoringProfile),
+            typeof(LoadBalancingMappingProfile));
 
         services.AddScoped<ILoadBalancerService, LoadBalancerService>();
         services.AddScoped<HAProxyConfigurator>();
-        services.AddScoped<HAProxyMonitor>();
 
         services.AddHostedService<LoadBalancingInitializer>();
-
-        services.AddAutoMapper(typeof(LoadBalancingMappingProfile));
 
         services.AddTransient<LoadBalancerCertificateListener>();
 
@@ -111,7 +110,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHostedService<CertificateManagementInitializer>();
 
-        services.AddAutoMapper(typeof(CertificateManagementMappingProfile));
+        services.AddAutoMapper(_ => { }, typeof(CertificateManagementMappingProfile));
 
         services.AddTransient<CertificateRenewalJob>();
         

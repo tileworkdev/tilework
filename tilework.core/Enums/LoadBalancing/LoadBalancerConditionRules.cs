@@ -9,7 +9,8 @@ public static class LoadBalancerConditionRules
     {
         ConditionType.HostHeader,
         ConditionType.Path,
-        ConditionType.QueryString
+        ConditionType.QueryString,
+        ConditionType.SourceIp
     };
 
     private static readonly ConditionType[] HttpsConditions =
@@ -17,12 +18,14 @@ public static class LoadBalancerConditionRules
         ConditionType.HostHeader,
         ConditionType.Path,
         ConditionType.QueryString,
-        ConditionType.SNI
+        ConditionType.SNI,
+        ConditionType.SourceIp
     };
 
     private static readonly ConditionType[] TlsConditions =
     {
-        ConditionType.SNI
+        ConditionType.SNI,
+        ConditionType.SourceIp
     };
 
     public static IReadOnlyList<ConditionType> GetAllowedConditions(LoadBalancerProtocol protocol)

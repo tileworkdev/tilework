@@ -42,7 +42,7 @@ public class AcmeVerificationService
             null
         );
 
-        var tempFilePath = Path.GetTempFileName();
+        var tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         try
         {
             File.WriteAllText(tempFilePath, fileData);

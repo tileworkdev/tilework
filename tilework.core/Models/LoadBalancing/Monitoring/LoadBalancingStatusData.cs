@@ -1,5 +1,4 @@
-using System.Reflection;
-using Tilework.Core.Attributes;
+using Tilework.Monitoring.Models;
 using Tilework.LoadBalancing.Enums;
 
 namespace Tilework.LoadBalancing.Models;

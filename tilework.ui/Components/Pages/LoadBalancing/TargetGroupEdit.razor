@@ -14,7 +14,7 @@
 
 @page "/lb/targetgroups/{Id:guid}/edit"
 
-<PageTitle>Edit target group</PageTitle>
+<PageTitle>@PageTitleHelper.Format("Edit target group")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="@_item.Name" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => NavigationManager.NavigateTo("/lb/targetgroups"))"
@@ -30,7 +30,7 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.Storage)
     };
 
     protected override async Task OnInitializedAsync()

@@ -17,7 +17,7 @@
 
 @page "/lb/targetgroups/new"
 
-<PageTitle>New target group</PageTitle>
+<PageTitle>@PageTitleHelper.Format("New target group")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="New target group" Breadcrumbs="@_breadcrumbs"
                  OnCancel="@(async () => _navigationManager.NavigateTo("/lb/targetgroups"))"
@@ -29,8 +29,8 @@
     private List<BreadcrumbItem> _breadcrumbs = new List<BreadcrumbItem>
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
-        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.AltRoute),
-        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Target groups", href: "/lb/targetgroups", icon: Icons.Material.Filled.Storage),
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Outlined.AddCircleOutline)
     };
 
     protected override Task OnInitializedAsync()

@@ -17,7 +17,7 @@
 
 @page "/lb/loadbalancers/new"
 
-<PageTitle>New balancer</PageTitle>
+<PageTitle>@PageTitleHelper.Format("New balancer")</PageTitle>
 
 <GenericEditview Models="@(new EditFormModel[] { new EditFormModel(form) })" Title="New load balancer" Breadcrumbs="@_breadcrumbs"
                 OnCancel="@(async () => NavigationManager.NavigateTo("/lb/loadbalancers"))"
@@ -30,7 +30,7 @@
     {
         new BreadcrumbItem("Home", href: "/", icon: Icons.Material.Filled.Home),
         new BreadcrumbItem("Load balancers", href: "/lb/loadbalancers", icon: Icons.Material.Filled.AltRoute),
-        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Filled.AltRoute)
+        new BreadcrumbItem("Create new", href: null, disabled: true, icon: Icons.Material.Outlined.AddCircleOutline)
     };
 
 

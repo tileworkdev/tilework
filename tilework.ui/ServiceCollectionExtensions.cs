@@ -7,7 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddUserInterface(this IServiceCollection services)
     {
-        services.AddAutoMapper(typeof(FormMappingProfile));
+        services.AddAutoMapper(_ => { }, typeof(FormMappingProfile));
         services.AddScoped<IBrowserTimeZoneProvider, BrowserTimeZoneProvider>();
         services.AddScoped<DownloadService>();
 
