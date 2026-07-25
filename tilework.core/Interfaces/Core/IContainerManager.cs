@@ -18,6 +18,7 @@ public interface IContainerManager
     public Task<List<ContainerPort>> GetContainerPorts(string id);
 
     public Task<List<Container>> ListNativeContainers(string? module);
+    public Task<List<Container>> ListNonNativeContainers();
     public Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort>? ports);
     public Task DeleteContainer(string id);
     public Task CopyFileToContainer(string id, string localPath, string containerPath);

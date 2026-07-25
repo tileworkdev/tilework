@@ -230,6 +230,27 @@ public class DockerServiceManager : IContainerManager
         }).ToList();
     }
 
+    public async Task<List<Container>> ListNonNativeContainers()
+    {
+        var containers = await _client.Containers.ListContainersAsync(
+            new ContainersListParameters()
+            {
+                All = true
+            });
+
+        var non_native = containers.Where(cnt =>
+                cnt.Labels == null ||
+                !cnt.Labels.TryGetValue("dev.tilework.managed", out var managed) ||
+                !string.Equals(managed, "true", StringComparison.Ordinal));
+
+        return non_native.Select(cnt => new Container
+        {
+            Id = cnt.ID,
+            Name = cnt.Names[0].TrimStart('/'),
+            State = ParseState(cnt.State)
+        }).ToList();
+    }
+
     private async Task<bool> ImageExists(string image)
     {
         var images = await _client.Images.ListImagesAsync(new ImagesListParameters { All = true });
