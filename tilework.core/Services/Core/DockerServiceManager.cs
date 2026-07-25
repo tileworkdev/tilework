@@ -134,16 +134,17 @@ public class DockerServiceManager : IContainerManager
 
     public async Task<IPAddress?> GetContainerAddress(string id)
     {
+        return await GetContainerAddress(id, defaultNetworkName);
+    }
 
+    public async Task<IPAddress?> GetContainerAddress(string id, string networkName)
+    {
         var info = await _client.Containers.InspectContainerAsync(id);
 
         if (info.NetworkSettings.Networks.Count == 0)
             return null;
 
-        if (info.NetworkSettings.Networks.Count > 1)
-            _logger.LogWarning("Container is attached on multiple networks. Getting address on first");
-
-        var network = info.NetworkSettings.Networks.First();
+        var network = info.NetworkSettings.Networks.First(n => n.Key == networkName);
 
         return IPAddress.Parse(network.Value.IPAddress);
     }
@@ -201,7 +202,7 @@ public class DockerServiceManager : IContainerManager
     }
 
 
-    public async Task<List<Container>> ListContainers(string? module = null)
+    public async Task<List<Container>> ListNativeContainers(string? module = null)
     {
         var labelFilters = new Dictionary<string, bool>
         {
@@ -222,6 +223,27 @@ public class DockerServiceManager : IContainerManager
             });
 
         return containers.Select(cnt => new Container
+        {
+            Id = cnt.ID,
+            Name = cnt.Names[0].TrimStart('/'),
+            State = ParseState(cnt.State)
+        }).ToList();
+    }
+
+    public async Task<List<Container>> ListNonNativeContainers()
+    {
+        var containers = await _client.Containers.ListContainersAsync(
+            new ContainersListParameters()
+            {
+                All = true
+            });
+
+        var non_native = containers.Where(cnt =>
+                cnt.Labels == null ||
+                !cnt.Labels.TryGetValue("dev.tilework.managed", out var managed) ||
+                !string.Equals(managed, "true", StringComparison.Ordinal));
+
+        return non_native.Select(cnt => new Container
         {
             Id = cnt.ID,
             Name = cnt.Names[0].TrimStart('/'),
@@ -307,7 +329,7 @@ public class DockerServiceManager : IContainerManager
             }
         });
 
-        return (await ListContainers()).First(cnt => cnt.Id == response.ID);
+        return (await ListNativeContainers()).First(cnt => cnt.Id == response.ID);
     }
 
     public async Task DeleteContainer(string id)

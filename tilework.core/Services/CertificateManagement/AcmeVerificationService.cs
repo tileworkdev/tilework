@@ -66,7 +66,7 @@ public class AcmeVerificationService
 
     private async Task DeleteContainer(string name)
     {
-        var containers = await _containerManager.ListContainers("certificatemanagement.tile");
+        var containers = await _containerManager.ListNativeContainers("certificatemanagement.tile");
         var container = containers.FirstOrDefault(cnt => cnt.Name == $"certificatemanagement.acmeverification.{name}");
 
         if (container == null)
@@ -222,7 +222,7 @@ public class AcmeVerificationService
 
     public async Task StopAllVerifications()
     {
-        var containers = (await _containerManager.ListContainers("certificatemanagement.tile"))
+        var containers = (await _containerManager.ListNativeContainers("certificatemanagement.tile"))
             .Where(cnt => cnt.Name.StartsWith("AcmeVerification-"))
             .ToList();
 
