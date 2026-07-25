@@ -51,7 +51,7 @@ public abstract class BaseContainerProvider
 
     protected async Task<List<Container>> GetContainers()
     {
-        return await _containerManager.ListContainers(_fullModule);
+        return await _containerManager.ListNativeContainers(_fullModule);
     }
 
     protected async Task<Container?> GetContainer(string name)

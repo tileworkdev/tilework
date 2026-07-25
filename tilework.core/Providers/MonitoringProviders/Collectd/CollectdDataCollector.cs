@@ -35,7 +35,7 @@ public class CollectdConfigurator : IDataCollectorConfigurator
 
     private async Task<Container?> GetContainer()
     {
-        var containers = await _containerManager.ListContainers("monitoring.tile");
+        var containers = await _containerManager.ListNativeContainers("monitoring.tile");
 
         return containers.FirstOrDefault(c => c.Name == ContainerName);
     }

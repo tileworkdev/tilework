@@ -202,7 +202,7 @@ public class DockerServiceManager : IContainerManager
     }
 
 
-    public async Task<List<Container>> ListContainers(string? module = null)
+    public async Task<List<Container>> ListNativeContainers(string? module = null)
     {
         var labelFilters = new Dictionary<string, bool>
         {
