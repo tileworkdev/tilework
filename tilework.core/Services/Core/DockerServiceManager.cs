@@ -329,7 +329,7 @@ public class DockerServiceManager : IContainerManager
             }
         });
 
-        return (await ListContainers()).First(cnt => cnt.Id == response.ID);
+        return (await ListNativeContainers()).First(cnt => cnt.Id == response.ID);
     }
 
     public async Task DeleteContainer(string id)
