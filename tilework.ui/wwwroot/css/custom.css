@@ -9,3 +9,57 @@
   width: 100% !important;
   height: 100% !important;
 }
+
+/* Application shell */
+.tilework-appbar {
+  border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.tilework-wordmark {
+  color: var(--mud-palette-text-primary);
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
+.tilework-drawer {
+  background-image: none;
+}
+
+.tilework-nav-shell {
+  padding: 0.75rem 0.625rem 0.5rem;
+}
+
+.tilework-nav-menu .mud-nav-link {
+  border-radius: 0.625rem;
+  margin-block: 0.125rem;
+  position: relative;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.tilework-nav-menu .mud-nav-group > .mud-nav-link {
+  font-weight: 600;
+}
+
+.tilework-nav-menu .mud-nav-link:hover {
+  background-color: var(--mud-palette-action-default-hover);
+}
+
+.tilework-nav-menu .mud-nav-link.active:not(.mud-nav-link-disabled) {
+  color: var(--mud-palette-primary);
+  background-color: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
+  font-weight: 650;
+}
+
+.tilework-nav-menu .mud-nav-link.active:not(.mud-nav-link-disabled)::before {
+  position: absolute;
+  inset-block: 0.55rem;
+  inset-inline-start: 0.3rem;
+  width: 0.2rem;
+  border-radius: 999px;
+  background: var(--mud-palette-primary);
+  content: "";
+}
+
+.tilework-nav-menu .mud-nav-link.active .mud-nav-link-icon {
+  color: var(--mud-palette-primary);
+}

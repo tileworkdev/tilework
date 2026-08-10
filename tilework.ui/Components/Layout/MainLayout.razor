@@ -5,9 +5,9 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudLayout Class="mud-height-full">
-    <MudAppBar Elevation="0" Dense="true">
+    <MudAppBar Elevation="0" Dense="true" Class="tilework-appbar">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.subtitle2" Class="ml-3">@AppMetadata.Name</MudText>
+        <MudText Typo="Typo.subtitle2" Class="ml-3 tilework-wordmark">@AppMetadata.Name</MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <AuthorizeView>
@@ -24,7 +24,7 @@
             </Authorized>
         </AuthorizeView>
     </MudAppBar>
-    <MudDrawer Class="mud-height-full border-r border-solid mud-border-lines-default" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
+    <MudDrawer Class="mud-height-full border-r border-solid mud-border-lines-default tilework-drawer" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="mud-height-full px-4">
@@ -42,26 +42,7 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = false;
-    private MudTheme? _theme = null;
-
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-
-        _theme = new()
-        {
-            PaletteLight = _lightPalette,
-            PaletteDark = _darkPalette,
-            LayoutProperties = new LayoutProperties(),
-            Typography = new Typography()
-            {
-                Default = new DefaultTypography()
-                {
-                    FontFamily = new[] { "Inter", "Helvetica", "Arial", "sans-serif" }
-                }
-            }
-        };
-    }
+    private readonly MudTheme _theme = TileworkTheme.Create();
 
     private void DrawerToggle()
     {
@@ -73,46 +54,7 @@
         _isDarkMode = !_isDarkMode;
     }
 
-    private readonly PaletteLight _lightPalette = new()
-    {
-        Black = "#110e2d",
-        AppbarText = "#424242",
-        AppbarBackground = Colors.Gray.Lighten4,
-        DrawerBackground = "#ffffff",
-        GrayLight = "#e8e8e8",
-        GrayLighter = "#f9f9f9",
-    };
-
-    private readonly PaletteDark _darkPalette = new()
-    {
-        Primary = "#7e6fff",
-        Surface = "#1e1e2d",
-        Background = "#1a1a27",
-        BackgroundGray = "#151521",
-        AppbarText = "#92929f",
-        AppbarBackground = "rgba(26,26,39,0.8)",
-        DrawerBackground = "#1a1a27",
-        ActionDefault = "#74718e",
-        ActionDisabled = "#9999994d",
-        ActionDisabledBackground = "#605f6d4d",
-        TextPrimary = "#b2b0bf",
-        TextSecondary = "#92929f",
-        TextDisabled = "#ffffff33",
-        DrawerIcon = "#92929f",
-        DrawerText = "#92929f",
-        GrayLight = "#2a2833",
-        GrayLighter = "#1e1e2d",
-        Info = "#4a86ff",
-        Success = "#3dcb6c",
-        Warning = "#ffb545",
-        Error = "#ff3f5f",
-        LinesDefault = "#33323e",
-        TableLines = "#33323e",
-        Divider = "#292838",
-        OverlayLight = "#1e1e2d80",
-    };
-
-    public string DarkLightModeButtonIcon => _isDarkMode switch
+    private string DarkLightModeButtonIcon => _isDarkMode switch
     {
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,

@@ -1,7 +1,7 @@
 ﻿@namespace Tilework.Ui.Components.Layout
 
-<MudStack Class="d-flex flex-grow-1" StretchItems="StretchItems.Start">
-    <MudNavMenu>
+<MudStack Class="d-flex flex-grow-1 tilework-nav-shell" StretchItems="StretchItems.Start">
+    <MudNavMenu Class="tilework-nav-menu">
         <MudNavGroup Title="Load balancing" Expanded="false">
             <MudNavLink Href="/lb/loadbalancers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AltRoute">Load balancers</MudNavLink>
             <MudNavLink Href="/lb/targetgroups" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storage">Target groups</MudNavLink>
