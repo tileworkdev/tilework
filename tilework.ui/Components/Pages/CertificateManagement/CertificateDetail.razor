@@ -6,7 +6,6 @@
 @using Tilework.CertificateManagement.Enums
 @using Tilework.Core.Enums
 @using Tilework.Ui.Services
-@using Tilework.Ui.Utilities
 
 @namespace Tilework.Ui.Components.Pages
 
@@ -194,7 +193,7 @@
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        var dialog = _dialogService.Show<ConfirmDialog>("Renew", parameters, options);
+        var dialog = await _dialogService.ShowAsync<ConfirmDialog>("Renew", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled)
         {

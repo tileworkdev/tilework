@@ -1,4 +1,3 @@
-@using Tilework.Ui.Components.Shared
 @using Tilework.Ui.Services
 
 <MudCard Outlined="true" Class="mb-4">
@@ -8,7 +7,7 @@
         </CardHeaderContent>
         <CardHeaderActions>
             <div class="d-flex align-items-center pt-2">
-                <MudSelect T="string" Value="_selectedInterval" Margin="Margin.Dense" Color="Color.Primary"
+                <MudSelect T="string" Value="_selectedInterval" Margin="Margin.Dense"
                            ValueChanged="OnIntervalChanged" Dense="true" Variant="Variant.Outlined" Class="mr-3 my-0" Style="width: 9rem">
                     @foreach (var option in _intervalOptions)
                     {
