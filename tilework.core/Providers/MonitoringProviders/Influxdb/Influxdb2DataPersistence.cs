@@ -40,13 +40,13 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
 
 
     private readonly IContainerManager _containerManager;
-    private readonly DataPersistenceConfiguration _settings;
+    private readonly MonitoringDataPersistenceConfiguration _settings;
     private readonly ILogger<Influxdb2Configurator> _logger;
     private readonly IMapper _mapper;
     private readonly HttpApiFactoryService _apiFactory;
     private readonly TokenService _tokenService;
 
-    public Influxdb2Configurator(IOptions<DataPersistenceConfiguration> settings,
+    public Influxdb2Configurator(IOptions<MonitoringDataPersistenceConfiguration> settings,
                                  IContainerManager containerManager,
                                  ILogger<Influxdb2Configurator> logger,
                                  TokenService tokenService,
