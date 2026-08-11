@@ -1,6 +1,6 @@
 namespace Tilework.Monitoring.Interfaces;
 
-public interface IDataCollectorConfigurator
+public interface IMonitoringDataCollectorConfigurator
 {
     Task ApplyConfiguration(List<Monitoring.Models.Monitor> monitors);
     Task Shutdown();

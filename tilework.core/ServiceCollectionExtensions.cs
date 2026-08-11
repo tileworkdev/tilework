@@ -64,12 +64,12 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMonitoring(this IServiceCollection services,
                                                    IConfiguration configuration)
     {
-        services.Configure<DataCollectorConfiguration>(configuration.GetSection("DataCollector"));
+        services.Configure<MonitoringDataCollectorConfiguration>(configuration.GetSection("DataCollector"));
         services.Configure<DataPersistenceConfiguration>(configuration.GetSection("DataPersistence"));
 
-        services.AddScoped<IDataCollectorConfigurator, TelegrafConfigurator>();
-        services.AddScoped<IDataPersistenceConfigurator, Influxdb2Configurator>();
-        services.AddScoped<DataCollectorService>();
+        services.AddScoped<IMonitoringDataCollectorConfigurator, TelegrafConfigurator>();
+        services.AddScoped<IMonitoringDataPersistenceConfigurator, Influxdb2Configurator>();
+        services.AddScoped<MonitoringDataCollectorService>();
         services.AddScoped<MonitoringService>();
 
         services.AddHostedService<MonitoringInitializer>();

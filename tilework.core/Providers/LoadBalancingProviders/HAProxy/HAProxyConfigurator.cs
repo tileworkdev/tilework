@@ -32,21 +32,21 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerConfiguration _settings;
     private readonly ICertificateManagementService _certificateManagementService;
-    private readonly DataCollectorService _dataCollectorService;
+    private readonly MonitoringDataCollectorService _monitoringDataCollectorService;
     private readonly ILogger<HAProxyConfigurator> _logger;
     private readonly IMapper _mapper;
 
     public HAProxyConfigurator(IOptions<LoadBalancerConfiguration> settings,
                                IContainerManager containerManager,
                                ICertificateManagementService certificateManagementService,
-                               DataCollectorService dataCollectorService,
+                               MonitoringDataCollectorService monitoringDataCollectorService,
                                ILogger<HAProxyConfigurator> logger,
                                IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
     {
         _logger = logger;
         _settings = settings.Value;
         _certificateManagementService = certificateManagementService;
-        _dataCollectorService = dataCollectorService;
+        _monitoringDataCollectorService = monitoringDataCollectorService;
         _containerManager = containerManager;
         _mapper = mapper;
     }
@@ -145,7 +145,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
 
     public async Task ConfigureMonitoring(LoadBalancer loadBalancer)
     {
-        if (loadBalancer.Enabled == true && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == false)
+        if (loadBalancer.Enabled == true && _monitoringDataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == false)
         {
             var monitoringSource = new MonitoringSource()
             {
@@ -155,11 +155,11 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
                 Host = Host.Parse(await GetLoadBalancerHostname(loadBalancer)),
                 Port = 4380
             };
-            await _dataCollectorService.StartMonitoring(monitoringSource);
+            await _monitoringDataCollectorService.StartMonitoring(monitoringSource);
         }
-        else if (loadBalancer.Enabled == false && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == true)
+        else if (loadBalancer.Enabled == false && _monitoringDataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == true)
         {
-            await _dataCollectorService.StopMonitoring(loadBalancer.Id.ToString());
+            await _monitoringDataCollectorService.StopMonitoring(loadBalancer.Id.ToString());
         }
     }
 

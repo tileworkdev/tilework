@@ -25,16 +25,16 @@ public sealed class MonitoringInitializer : IHostedService
         _logger.LogInformation($"Initiating startup for module: Monitoring");
         await using var scope = _serviceProvider.CreateAsyncScope();
 
-        var dataCollectorService = scope.ServiceProvider.GetRequiredService<DataCollectorService>();
-        await dataCollectorService.ApplyConfiguration();
+        var monitoringDataCollectorService = scope.ServiceProvider.GetRequiredService<MonitoringDataCollectorService>();
+        await monitoringDataCollectorService.ApplyConfiguration();
     }
 
     public async Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation($"Initiating shutdown for module: Monitoring");
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var dataCollectorService = scope.ServiceProvider.GetRequiredService<DataCollectorService>();
+        var monitoringDataCollectorService = scope.ServiceProvider.GetRequiredService<MonitoringDataCollectorService>();
 
-        await dataCollectorService.Shutdown();
+        await monitoringDataCollectorService.Shutdown();
     }
 }

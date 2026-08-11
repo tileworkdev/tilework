@@ -20,7 +20,7 @@ using Tilework.TokenVault.Services;
 
 namespace Tilework.Monitoring.Influxdb;
 
-public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConfigurator
+public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersistenceConfigurator
 {
     protected static string _serviceName = "influxdb";
     protected static string _moduleName = "monitoring";
