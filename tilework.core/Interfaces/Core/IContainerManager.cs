@@ -15,9 +15,12 @@ public interface IContainerManager
 
     public Task<IPAddress> GetContainerAddress(string id);
     public Task<List<ContainerPort>> GetContainerPorts(string id);
+    public Task<List<ContainerMount>> GetContainerMounts(string id);
 
     public Task<List<Container>> ListContainers(string? module);
-    public Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort>? ports);
+    public Task<Container> CreateContainer(string name, string image, string module,
+                                           List<ContainerPort>? ports,
+                                           List<ContainerMount>? mounts = null);
     public Task DeleteContainer(string id);
     public Task CopyFileToContainer(string id, string localPath, string containerPath);
 
