@@ -28,6 +28,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
 
     private static string _orgName = "tilework";
 
+#if DEBUG
     protected static List<ContainerPort> _ports = new List<ContainerPort>()
     {
         new ContainerPort()
@@ -37,6 +38,9 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
             Type = PortType.TCP
         }
     };
+#else
+    protected static List<ContainerPort> _ports = new List<ContainerPort>() {};
+#endif
 
 
     private readonly IContainerManager _containerManager;

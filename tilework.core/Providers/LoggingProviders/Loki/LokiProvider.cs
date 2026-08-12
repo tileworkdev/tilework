@@ -17,7 +17,9 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
     protected static string _moduleName = "logging";
     private static string _defaultName = "default";
 
-    protected static List<ContainerPort> _ports = new()
+
+#if DEBUG
+    protected static List<ContainerPort> _ports = new List<ContainerPort>()
     {
         new ContainerPort()
         {
@@ -26,6 +28,9 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
             Type = PortType.TCP
         }
     };
+#else
+    protected static List<ContainerPort> _ports = new List<ContainerPort>() {};
+#endif
 
     private readonly IContainerManager _containerManager;
     private readonly HttpApiFactoryService _apiFactory;
