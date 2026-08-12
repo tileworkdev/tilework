@@ -7,6 +7,7 @@ using Tilework.Core.Enums;
 using Tilework.Core.Services;
 using Tilework.Logging.Interfaces;
 using Tilework.Logging.Models;
+using Tilework.Logging.Enums;
 
 namespace Tilework.Logging.Alloy;
 
@@ -76,10 +77,7 @@ public class AlloyConfigurator : BaseContainerProvider, ILoggingDataCollectorCon
         LoggingTarget target)
     {
         var configuration = new Configuration();
-        configuration
-            .AddBlock("loki.write", "default")
-            .AddBlock("endpoint")
-            .Set("url", $"http://{target.Host.Value}:{target.Port}/loki/api/v1/push");
+        var targetReceiver = AddTarget(configuration, target);
 
         var dockerHost = $"unix://{DockerSocketPath}";
         for (var index = 0; index < sources.Count; index++)
@@ -104,9 +102,29 @@ public class AlloyConfigurator : BaseContainerProvider, ILoggingDataCollectorCon
                     ["instance"] = source.Name,
                     ["container"] = source.ContainerName
                 })
-                .SetArray("forward_to", ConfigValue.Raw("loki.write.default.receiver"));
+                .SetArray("forward_to", ConfigValue.Raw(targetReceiver));
         }
 
         return configuration;
+    }
+
+    private static string AddTarget(Configuration configuration, LoggingTarget target)
+    {
+        return target.Type switch
+        {
+            LoggingPersistenceType.LOKI => AddLokiTarget(configuration, target),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(target.Type), target.Type, "Unsupported logging persistence type")
+        };
+    }
+
+    private static string AddLokiTarget(Configuration configuration, LoggingTarget target)
+    {
+        configuration
+            .AddBlock("loki.write", "default")
+            .AddBlock("endpoint")
+            .Set("url", $"http://{target.Host.Value}:{target.Port}/loki/api/v1/push");
+
+        return "loki.write.default.receiver";
     }
 }

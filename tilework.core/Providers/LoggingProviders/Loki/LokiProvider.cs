@@ -6,6 +6,7 @@ using Tilework.Core.Models;
 using Tilework.Core.Enums;
 using Tilework.Logging.Interfaces;
 using Tilework.Logging.Models;
+using Tilework.Logging.Enums;
 using Tilework.Core.Services;
 
 namespace Tilework.Logging.Loki;
@@ -49,6 +50,7 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
         return new LoggingTarget
         {
             Name = _defaultName,
+            Type = LoggingPersistenceType.LOKI,
             Host = Host.Parse(address.ToString()),
             Port = 3100
         };
