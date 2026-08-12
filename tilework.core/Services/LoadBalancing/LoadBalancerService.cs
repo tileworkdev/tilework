@@ -14,6 +14,8 @@ using Tilework.LoadBalancing.Haproxy;
 
 using Tilework.CertificateManagement.Models;
 using Tilework.Monitoring.Services;
+using Tilework.Logging.Models;
+using Tilework.Logging.Services;
 using Tilework.Core.Persistence;
 
 
@@ -28,6 +30,7 @@ public class LoadBalancerService : ILoadBalancerService
     private readonly ILogger<LoadBalancerService> _logger;
     private readonly IMapper _mapper;
     private readonly MonitoringService _monitoringService;
+    private readonly LoggingService _loggingService;
 
 
     public LoadBalancerService(IServiceProvider serviceProvider,
@@ -35,13 +38,15 @@ public class LoadBalancerService : ILoadBalancerService
                                IMapper mapper,
                                IOptions<LoadBalancerConfiguration> settings,
                                ILogger<LoadBalancerService> logger,
-                               MonitoringService monitoringService)
+                               MonitoringService monitoringService,
+                               LoggingService loggingService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
         _configurator = LoadConfigurator(serviceProvider, _settings);
         _monitoringService = monitoringService;
+        _loggingService = loggingService;
         _mapper = mapper;
     }
 
@@ -532,6 +537,23 @@ public class LoadBalancerService : ILoadBalancerService
         filters["instance"] = lb.Id.ToString();
 
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
+    }
+
+    public async Task<List<LoggingData>> GetLoadBalancerLoggingData(
+        Guid id,
+        DateTimeOffset start,
+        DateTimeOffset end)
+    {
+        var loadBalancer = await GetLoadBalancer(id);
+        if (loadBalancer == null)
+            throw new ArgumentException("Invalid load balancer id", nameof(id));
+
+        var filters = new Dictionary<string, string>
+        {
+            ["instance"] = loadBalancer.Name
+        };
+
+        return await _loggingService.GetLoggingData("loadbalancing", filters, start, end);
     }
 
     public async Task<List<LoadBalancingMonitorData>> GetTargetMonitoringData(Guid id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end)

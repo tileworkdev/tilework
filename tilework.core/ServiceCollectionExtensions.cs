@@ -92,6 +92,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILoggingDataCollectorConfigurator, AlloyConfigurator>();
         services.AddSingleton<ILoggingDataPersistenceConfigurator, LokiConfigurator>();
         services.AddSingleton<LoggingDataCollectorService>();
+        services.AddScoped<LoggingService>();
 
         services.AddHostedService<LoggingInitializer>();
 

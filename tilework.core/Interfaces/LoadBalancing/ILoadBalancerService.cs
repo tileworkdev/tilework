@@ -1,6 +1,7 @@
 using Tilework.LoadBalancing.Models;
 using Tilework.CertificateManagement.Models;
 using Tilework.LoadBalancing.Enums;
+using Tilework.Logging.Models;
 
 namespace Tilework.LoadBalancing.Interfaces;
 
@@ -44,6 +45,7 @@ public interface ILoadBalancerService
     public Task<LoadBalancerStatus> GetTargetHealth(Guid id);
 
     public Task<List<LoadBalancingMonitorData>> GetLoadBalancerMonitoringData(Guid Id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end);
+    public Task<List<LoggingData>> GetLoadBalancerLoggingData(Guid Id, DateTimeOffset start, DateTimeOffset end);
 
     public Task ApplyConfiguration(Guid Id);
     public Task ApplyConfiguration();

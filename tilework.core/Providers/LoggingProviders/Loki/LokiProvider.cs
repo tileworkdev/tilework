@@ -27,13 +27,16 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
     };
 
     private readonly IContainerManager _containerManager;
+    private readonly HttpApiFactoryService _apiFactory;
 
     public LokiConfigurator(IOptions<LoggingDataPersistenceConfiguration> settings,
                             IContainerManager containerManager,
+                            HttpApiFactoryService apiFactory,
                             ILogger<LokiConfigurator> logger)
         : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
     {
         _containerManager = containerManager;
+        _apiFactory = apiFactory;
     }
 
     public async Task<LoggingTarget> GetTarget()
@@ -58,8 +61,95 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
             await StartUp(_defaultName, _ports, new(), ContainerRestartType.RESTART);
     }
 
+    public async Task<List<LoggingData>> GetData(
+        string module,
+        Dictionary<string, string> filters,
+        DateTimeOffset start,
+        DateTimeOffset end)
+    {
+        if (string.IsNullOrWhiteSpace(module))
+            throw new ArgumentException("A logging module is required", nameof(module));
+        ArgumentNullException.ThrowIfNull(filters);
+        if (end < start)
+            throw new ArgumentException("The end timestamp must not be before the start timestamp", nameof(end));
+
+        var selectors = new Dictionary<string, string>(filters, StringComparer.Ordinal);
+        selectors["module"] = module;
+
+        var query = "{" + string.Join(",", selectors.Select(selector =>
+        {
+            ValidateLabelName(selector.Key);
+            return $"{selector.Key}=\"{EscapeLabelValue(selector.Value)}\"";
+        })) + "}";
+
+        var target = await GetTarget();
+        var api = _apiFactory.GetApiService($"http://{target.Host.Value}:{target.Port}");
+        var response = await api.ApiGet<QueryRangeResponse>(
+            "/loki/api/v1/query_range",
+            query: new Dictionary<string, string>
+            {
+                ["query"] = query,
+                ["start"] = ToUnixNanoseconds(start),
+                ["end"] = ToUnixNanoseconds(end),
+                ["direction"] = "forward",
+                ["limit"] = "5000"
+            });
+
+        if (!string.Equals(response.Status, "success", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Loki returned an unsuccessful query response");
+        if (response.Data == null || response.Data.Result.Count == 0)
+            return new List<LoggingData>();
+        if (!string.Equals(response.Data.ResultType, "streams", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Unexpected Loki result type: {response.Data.ResultType}");
+
+        return response.Data.Result
+            .SelectMany(stream => stream.Values
+                .Where(value => value.Count >= 2)
+                .Select(value => new LoggingData
+                {
+                    Timestamp = FromUnixNanoseconds(value[0].GetString()),
+                    Message = value[1].GetString() ?? string.Empty,
+                    Labels = new Dictionary<string, string>(stream.Labels, StringComparer.Ordinal)
+                }))
+            .OrderBy(entry => entry.Timestamp)
+            .ToList();
+    }
+
     public async Task Shutdown()
     {
         await Shutdown(_defaultName);
+    }
+
+    private static string ToUnixNanoseconds(DateTimeOffset timestamp)
+    {
+        var utcTicks = timestamp.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks;
+        return checked(utcTicks * 100).ToString();
+    }
+
+    private static DateTimeOffset FromUnixNanoseconds(string? value)
+    {
+        if (!long.TryParse(value, out var nanoseconds))
+            throw new FormatException($"Invalid Loki timestamp: {value}");
+
+        return DateTimeOffset.UnixEpoch.AddTicks(nanoseconds / 100);
+    }
+
+    private static void ValidateLabelName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            !(char.IsLetter(name[0]) || name[0] == '_') ||
+            name.Skip(1).Any(character => !(char.IsLetterOrDigit(character) || character == '_')))
+        {
+            throw new ArgumentException($"Invalid Loki label name: {name}", nameof(name));
+        }
+    }
+
+    private static string EscapeLabelValue(string value)
+    {
+        return (value ?? string.Empty)
+            .Replace("\\", "\\\\")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\"", "\\\"");
     }
 }

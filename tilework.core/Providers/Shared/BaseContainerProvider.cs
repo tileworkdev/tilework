@@ -78,7 +78,7 @@ public abstract class BaseContainerProvider
         await _loggingService.StartLogging(new LoggingSource
         {
             Module = _module,
-            Name = container.Name,
+            Name = containerName,
             ContainerId = container.Id,
             ContainerName = container.Name
         });
