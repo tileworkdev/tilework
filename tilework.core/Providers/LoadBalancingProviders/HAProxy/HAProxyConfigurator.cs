@@ -20,6 +20,7 @@ using Tilework.Monitoring.Enums;
 using Tilework.Monitoring.Models;
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Monitoring.Services;
+using Tilework.Logging.Services;
 using Tilework.Exceptions.Core;
 
 namespace Tilework.LoadBalancing.Haproxy;
@@ -40,8 +41,11 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
                                IContainerManager containerManager,
                                ICertificateManagementService certificateManagementService,
                                MonitoringDataCollectorService monitoringDataCollectorService,
+                               LoggingDataCollectorService loggingDataCollectorService,
                                ILogger<HAProxyConfigurator> logger,
-                               IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
+                               IMapper mapper)
+        : base(containerManager, logger, _moduleName, _serviceName,
+               settings.Value.BackendImage, loggingDataCollectorService)
     {
         _logger = logger;
         _settings = settings.Value;
@@ -220,8 +224,10 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
             await Shutdown(loadBalancer.Name);
         }
 
-        
+
         await ConfigureMonitoring(loadBalancer);
+        if (loadBalancer.Enabled)
+            await ConfigureContainerLogging(loadBalancer.Name);
     }
 
     public async Task ApplyConfiguration(List<LoadBalancer> loadBalancers)

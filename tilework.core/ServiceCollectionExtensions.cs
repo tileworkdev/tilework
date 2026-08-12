@@ -28,6 +28,12 @@ using Tilework.Monitoring.Models;
 using Tilework.Monitoring.Services;
 using Tilework.Monitoring.Influxdb;
 
+using Tilework.Logging.Interfaces;
+using Tilework.Logging.Alloy;
+using Tilework.Logging.Loki;
+using Tilework.Logging.Models;
+using Tilework.Logging.Services;
+
 using Tilework.TokenVault.Services;
 
 using Tilework.Persistence.IdentityManagement.Models;
@@ -73,6 +79,21 @@ public static class ServiceCollectionExtensions
         services.AddScoped<MonitoringService>();
 
         services.AddHostedService<MonitoringInitializer>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddLogging(this IServiceCollection services,
+                                                IConfiguration configuration)
+    {
+        services.Configure<LoggingDataCollectorConfiguration>(configuration.GetSection("DataCollector"));
+        services.Configure<LoggingDataPersistenceConfiguration>(configuration.GetSection("DataPersistence"));
+
+        services.AddSingleton<ILoggingDataCollectorConfigurator, AlloyConfigurator>();
+        services.AddSingleton<ILoggingDataPersistenceConfigurator, LokiConfigurator>();
+        services.AddSingleton<LoggingDataCollectorService>();
+
+        services.AddHostedService<LoggingInitializer>();
 
         return services;
     }
