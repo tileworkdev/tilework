@@ -10,12 +10,6 @@
         </CardHeaderContent>
         <CardHeaderActions>
             <div class="d-flex align-items-center pt-2">
-                <MudSelect T="SortOrder" Value="_sortOrder" Margin="Margin.Dense"
-                           ValueChanged="OnSortOrderChanged" Dense="true" Variant="Variant.Outlined"
-                           Class="mr-3 my-0" Style="width: 9rem" aria-label="Log order">
-                    <MudSelectItem Value="@SortOrder.Ascending">Oldest first</MudSelectItem>
-                    <MudSelectItem Value="@SortOrder.Descending">Newest first</MudSelectItem>
-                </MudSelect>
                 <MudToggleGroup Class="mr-3" T="string" Value="_selectedRange" Color="Color.Primary"
                                 ValueChanged="OnRangeChanged" Style="width: 20rem">
                     <MudToggleItem Value="@("1h")" />
@@ -78,7 +72,6 @@
     private IBrowserTimeZoneProvider BrowserTimeZoneProvider { get; set; } = default!;
 
     private string _selectedRange = "1h";
-    private SortOrder _sortOrder = SortOrder.Ascending;
     private List<LoggingData> _entries = new();
     private bool _loading;
     private bool _initialized;
@@ -100,7 +93,7 @@
         {
             var to = DateTimeOffset.UtcNow;
             var from = GetRangeStart(_selectedRange, to);
-            var entries = await LoadData(from, to, _sortOrder) ?? new List<LoggingData>();
+            var entries = await LoadData(from, to, SortOrder.Ascending) ?? new List<LoggingData>();
             var browserTimeZone = _browserTimeZone ?? await BrowserTimeZoneProvider.GetTimeZoneAsync();
 
             if (requestVersion == _requestVersion)
@@ -130,12 +123,6 @@
     private Task OnRangeChanged(string range)
     {
         _selectedRange = range;
-        return RefreshAsync();
-    }
-
-    private Task OnSortOrderChanged(SortOrder order)
-    {
-        _sortOrder = order;
         return RefreshAsync();
     }
 
