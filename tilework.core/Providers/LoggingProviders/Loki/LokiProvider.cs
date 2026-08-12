@@ -13,13 +13,13 @@ namespace Tilework.Logging.Loki;
 
 public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceConfigurator
 {
-    protected static string _serviceName = "loki";
-    protected static string _moduleName = "logging";
-    private static string _defaultName = "default";
+    protected static readonly string _serviceName = "loki";
+    protected static readonly string _moduleName = "logging";
+    private static readonly string _defaultName = "default";
 
 
 #if DEBUG
-    protected static List<ContainerPort> _ports = new List<ContainerPort>()
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>()
     {
         new ContainerPort()
         {
@@ -29,7 +29,7 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
         }
     };
 #else
-    protected static List<ContainerPort> _ports = new List<ContainerPort>() {};
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>() {};
 #endif
 
     private readonly IContainerManager _containerManager;

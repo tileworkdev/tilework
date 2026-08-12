@@ -22,14 +22,14 @@ namespace Tilework.Monitoring.Influxdb;
 
 public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersistenceConfigurator
 {
-    protected static string _serviceName = "influxdb";
-    protected static string _moduleName = "monitoring";
-    private static string _defaultName = "default";
+    protected static readonly string _serviceName = "influxdb";
+    protected static readonly string _moduleName = "monitoring";
+    private static readonly string _defaultName = "default";
 
-    private static string _orgName = "tilework";
+    private static readonly string _orgName = "tilework";
 
 #if DEBUG
-    protected static List<ContainerPort> _ports = new List<ContainerPort>()
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>()
     {
         new ContainerPort()
         {
@@ -39,7 +39,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
         }
     };
 #else
-    protected static List<ContainerPort> _ports = new List<ContainerPort>() {};
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>() {};
 #endif
 
 
