@@ -16,6 +16,7 @@ using Tilework.CertificateManagement.Models;
 using Tilework.Monitoring.Services;
 using Tilework.Logging.Models;
 using Tilework.Logging.Services;
+using Tilework.Core.Enums;
 using Tilework.Core.Persistence;
 
 
@@ -539,10 +540,7 @@ public class LoadBalancerService : ILoadBalancerService
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
 
-    public async Task<List<LoggingData>> GetLoadBalancerLoggingData(
-        Guid id,
-        DateTimeOffset start,
-        DateTimeOffset end)
+    public async Task<List<LoggingData>> GetLoadBalancerLoggingData(Guid id, DateTimeOffset start, DateTimeOffset end, SortOrder order)
     {
         var loadBalancer = await GetLoadBalancer(id);
         if (loadBalancer == null)
@@ -553,7 +551,7 @@ public class LoadBalancerService : ILoadBalancerService
             ["instance"] = loadBalancer.Name
         };
 
-        return await _loggingService.GetLoggingData("loadbalancing", filters, start, end);
+        return await _loggingService.GetLoggingData("loadbalancing", filters, start, end, order);
     }
 
     public async Task<List<LoadBalancingMonitorData>> GetTargetMonitoringData(Guid id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end)

@@ -1,3 +1,4 @@
+using Tilework.Core.Enums;
 using Tilework.Logging.Interfaces;
 using Tilework.Logging.Models;
 
@@ -16,8 +17,9 @@ public class LoggingService
         string module,
         Dictionary<string, string> filters,
         DateTimeOffset start,
-        DateTimeOffset end)
+        DateTimeOffset end,
+        SortOrder order)
     {
-        return _persistenceConfigurator.GetData(module, filters, start, end);
+        return _persistenceConfigurator.GetData(module, filters, start, end, order);
     }
 }

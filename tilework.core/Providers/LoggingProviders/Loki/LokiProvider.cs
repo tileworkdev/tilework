@@ -72,7 +72,8 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
         string module,
         Dictionary<string, string> filters,
         DateTimeOffset start,
-        DateTimeOffset end)
+        DateTimeOffset end,
+        SortOrder order)
     {
         if (string.IsNullOrWhiteSpace(module))
             throw new ArgumentException("A logging module is required", nameof(module));
@@ -98,7 +99,7 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
                 ["query"] = query,
                 ["start"] = ToUnixNanoseconds(start),
                 ["end"] = ToUnixNanoseconds(end),
-                ["direction"] = "forward",
+                ["direction"] = order == SortOrder.Ascending ? "forward" : "backward",
                 ["limit"] = "5000"
             });
 
@@ -109,7 +110,7 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
         if (!string.Equals(response.Data.ResultType, "streams", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"Unexpected Loki result type: {response.Data.ResultType}");
 
-        return response.Data.Result
+        var entries = response.Data.Result
             .SelectMany(stream => stream.Values
                 .Where(value => value.Count >= 2)
                 .Select(value => new LoggingData
@@ -118,8 +119,11 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
                     Message = value[1].GetString() ?? string.Empty,
                     Labels = new Dictionary<string, string>(stream.Labels, StringComparer.Ordinal)
                 }))
-            .OrderBy(entry => entry.Timestamp)
             .ToList();
+
+        return order == SortOrder.Ascending
+            ? entries.OrderBy(entry => entry.Timestamp).ToList()
+            : entries.OrderByDescending(entry => entry.Timestamp).ToList();
     }
 
     public async Task Shutdown()

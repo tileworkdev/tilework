@@ -5,6 +5,7 @@
 @using Tilework.LoadBalancing.Enums
 @using Tilework.LoadBalancing.Interfaces
 @using Tilework.LoadBalancing.Models
+@using Tilework.Logging.Models
 
 @using Tilework.CertificateManagement.Interfaces
 @using Tilework.CertificateManagement.Models
@@ -146,6 +147,9 @@
         <MudTabPanel Text="Monitoring">
 
             <TimeSeriesChartPanel Title="Monitoring" LoadData="LoadMonitoringCharts" />
+        </MudTabPanel>
+        <MudTabPanel Text="Logs">
+            <LogViewerPanel Title="Load balancer logs" LoadData="LoadLoggingData" />
         </MudTabPanel>
 
     </TabContent>
@@ -508,5 +512,13 @@
         }
 
         return charts;
+    }
+
+    private Task<List<LoggingData>> LoadLoggingData(
+        DateTimeOffset from,
+        DateTimeOffset to,
+        SortOrder order)
+    {
+        return _loadBalancerService.GetLoadBalancerLoggingData(_item.Id, from, to, order);
     }
 }
