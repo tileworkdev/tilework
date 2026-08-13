@@ -12,7 +12,6 @@ public class MonitoringDataCollectorService
 {
     private readonly IMonitoringDataCollectorConfigurator _collectorConfigurator;
     private readonly IMonitoringDataPersistenceConfigurator _persistenceConfigurator;
-    private readonly TileworkContext _dbContext;
     private readonly MonitoringDataCollectorConfiguration _settings;
     private readonly ILogger<MonitoringDataCollectorService> _logger;
 
@@ -20,13 +19,11 @@ public class MonitoringDataCollectorService
 
     public MonitoringDataCollectorService(IMonitoringDataCollectorConfigurator collectorConfigurator,
                                           IMonitoringDataPersistenceConfigurator persistenceConfigurator,
-                                          TileworkContext dbContext,
                                           IOptions<MonitoringDataCollectorConfiguration> settings,
                                           ILogger<MonitoringDataCollectorService> logger)
     {
         _collectorConfigurator = collectorConfigurator;
         _persistenceConfigurator = persistenceConfigurator;
-        _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
     }
