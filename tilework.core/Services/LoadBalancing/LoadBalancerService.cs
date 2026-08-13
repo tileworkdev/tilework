@@ -14,7 +14,6 @@ using Tilework.LoadBalancing.Haproxy;
 
 using Tilework.CertificateManagement.Models;
 using Tilework.Monitoring.Services;
-using Tilework.Logging.Models;
 using Tilework.Logging.Services;
 using Tilework.Core.Enums;
 using Tilework.Core.Persistence;
@@ -540,7 +539,7 @@ public class LoadBalancerService : ILoadBalancerService
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
 
-    public async Task<List<LoggingData>> GetLoadBalancerLoggingData(Guid Id, DateTimeOffset start, DateTimeOffset end, SortOrder order)
+    public async Task<List<LoadBalancerLogEntry>> GetLoadBalancerLoggingData(Guid Id, DateTimeOffset start, DateTimeOffset end, SortOrder order)
     {
         var loadBalancer = await GetLoadBalancer(Id);
         if (loadBalancer == null)
@@ -551,7 +550,24 @@ public class LoadBalancerService : ILoadBalancerService
             ["instance"] = loadBalancer.Name
         };
 
-        return await _loggingService.GetLoggingData("loadbalancing", filters, start, end, order);
+        var backendNames = await _dbContext.TargetGroups
+            .AsNoTracking()
+            .ToDictionaryAsync(group => group.Id.ToString(), group => group.Name);
+        var logData = await _loggingService.GetLoggingData("loadbalancing", filters, start, end, order);
+
+        var entries = new List<LoadBalancerLogEntry>();
+        foreach (var data in logData)
+        {
+            if (!HAProxyLogParser.TryParse(data, out var entry) || entry == null)
+                continue;
+
+            if (entry.Backend != null && backendNames.TryGetValue(entry.Backend, out var backendName))
+                entry = entry with { Backend = backendName };
+
+            entries.Add(entry);
+        }
+
+        return entries;
     }
 
     public async Task<List<LoadBalancingMonitorData>> GetTargetMonitoringData(Guid id, TimeSpan interval, DateTimeOffset start, DateTimeOffset end)

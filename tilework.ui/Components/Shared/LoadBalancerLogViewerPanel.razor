@@ -1,0 +1,198 @@
+@using System.Globalization
+@using System.Net
+@using Tilework.Core.Enums
+@using Tilework.LoadBalancing.Enums
+@using Tilework.LoadBalancing.Models
+@using Tilework.Ui.Services
+
+<MudCard Outlined="true" Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <div class="d-flex align-items-center pt-2">
+                <MudToggleGroup Class="mr-3" T="string" Value="_selectedRange" Color="Color.Primary"
+                                ValueChanged="OnRangeChanged" Style="width: 20rem">
+                    <MudToggleItem Value="@("1h")" />
+                    <MudToggleItem Value="@("3h")" />
+                    <MudToggleItem Value="@("12h")" />
+                    <MudToggleItem Value="@("1d")" />
+                    <MudToggleItem Value="@("3d")" />
+                    <MudToggleItem Value="@("1w")" />
+                </MudToggleGroup>
+                <MudButton Class="pl-3" Color="Color.Primary" Variant="Variant.Outlined"
+                           Disabled="_loading" OnClick="RefreshAsync">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                </MudButton>
+            </div>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3">@_error</MudAlert>
+        }
+
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_entries.Count == 0)
+        {
+            <MudText Color="Color.Secondary" Class="pa-4">No HTTP requests in the selected range.</MudText>
+        }
+        else
+        {
+            <div class="tilework-lb-log-table" role="log" aria-label="@Title">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>Source</th>
+                            <th>Request</th>
+                            <th>Status</th>
+                            <th class="tilework-lb-log-number">Total time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in _entries)
+                        {
+                            <tr>
+                                <td class="tilework-lb-log-timestamp">@FormatTimestamp(entry.Timestamp)</td>
+                                <td><span class="tilework-lb-log-action">@FormatAction(entry)</span></td>
+                                <td><code>@entry.SourceAddress</code></td>
+                                <td>
+                                    <span class="tilework-lb-log-method">@entry.Method.Method</span>
+                                    <code class="tilework-lb-log-path">@entry.Path</code>
+                                </td>
+                                <td><span class="@GetStatusClass(entry.StatusCode)">@((int)entry.StatusCode)</span></td>
+                                <td class="tilework-lb-log-number">@entry.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Logs";
+
+    [Parameter]
+    public Func<DateTimeOffset, DateTimeOffset, SortOrder, Task<List<LoadBalancerLogEntry>>>? LoadData { get; set; }
+
+    [Inject]
+    private IBrowserTimeZoneProvider BrowserTimeZoneProvider { get; set; } = default!;
+
+    private string _selectedRange = "1h";
+    private List<LoadBalancerLogEntry> _entries = new();
+    private bool _loading;
+    private bool _initialized;
+    private string? _error;
+    private TimeZoneInfo? _browserTimeZone;
+    private int _requestVersion;
+
+    public async Task RefreshAsync()
+    {
+        if (LoadData == null)
+            return;
+
+        var requestVersion = ++_requestVersion;
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var to = DateTimeOffset.UtcNow;
+            var from = GetRangeStart(_selectedRange, to);
+            var entries = await LoadData(from, to, SortOrder.Ascending) ?? new();
+            var browserTimeZone = _browserTimeZone ?? await BrowserTimeZoneProvider.GetTimeZoneAsync();
+
+            if (requestVersion == _requestVersion)
+            {
+                _entries = entries;
+                _browserTimeZone = browserTimeZone;
+            }
+        }
+        catch (Exception exception)
+        {
+            if (requestVersion == _requestVersion)
+            {
+                _entries = new();
+                _error = $"Failed to load logs: {exception.Message}";
+            }
+        }
+        finally
+        {
+            if (requestVersion == _requestVersion)
+            {
+                _loading = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            await RefreshAsync();
+        }
+    }
+
+    private Task OnRangeChanged(string range)
+    {
+        _selectedRange = range;
+        return RefreshAsync();
+    }
+
+    private string FormatTimestamp(DateTimeOffset timestamp)
+    {
+        var localized = _browserTimeZone == null
+            ? timestamp.ToLocalTime()
+            : TimeZoneInfo.ConvertTime(timestamp, _browserTimeZone);
+
+        return localized.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatAction(LoadBalancerLogEntry entry)
+    {
+        return entry.Action switch
+        {
+            LoadBalancerLogAction.Forwarded => $"Forwarded · {entry.Backend}",
+            LoadBalancerLogAction.ForwardingFailed => $"Failed · {entry.Backend}",
+            _ => "LB response"
+        };
+    }
+
+    private static string GetStatusClass(HttpStatusCode statusCode)
+    {
+        var numericStatus = (int)statusCode;
+        if (numericStatus < 300)
+            return "tilework-lb-log-status tilework-lb-log-status-success";
+        if (numericStatus < 400)
+            return "tilework-lb-log-status tilework-lb-log-status-redirect";
+
+        return "tilework-lb-log-status tilework-lb-log-status-error";
+    }
+
+    private static DateTimeOffset GetRangeStart(string range, DateTimeOffset to)
+    {
+        return range switch
+        {
+            "1h" => to.AddHours(-1),
+            "3h" => to.AddHours(-3),
+            "12h" => to.AddHours(-12),
+            "1d" => to.AddDays(-1),
+            "3d" => to.AddDays(-3),
+            "1w" => to.AddDays(-7),
+            _ => to.AddHours(-1)
+        };
+    }
+}

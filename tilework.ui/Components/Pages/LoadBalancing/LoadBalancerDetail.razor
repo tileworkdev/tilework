@@ -149,7 +149,7 @@
             <TimeSeriesChartPanel Title="Monitoring" LoadData="LoadMonitoringCharts" />
         </MudTabPanel>
         <MudTabPanel Text="Logs">
-            <LogViewerPanel Title="Load balancer logs" LoadData="LoadLoggingData" />
+            <LoadBalancerLogViewerPanel Title="Load balancer logs" LoadData="LoadLoggingData" />
         </MudTabPanel>
 
     </TabContent>
@@ -514,7 +514,7 @@
         return charts;
     }
 
-    private Task<List<LoggingData>> LoadLoggingData(
+    private Task<List<LoadBalancerLogEntry>> LoadLoggingData(
         DateTimeOffset from,
         DateTimeOffset to,
         SortOrder order)
