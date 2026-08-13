@@ -10,6 +10,73 @@
   height: 100% !important;
 }
 
+/* Log terminal */
+.tilework-log-terminal {
+  overflow: hidden;
+  min-height: 24rem;
+  border: 1px solid #30363d;
+  border-radius: 0.5rem;
+  background: #0d1117;
+  color: #d1d7e0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.tilework-log-output {
+  overflow: auto;
+  height: 32rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  scrollbar-color: #484f58 #0d1117;
+}
+
+.tilework-log-line {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 1rem;
+  min-width: max-content;
+}
+
+.tilework-log-line:hover { background: rgb(255 255 255 / 4%); }
+
+.tilework-log-timestamp {
+  color: #7ee787;
+  user-select: none;
+}
+
+.tilework-log-message {
+  color: #d1d7e0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tilework-log-state { color: #8b949e; }
+.tilework-terminal-prompt { color: #58a6ff; }
+
+.tilework-terminal-cursor {
+  color: #f0f6fc;
+  animation: tilework-terminal-blink 1s steps(1, end) infinite;
+}
+
+@keyframes tilework-terminal-blink {
+  50% { opacity: 0; }
+}
+
+@media (max-width: 600px) {
+  .tilework-log-output {
+    height: 24rem;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .tilework-log-line {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-bottom: 0.65rem;
+  }
+}
+
 /* Application shell */
 .tilework-appbar {
   border-bottom: 1px solid var(--mud-palette-lines-default);

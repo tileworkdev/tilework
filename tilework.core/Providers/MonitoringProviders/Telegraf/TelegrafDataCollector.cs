@@ -15,18 +15,18 @@ using Tilework.Monitoring.Enums;
 
 namespace Tilework.Monitoring.Telegraf;
 
-public class TelegrafConfigurator : BaseContainerProvider, IDataCollectorConfigurator
+public class TelegrafConfigurator : BaseContainerProvider, IMonitoringDataCollectorConfigurator
 {
-    protected static string _serviceName = "telegraf";
-    protected static string _moduleName = "monitoring";
-    protected static string _defaultName = "default";
+    protected static readonly string _serviceName = "telegraf";
+    protected static readonly string _moduleName = "monitoring";
+    protected static readonly string _defaultName = "default";
 
     private readonly IContainerManager _containerManager;
-    private readonly DataCollectorConfiguration _settings;
+    private readonly MonitoringDataCollectorConfiguration _settings;
     private readonly ILogger<TelegrafConfigurator> _logger;
     private readonly IMapper _mapper;
 
-    public TelegrafConfigurator(IOptions<DataCollectorConfiguration> settings,
+    public TelegrafConfigurator(IOptions<MonitoringDataCollectorConfiguration> settings,
                                IContainerManager containerManager,
                                ILogger<TelegrafConfigurator> logger,
                                IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)

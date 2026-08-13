@@ -200,6 +200,23 @@ public class DockerServiceManager : IContainerManager
             .ToList();
     }
 
+    public async Task<List<ContainerMount>> GetContainerMounts(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("Container ID cannot be null or empty.", nameof(id));
+
+        var info = await _client.Containers.InspectContainerAsync(id);
+        return info.Mounts?
+            .Where(mount => string.Equals(mount.Type, "bind", StringComparison.OrdinalIgnoreCase))
+            .Select(mount => new ContainerMount
+            {
+                Source = mount.Source,
+                Target = mount.Destination,
+                ReadOnly = !mount.RW
+            })
+            .ToList() ?? new List<ContainerMount>();
+    }
+
 
     public async Task<List<Container>> ListContainers(string? module = null)
     {
@@ -235,7 +252,9 @@ public class DockerServiceManager : IContainerManager
         return images.Any(img => img.RepoTags?.Contains(image) == true);
     }
 
-    public async Task<Container> CreateContainer(string name, string image, string module, List<ContainerPort>? ports)
+    public async Task<Container> CreateContainer(string name, string image, string module,
+                                                 List<ContainerPort>? ports,
+                                                 List<ContainerMount>? mounts = null)
     {
         string[] imageParts = image.Split(':');
 
@@ -296,7 +315,10 @@ public class DockerServiceManager : IContainerManager
                 {
                     Name = RestartPolicyKind.UnlessStopped,
                 },
-                PortBindings = portBindings
+                PortBindings = portBindings,
+                Binds = mounts?.Select(mount =>
+                    $"{mount.Source}:{mount.Target}{(mount.ReadOnly ? ":ro" : string.Empty)}")
+                    .ToList()
             },
             NetworkingConfig = new NetworkingConfig
             {

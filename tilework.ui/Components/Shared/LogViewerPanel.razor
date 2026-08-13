@@ -1,0 +1,160 @@
+@using System.Globalization
+@using Tilework.Core.Enums
+@using Tilework.Logging.Models
+@using Tilework.Ui.Services
+
+<MudCard Outlined="true" Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <div class="d-flex align-items-center pt-2">
+                <MudToggleGroup Class="mr-3" T="string" Value="_selectedRange" Color="Color.Primary"
+                                ValueChanged="OnRangeChanged" Style="width: 20rem">
+                    <MudToggleItem Value="@("1h")" />
+                    <MudToggleItem Value="@("3h")" />
+                    <MudToggleItem Value="@("12h")" />
+                    <MudToggleItem Value="@("1d")" />
+                    <MudToggleItem Value="@("3d")" />
+                    <MudToggleItem Value="@("1w")" />
+                </MudToggleGroup>
+                <MudButton Class="pl-3" Color="Color.Primary" Variant="Variant.Outlined"
+                           Disabled="_loading" OnClick="RefreshAsync">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                </MudButton>
+            </div>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3">@_error</MudAlert>
+        }
+
+        <div class="tilework-log-terminal" role="log" aria-label="@Title">
+            <div class="tilework-log-output" aria-busy="@_loading.ToString().ToLowerInvariant()">
+                @if (_loading)
+                {
+                    <div class="tilework-log-state">
+                        <span class="tilework-terminal-prompt">$</span> loading logs<span class="tilework-terminal-cursor">_</span>
+                    </div>
+                }
+                else if (_entries.Count == 0)
+                {
+                    <div class="tilework-log-state">
+                        <span class="tilework-terminal-prompt">$</span> no log entries in the selected range
+                    </div>
+                }
+                else
+                {
+                    @foreach (var entry in _entries)
+                    {
+                        <div class="tilework-log-line">
+                            <span class="tilework-log-timestamp">@FormatTimestamp(entry.Timestamp)</span>
+                            <span class="tilework-log-message">@entry.Message</span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Logs";
+
+    [Parameter]
+    public Func<DateTimeOffset, DateTimeOffset, SortOrder, Task<List<LoggingData>>>? LoadData { get; set; }
+
+    [Inject]
+    private IBrowserTimeZoneProvider BrowserTimeZoneProvider { get; set; }
+
+    private string _selectedRange = "1h";
+    private List<LoggingData> _entries = new();
+    private bool _loading;
+    private bool _initialized;
+    private string? _error;
+    private TimeZoneInfo? _browserTimeZone;
+    private int _requestVersion;
+
+    public async Task RefreshAsync()
+    {
+        if (LoadData == null)
+            return;
+
+        var requestVersion = ++_requestVersion;
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var to = DateTimeOffset.UtcNow;
+            var from = GetRangeStart(_selectedRange, to);
+            var entries = await LoadData(from, to, SortOrder.Ascending) ?? new List<LoggingData>();
+            var browserTimeZone = _browserTimeZone ?? await BrowserTimeZoneProvider.GetTimeZoneAsync();
+
+            if (requestVersion == _requestVersion)
+            {
+                _entries = entries;
+                _browserTimeZone = browserTimeZone;
+            }
+        }
+        catch (Exception exception)
+        {
+            if (requestVersion == _requestVersion)
+            {
+                _entries = new List<LoggingData>();
+                _error = $"Failed to load logs: {exception.Message}";
+            }
+        }
+        finally
+        {
+            if (requestVersion == _requestVersion)
+            {
+                _loading = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private Task OnRangeChanged(string range)
+    {
+        _selectedRange = range;
+        return RefreshAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            await RefreshAsync();
+        }
+    }
+
+    private string FormatTimestamp(DateTimeOffset timestamp)
+    {
+        var localized = _browserTimeZone == null
+            ? timestamp.ToLocalTime()
+            : TimeZoneInfo.ConvertTime(timestamp, _browserTimeZone);
+
+        return localized.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+    }
+
+    private static DateTimeOffset GetRangeStart(string range, DateTimeOffset to)
+    {
+        return range switch
+        {
+            "1h" => to.AddHours(-1),
+            "3h" => to.AddHours(-3),
+            "12h" => to.AddHours(-12),
+            "1d" => to.AddDays(-1),
+            "3d" => to.AddDays(-3),
+            "1w" => to.AddDays(-7),
+            _ => to.AddHours(-1)
+        };
+    }
+}

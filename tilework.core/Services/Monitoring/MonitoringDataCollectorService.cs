@@ -8,25 +8,22 @@ using Tilework.Monitoring.Interfaces;
 
 namespace Tilework.Monitoring.Services;
 
-public class DataCollectorService
+public class MonitoringDataCollectorService
 {
-    private readonly IDataCollectorConfigurator _collectorConfigurator;
-    private readonly IDataPersistenceConfigurator _persistenceConfigurator;
-    private readonly TileworkContext _dbContext;
-    private readonly DataCollectorConfiguration _settings;
-    private readonly ILogger<DataCollectorService> _logger;
+    private readonly IMonitoringDataCollectorConfigurator _collectorConfigurator;
+    private readonly IMonitoringDataPersistenceConfigurator _persistenceConfigurator;
+    private readonly MonitoringDataCollectorConfiguration _settings;
+    private readonly ILogger<MonitoringDataCollectorService> _logger;
 
     private List<MonitoringSource> _sources = new();
 
-    public DataCollectorService(IDataCollectorConfigurator collectorConfigurator,
-                                IDataPersistenceConfigurator persistenceConfigurator,
-                                TileworkContext dbContext,
-                                IOptions<DataCollectorConfiguration> settings,
-                                ILogger<DataCollectorService> logger)
+    public MonitoringDataCollectorService(IMonitoringDataCollectorConfigurator collectorConfigurator,
+                                          IMonitoringDataPersistenceConfigurator persistenceConfigurator,
+                                          IOptions<MonitoringDataCollectorConfiguration> settings,
+                                          ILogger<MonitoringDataCollectorService> logger)
     {
         _collectorConfigurator = collectorConfigurator;
         _persistenceConfigurator = persistenceConfigurator;
-        _dbContext = dbContext;
         _logger = logger;
         _settings = settings.Value;
     }

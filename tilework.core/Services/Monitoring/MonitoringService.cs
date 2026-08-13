@@ -7,12 +7,12 @@ namespace Tilework.Monitoring.Services;
 
 public class MonitoringService
 {
-    private readonly IDataPersistenceConfigurator _persistenceConfigurator;
+    private readonly IMonitoringDataPersistenceConfigurator _persistenceConfigurator;
 
     private readonly ILogger<MonitoringService> _logger;
 
 
-    public MonitoringService(IDataPersistenceConfigurator persistenceConfigurator,
+    public MonitoringService(IMonitoringDataPersistenceConfigurator persistenceConfigurator,
                              ILogger<MonitoringService> logger)
     {
         _persistenceConfigurator = persistenceConfigurator;

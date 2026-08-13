@@ -21,12 +21,13 @@ using Tilework.TokenVault.Services;
 
 namespace Tilework.Monitoring.Influxdb;
 
-public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConfigurator
+public class Influxdb3Configurator : BaseContainerProvider, IMonitoringDataPersistenceConfigurator
 {
-    protected static string _serviceName = "influxdb";
-    protected static string _moduleName = "monitoring";
+    protected static readonly string _serviceName = "influxdb3";
+    protected static readonly string _moduleName = "monitoring";
 
-    protected static List<ContainerPort> _ports = new List<ContainerPort>()
+#if DEBUG
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>()
     {
         new ContainerPort()
         {
@@ -35,15 +36,18 @@ public class Influxdb3Configurator : BaseContainerProvider, IDataPersistenceConf
             Type = PortType.TCP
         }
     };
+#else
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>() {};
+#endif
 
     private readonly IContainerManager _containerManager;
-    private readonly DataPersistenceConfiguration _settings;
+    private readonly MonitoringDataPersistenceConfiguration _settings;
     private readonly ILogger<Influxdb3Configurator> _logger;
     private readonly IMapper _mapper;
     private readonly HttpApiFactoryService _apiFactory;
     private readonly TokenService _tokenService;
 
-    public Influxdb3Configurator(IOptions<DataPersistenceConfiguration> settings,
+    public Influxdb3Configurator(IOptions<MonitoringDataPersistenceConfiguration> settings,
                                  IContainerManager containerManager,
                                  ILogger<Influxdb3Configurator> logger,
                                  TokenService tokenService,

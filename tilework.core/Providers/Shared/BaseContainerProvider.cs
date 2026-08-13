@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
 using Tilework.Core.Enums;
+using Tilework.Logging.Models;
+using Tilework.Logging.Services;
 
 namespace Tilework.Core.Services;
 
@@ -15,6 +17,7 @@ public abstract class BaseContainerProvider
     private readonly string _module;
     private readonly string _service;
     private readonly string _imageName;
+    private readonly LoggingDataCollectorService? _loggingService;
 
     private string _fullModule => $"{_module}.tile";
     
@@ -23,7 +26,8 @@ public abstract class BaseContainerProvider
                                  ILogger logger,
                                  string module,
                                  string service,
-                                 string imageName)
+                                 string imageName,
+                                 LoggingDataCollectorService? loggingService = null)
     {
         _containerManager = containerManager;
         _logger = logger;
@@ -31,6 +35,7 @@ public abstract class BaseContainerProvider
         _module = module;
         _service = service;
         _imageName = imageName;
+        _loggingService = loggingService;
 
         if (string.IsNullOrEmpty(_imageName))
             throw new ArgumentException($"No image setting supplied for {_module}.{_service}");
@@ -60,12 +65,32 @@ public abstract class BaseContainerProvider
         return containers.FirstOrDefault(c => c.Name == (IsFullName(name) ? name : GetFullName(name)));
     }
 
-    private async Task<Container> CreateContainer(string name, List<ContainerPort> ports)
+    protected async Task ConfigureContainerLogging(string containerName)
+    {
+        if (_loggingService == null)
+            throw new InvalidOperationException(
+                $"No logging service was supplied to provider {_module}.{_service}");
+
+        var container = await GetContainer(containerName)
+            ?? throw new InvalidOperationException(
+                $"Cannot configure logging because container {GetFullName(containerName)} does not exist");
+
+        await _loggingService.StartLogging(new LoggingSource
+        {
+            Module = _module,
+            Name = containerName,
+            ContainerId = container.Id,
+            ContainerName = container.Name
+        });
+    }
+
+    private async Task<Container> CreateContainer(string name, List<ContainerPort> ports,
+                                                  List<ContainerMount>? mounts)
     {
         try
         {
             var container = await _containerManager.CreateContainer(
-                GetFullName(name), _imageName, _fullModule, ports
+                GetFullName(name), _imageName, _fullModule, ports, mounts
             );
 
             return container;
@@ -77,7 +102,9 @@ public abstract class BaseContainerProvider
         }
     }
 
-    protected async Task StartUp(string name, List<ContainerPort> ports, List<ContainerFile> files, ContainerRestartType restartType)
+    protected async Task StartUp(string name, List<ContainerPort> ports, List<ContainerFile> files,
+                                 ContainerRestartType restartType,
+                                 List<ContainerMount>? mounts = null)
     {
         var container = await GetContainer(name);
 
@@ -85,9 +112,16 @@ public abstract class BaseContainerProvider
         {
             var existingPorts = await _containerManager.GetContainerPorts(container.Id);
 
-            if (PortsAreDifferent(existingPorts, ports))
+            if (ComparePorts(existingPorts, ports))
             {
                 _logger.LogInformation($"Container {GetFullName(name)} ports changed, forcing recreate");
+                restartType = ContainerRestartType.RECREATE;
+            }
+
+            var existingMounts = await _containerManager.GetContainerMounts(container.Id);
+            if (CompareMounts(existingMounts, mounts))
+            {
+                _logger.LogInformation($"Container {GetFullName(name)} mounts changed, forcing recreate");
                 restartType = ContainerRestartType.RECREATE;
             }
         }
@@ -102,7 +136,7 @@ public abstract class BaseContainerProvider
         if (container == null)
         {
             _logger.LogInformation($"Creating container {GetFullName(name)}");
-            container = await CreateContainer(name, ports);
+            container = await CreateContainer(name, ports, mounts);
         }
 
         foreach(var file in files)
@@ -132,7 +166,7 @@ public abstract class BaseContainerProvider
         }
     }
 
-    private static bool PortsAreDifferent(List<ContainerPort>? existingPorts, List<ContainerPort>? desiredPorts)
+    private static bool ComparePorts(List<ContainerPort>? existingPorts, List<ContainerPort>? desiredPorts)
     {
         var normalizedExisting = NormalizePorts(existingPorts);
         var normalizedDesired = NormalizePorts(desiredPorts);
@@ -168,6 +202,28 @@ public abstract class BaseContainerProvider
             .ToList();
     }
 
+    private static bool CompareMounts(List<ContainerMount>? existingMounts,
+                                      List<ContainerMount>? desiredMounts)
+    {
+        var normalizedDesired = NormalizeMounts(desiredMounts);
+        var normalizedExisting = NormalizeMounts(existingMounts);
+
+        if (normalizedExisting.Count != normalizedDesired.Count)
+            return true;
+
+        return normalizedDesired.Where((mount, index) => mount != normalizedExisting[index]).Any();
+    }
+
+    private static List<(string Source, string Target, bool ReadOnly)> NormalizeMounts(
+        List<ContainerMount>? mounts)
+    {
+        return mounts?
+            .Select(mount => (mount.Source, mount.Target, mount.ReadOnly))
+            .OrderBy(mount => mount.Source, StringComparer.Ordinal)
+            .ThenBy(mount => mount.Target, StringComparer.Ordinal)
+            .ToList() ?? new List<(string Source, string Target, bool ReadOnly)>();
+    }
+
     private async Task DeleteContainer(string name)
     {
         var container = await GetContainer(name);
@@ -185,6 +241,13 @@ public abstract class BaseContainerProvider
 
     public async Task Shutdown(string name)
     {
+        if (_loggingService != null)
+        {
+            var container = await GetContainer(name);
+            if (container != null)
+                await _loggingService.StopLoggingForContainer(container.Name);
+        }
+
         await DeleteContainer(name);
     }
 }

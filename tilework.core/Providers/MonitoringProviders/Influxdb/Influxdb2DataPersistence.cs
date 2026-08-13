@@ -20,15 +20,16 @@ using Tilework.TokenVault.Services;
 
 namespace Tilework.Monitoring.Influxdb;
 
-public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConfigurator
+public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersistenceConfigurator
 {
-    protected static string _serviceName = "influxdb";
-    protected static string _moduleName = "monitoring";
-    private static string _defaultName = "default";
+    protected static readonly string _serviceName = "influxdb";
+    protected static readonly string _moduleName = "monitoring";
+    private static readonly string _defaultName = "default";
 
-    private static string _orgName = "tilework";
+    private static readonly string _orgName = "tilework";
 
-    protected static List<ContainerPort> _ports = new List<ContainerPort>()
+#if DEBUG
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>()
     {
         new ContainerPort()
         {
@@ -37,16 +38,19 @@ public class Influxdb2Configurator : BaseContainerProvider, IDataPersistenceConf
             Type = PortType.TCP
         }
     };
+#else
+    protected static readonly List<ContainerPort> _ports = new List<ContainerPort>() {};
+#endif
 
 
     private readonly IContainerManager _containerManager;
-    private readonly DataPersistenceConfiguration _settings;
+    private readonly MonitoringDataPersistenceConfiguration _settings;
     private readonly ILogger<Influxdb2Configurator> _logger;
     private readonly IMapper _mapper;
     private readonly HttpApiFactoryService _apiFactory;
     private readonly TokenService _tokenService;
 
-    public Influxdb2Configurator(IOptions<DataPersistenceConfiguration> settings,
+    public Influxdb2Configurator(IOptions<MonitoringDataPersistenceConfiguration> settings,
                                  IContainerManager containerManager,
                                  ILogger<Influxdb2Configurator> logger,
                                  TokenService tokenService,

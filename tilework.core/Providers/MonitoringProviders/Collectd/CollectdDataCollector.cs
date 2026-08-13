@@ -11,18 +11,18 @@ using Tilework.Monitoring.Enums;
 
 namespace Tilework.Monitoring.Collectd;
 
-public class CollectdConfigurator : IDataCollectorConfigurator
+public class CollectdConfigurator : IMonitoringDataCollectorConfigurator
 {
     public string ServiceName => "Collectd";
 
     private string ContainerName => $"DataCollector-{ServiceName}";
 
     private readonly IContainerManager _containerManager;
-    private readonly DataCollectorConfiguration _settings;
+    private readonly MonitoringDataCollectorConfiguration _settings;
     private readonly ILogger<CollectdConfigurator> _logger;
     private readonly IMapper _mapper;
 
-    public CollectdConfigurator(IOptions<DataCollectorConfiguration> settings,
+    public CollectdConfigurator(IOptions<MonitoringDataCollectorConfiguration> settings,
                                IContainerManager containerManager,
                                ILogger<CollectdConfigurator> logger,
                                IMapper mapper)

@@ -2,7 +2,7 @@ using Tilework.Monitoring.Models;
 
 namespace Tilework.Monitoring.Interfaces;
 
-public interface IDataPersistenceConfigurator
+public interface IMonitoringDataPersistenceConfigurator
 {
     Task<MonitoringTarget> GetTarget(MonitoringSource source);
     Task<List<T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new();

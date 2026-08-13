@@ -20,33 +20,37 @@ using Tilework.Monitoring.Enums;
 using Tilework.Monitoring.Models;
 using Tilework.Persistence.LoadBalancing.Models;
 using Tilework.Monitoring.Services;
+using Tilework.Logging.Services;
 using Tilework.Exceptions.Core;
 
 namespace Tilework.LoadBalancing.Haproxy;
 
 public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigurator
 {
-    protected static string _serviceName = "haproxy";
-    protected static string _moduleName = "loadbalancing";
+    protected static readonly string _serviceName = "haproxy";
+    protected static readonly string _moduleName = "loadbalancing";
 
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerConfiguration _settings;
     private readonly ICertificateManagementService _certificateManagementService;
-    private readonly DataCollectorService _dataCollectorService;
+    private readonly MonitoringDataCollectorService _monitoringDataCollectorService;
     private readonly ILogger<HAProxyConfigurator> _logger;
     private readonly IMapper _mapper;
 
     public HAProxyConfigurator(IOptions<LoadBalancerConfiguration> settings,
                                IContainerManager containerManager,
                                ICertificateManagementService certificateManagementService,
-                               DataCollectorService dataCollectorService,
+                               MonitoringDataCollectorService monitoringDataCollectorService,
+                               LoggingDataCollectorService loggingDataCollectorService,
                                ILogger<HAProxyConfigurator> logger,
-                               IMapper mapper) : base(containerManager, logger, _moduleName, _serviceName, settings.Value.BackendImage)
+                               IMapper mapper)
+        : base(containerManager, logger, _moduleName, _serviceName,
+               settings.Value.BackendImage, loggingDataCollectorService)
     {
         _logger = logger;
         _settings = settings.Value;
         _certificateManagementService = certificateManagementService;
-        _dataCollectorService = dataCollectorService;
+        _monitoringDataCollectorService = monitoringDataCollectorService;
         _containerManager = containerManager;
         _mapper = mapper;
     }
@@ -145,7 +149,7 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
 
     public async Task ConfigureMonitoring(LoadBalancer loadBalancer)
     {
-        if (loadBalancer.Enabled == true && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == false)
+        if (loadBalancer.Enabled == true && _monitoringDataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == false)
         {
             var monitoringSource = new MonitoringSource()
             {
@@ -155,11 +159,11 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
                 Host = Host.Parse(await GetLoadBalancerHostname(loadBalancer)),
                 Port = 4380
             };
-            await _dataCollectorService.StartMonitoring(monitoringSource);
+            await _monitoringDataCollectorService.StartMonitoring(monitoringSource);
         }
-        else if (loadBalancer.Enabled == false && _dataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == true)
+        else if (loadBalancer.Enabled == false && _monitoringDataCollectorService.IsMonitored(loadBalancer.Id.ToString()) == true)
         {
-            await _dataCollectorService.StopMonitoring(loadBalancer.Id.ToString());
+            await _monitoringDataCollectorService.StopMonitoring(loadBalancer.Id.ToString());
         }
     }
 
@@ -220,8 +224,10 @@ public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigur
             await Shutdown(loadBalancer.Name);
         }
 
-        
+
         await ConfigureMonitoring(loadBalancer);
+        if (loadBalancer.Enabled)
+            await ConfigureContainerLogging(loadBalancer.Name);
     }
 
     public async Task ApplyConfiguration(List<LoadBalancer> loadBalancers)
