@@ -17,9 +17,9 @@ namespace Tilework.Monitoring.Telegraf;
 
 public class TelegrafConfigurator : BaseContainerProvider, IMonitoringDataCollectorConfigurator
 {
-    protected static string _serviceName = "telegraf";
-    protected static string _moduleName = "monitoring";
-    protected static string _defaultName = "default";
+    protected static readonly string _serviceName = "telegraf";
+    protected static readonly string _moduleName = "monitoring";
+    protected static readonly string _defaultName = "default";
 
     private readonly IContainerManager _containerManager;
     private readonly MonitoringDataCollectorConfiguration _settings;

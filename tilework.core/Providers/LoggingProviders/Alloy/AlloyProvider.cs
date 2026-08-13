@@ -13,9 +13,9 @@ namespace Tilework.Logging.Alloy;
 
 public class AlloyConfigurator : BaseContainerProvider, ILoggingDataCollectorConfigurator
 {
-    protected static string _serviceName = "alloy";
-    protected static string _moduleName = "logging";
-    protected static string _defaultName = "default";
+    protected static readonly string _serviceName = "alloy";
+    protected static readonly string _moduleName = "logging";
+    protected static readonly string _defaultName = "default";
 
     private const string DockerSocketPath = "/var/run/docker.sock";
 

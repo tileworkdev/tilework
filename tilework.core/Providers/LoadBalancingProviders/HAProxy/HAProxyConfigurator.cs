@@ -27,8 +27,8 @@ namespace Tilework.LoadBalancing.Haproxy;
 
 public class HAProxyConfigurator : BaseContainerProvider, ILoadBalancingConfigurator
 {
-    protected static string _serviceName = "haproxy";
-    protected static string _moduleName = "loadbalancing";
+    protected static readonly string _serviceName = "haproxy";
+    protected static readonly string _moduleName = "loadbalancing";
 
     private readonly IContainerManager _containerManager;
     private readonly LoadBalancerConfiguration _settings;
