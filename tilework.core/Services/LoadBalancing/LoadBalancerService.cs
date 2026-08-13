@@ -540,11 +540,11 @@ public class LoadBalancerService : ILoadBalancerService
         return await _monitoringService.GetMonitoringData<LoadBalancingMonitorData>("LoadBalancing", filters, interval, start, end);
     }
 
-    public async Task<List<LoggingData>> GetLoadBalancerLoggingData(Guid id, DateTimeOffset start, DateTimeOffset end, SortOrder order)
+    public async Task<List<LoggingData>> GetLoadBalancerLoggingData(Guid Id, DateTimeOffset start, DateTimeOffset end, SortOrder order)
     {
-        var loadBalancer = await GetLoadBalancer(id);
+        var loadBalancer = await GetLoadBalancer(Id);
         if (loadBalancer == null)
-            throw new ArgumentException("Invalid load balancer id", nameof(id));
+            throw new ArgumentException("Invalid load balancer id", nameof(Id));
 
         var filters = new Dictionary<string, string>
         {
