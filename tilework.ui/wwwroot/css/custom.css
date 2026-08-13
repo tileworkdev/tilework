@@ -128,7 +128,30 @@
   text-align: center;
 }
 
-.tilework-lb-log-path { color: var(--mud-palette-text-primary); }
+.tilework-lb-log-method {
+  color: var(--mud-palette-primary-text);
+  background: var(--mud-palette-primary);
+}
+
+.tilework-lb-log-request {
+  max-width: 30rem;
+}
+
+.tilework-lb-log-request-content {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tilework-lb-log-path {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mud-palette-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tilework-lb-log-status-success { color: var(--mud-palette-success); background: color-mix(in srgb, var(--mud-palette-success) 12%, transparent); }
 .tilework-lb-log-status-redirect { color: var(--mud-palette-warning); background: color-mix(in srgb, var(--mud-palette-warning) 12%, transparent); }
 .tilework-lb-log-status-error { color: var(--mud-palette-error); background: color-mix(in srgb, var(--mud-palette-error) 12%, transparent); }

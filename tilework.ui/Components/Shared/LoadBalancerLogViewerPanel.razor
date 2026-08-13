@@ -63,9 +63,11 @@
                                 <td class="tilework-lb-log-timestamp">@FormatTimestamp(entry.Timestamp)</td>
                                 <td><span class="tilework-lb-log-action">@FormatAction(entry)</span></td>
                                 <td><code>@entry.SourceAddress</code></td>
-                                <td>
-                                    <span class="tilework-lb-log-method">@entry.Method.Method</span>
-                                    <code class="tilework-lb-log-path">@entry.Path</code>
+                                <td class="tilework-lb-log-request">
+                                    <div class="tilework-lb-log-request-content">
+                                        <span class="tilework-lb-log-method">@entry.Method.Method</span>
+                                        <code class="tilework-lb-log-path" title="@entry.Path">@entry.Path</code>
+                                    </div>
                                 </td>
                                 <td><span class="@GetStatusClass(entry.StatusCode)">@((int)entry.StatusCode)</span></td>
                                 <td class="tilework-lb-log-number">@entry.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</td>
