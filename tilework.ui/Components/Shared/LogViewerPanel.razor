@@ -69,7 +69,7 @@
     public Func<DateTimeOffset, DateTimeOffset, SortOrder, Task<List<LoggingData>>>? LoadData { get; set; }
 
     [Inject]
-    private IBrowserTimeZoneProvider BrowserTimeZoneProvider { get; set; } = default!;
+    private IBrowserTimeZoneProvider BrowserTimeZoneProvider { get; set; }
 
     private string _selectedRange = "1h";
     private List<LoggingData> _entries = new();
