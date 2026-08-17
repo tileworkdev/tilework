@@ -63,9 +63,22 @@ public class LokiConfigurator : BaseContainerProvider, ILoggingDataPersistenceCo
 
     public async Task ApplyConfiguration()
     {
+        var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "loki.yaml");
+
+        if (!File.Exists(configPath))
+            throw new InvalidOperationException($"No default Loki configuration file found at {configPath}");
+
         var container = await GetContainer(_defaultName);
         if (container == null || container.State != ContainerState.Running)
-            await StartUp(_defaultName, _ports, new(), ContainerRestartType.RESTART);
+        {
+            var containerFile = new ContainerFile
+            {
+                LocalPath = configPath,
+                ContainerPath = "/etc/loki/local-config.yaml"
+            };
+
+            await StartUp(_defaultName, _ports, new() { containerFile }, ContainerRestartType.RESTART);
+        }
     }
 
     public async Task<List<LoggingData>> GetData(
