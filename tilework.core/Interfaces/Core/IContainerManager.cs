@@ -29,4 +29,5 @@ public interface IContainerManager
     public Task KillContainer(string id, UnixSignal signal);
 
     public Task<ContainerCommandResult> ExecuteContainerCommand(string id, string command);
+    public Task<ContainerCommandResult> ExecuteContainerCommand(string id, IReadOnlyList<string> command);
 }

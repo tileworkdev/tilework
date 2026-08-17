@@ -413,11 +413,16 @@ public class DockerServiceManager : IContainerManager
 
     public async Task<ContainerCommandResult> ExecuteContainerCommand(string id, string command)
     {
+        return await ExecuteContainerCommand(id, ["sh", "-c", command]);
+    }
+
+    public async Task<ContainerCommandResult> ExecuteContainerCommand(string id, IReadOnlyList<string> command)
+    {
         var execCreate = await _client.Exec.ExecCreateContainerAsync(id, new ContainerExecCreateParameters
         {
             AttachStdout = true,
             AttachStderr = true,
-            Cmd = ["sh", "-c", command]
+            Cmd = command.ToList()
         });
 
 

@@ -122,7 +122,15 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
         
         await _containerManager.ExecuteContainerCommand(
             container.Id,
-            $"influx setup --username admin --password \"{token}\" --org \"{orgName}\" --bucket tilework --token \"{token}\" --force");
+            [
+                "influx", "setup",
+                "--username", "admin",
+                "--password", token,
+                "--org", orgName,
+                "--bucket", "tilework",
+                "--token", token,
+                "--force"
+            ]);
     }
 
     private async Task<HttpApiService> GetApiService()
