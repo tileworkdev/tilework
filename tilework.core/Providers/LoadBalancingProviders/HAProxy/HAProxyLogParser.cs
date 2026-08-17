@@ -35,6 +35,7 @@ public static partial class HAProxyLogParser
         var backend = match.Groups["backend"].Value;
         var server = match.Groups["server"].Value;
         var method = new HttpMethod(match.Groups["method"].Value);
+        var capturedHeaders = CapturedRequestHeadersPattern().Match(match.Groups["logDetails"].Value);
         var wasBackendSelected = !string.Equals(frontend, backend, StringComparison.Ordinal);
         var wasServerSelected = !string.Equals(server, "<NOSRV>", StringComparison.Ordinal);
 
@@ -51,14 +52,28 @@ public static partial class HAProxyLogParser
             StatusCode = (HttpStatusCode)statusCode,
             Method = method,
             Path = match.Groups["path"].Value,
+            HostHeader = GetCapturedHeader(capturedHeaders, "hostHeader"),
+            UserAgent = GetCapturedHeader(capturedHeaders, "userAgent"),
+            XForwardedFor = GetCapturedHeader(capturedHeaders, "xForwardedFor"),
             TotalTimeMilliseconds = totalTime
         };
 
         return true;
     }
 
+    private static string? GetCapturedHeader(Match capturedHeaders, string groupName)
+    {
+        var group = capturedHeaders.Groups[groupName];
+        return group.Success && !string.IsNullOrEmpty(group.Value) ? group.Value : null;
+    }
+
     [GeneratedRegex(
-        """^(?<sourceAddress>.+):\d+ \[(?<timestamp>[^\]]+)\] (?<frontend>\S+) (?<backend>\S+)/(?<server>\S+) -?\d+/-?\d+/-?\d+/-?\d+/(?<totalTime>-?\d+) (?<statusCode>\d{3}) \d+ .*"(?<method>[!#$%&'*+.^_`|~0-9A-Za-z-]+) (?<path>.*?) HTTP/\d(?:\.\d+)?"$""",
+        """^(?<sourceAddress>.+):\d+ \[(?<timestamp>[^\]]+)\] (?<frontend>\S+) (?<backend>\S+)/(?<server>\S+) -?\d+/-?\d+/-?\d+/-?\d+/(?<totalTime>-?\d+) (?<statusCode>\d{3}) \d+ (?<logDetails>.*)"(?<method>[!#$%&'*+.^_`|~0-9A-Za-z-]+) (?<path>.*?) HTTP/\d(?:\.\d+)?"$""",
         RegexOptions.CultureInvariant)]
     private static partial Regex HttpLogPattern();
+
+    [GeneratedRegex(
+        @"\{(?<hostHeader>[^|}]*)\|(?<userAgent>[^|}]*)\|(?<xForwardedFor>[^}]*)\}",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex CapturedRequestHeadersPattern();
 }

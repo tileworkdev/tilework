@@ -79,6 +79,13 @@ public class HAProxyConfigurationProfile : Profile
 
     private static void MapHttpLoadBalancerRules(LoadBalancer src, FrontendSection dest, ResolutionContext context)
     {
+        // HAProxy does not allow request-header captures in `defaults`. Keep the
+        // declaration order in sync with HAProxyLogParser: Host, User-Agent, then
+        // X-Forwarded-For.
+        dest.RequestHeaderCaptures.Add(new RequestHeaderCapture("Host", 128));
+        dest.RequestHeaderCaptures.Add(new RequestHeaderCapture("User-Agent", 512));
+        dest.RequestHeaderCaptures.Add(new RequestHeaderCapture("X-Forwarded-For", 512));
+
         dest.HttpRequests.Add(new AddHeaderHttpRequest(
             "X-Forwarded-Proto",
             src.Protocol == LoadBalancerProtocol.HTTPS ? "https" : "http"));

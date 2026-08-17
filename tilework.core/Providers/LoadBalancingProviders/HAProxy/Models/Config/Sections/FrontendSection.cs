@@ -8,6 +8,9 @@ public class FrontendSection : ConfigSection
     [Statement("mode")]
     public Mode Mode { get; set; }
 
+    [Statement("capture")]
+    public List<RequestHeaderCapture> RequestHeaderCaptures { get; set; } = new();
+
     [Statement("acl")]
     public List<Acl> Acls { get; set; } = new List<Acl>();
 

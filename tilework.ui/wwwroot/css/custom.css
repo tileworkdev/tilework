@@ -77,61 +77,16 @@
   }
 }
 
-.tilework-lb-log-table {
-  overflow: auto;
-  max-height: 32rem;
-  border: 1px solid var(--mud-palette-lines-default);
-  border-radius: 0.5rem;
+.tilework-lb-log-table > .mud-table-container > table {
+  min-width: 70rem;
 }
 
-.tilework-lb-log-table table {
-  width: 100%;
-  min-width: 64rem;
-  border-collapse: collapse;
-}
-
-.tilework-lb-log-table th,
-.tilework-lb-log-table td {
-  padding: 0.7rem 0.85rem;
-  border-bottom: 1px solid var(--mud-palette-lines-default);
-  text-align: left;
+.tilework-lb-log-table .mud-table-cell {
   white-space: nowrap;
 }
 
-.tilework-lb-log-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--mud-palette-surface);
-  color: var(--mud-palette-text-secondary);
-  font-size: 0.75rem;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.tilework-lb-log-table tbody tr:hover { background: var(--mud-palette-action-default-hover); }
 .tilework-lb-log-timestamp { color: var(--mud-palette-text-secondary); font-variant-numeric: tabular-nums; }
 .tilework-lb-log-number { text-align: right !important; font-variant-numeric: tabular-nums; }
-.tilework-lb-log-action { font-weight: 600; }
-
-.tilework-lb-log-method,
-.tilework-lb-log-status {
-  display: inline-block;
-  min-width: 2.8rem;
-  margin-right: 0.55rem;
-  padding: 0.15rem 0.45rem;
-  border-radius: 0.35rem;
-  background: var(--mud-palette-action-default);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-align: center;
-}
-
-.tilework-lb-log-method {
-  color: var(--mud-palette-primary-text);
-  background: var(--mud-palette-primary);
-}
 
 .tilework-lb-log-request {
   max-width: 30rem;
@@ -140,6 +95,7 @@
 .tilework-lb-log-request-content {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   min-width: 0;
 }
 
@@ -152,9 +108,28 @@
   white-space: nowrap;
 }
 
-.tilework-lb-log-status-success { color: var(--mud-palette-success); background: color-mix(in srgb, var(--mud-palette-success) 12%, transparent); }
-.tilework-lb-log-status-redirect { color: var(--mud-palette-warning); background: color-mix(in srgb, var(--mud-palette-warning) 12%, transparent); }
-.tilework-lb-log-status-error { color: var(--mud-palette-error); background: color-mix(in srgb, var(--mud-palette-error) 12%, transparent); }
+.tilework-lb-log-details {
+  background: var(--mud-palette-background-gray);
+}
+
+.tilework-lb-log-detail-table th,
+.tilework-lb-log-detail-table td {
+  vertical-align: top;
+  white-space: normal;
+}
+
+.tilework-lb-log-detail-table th {
+  color: var(--mud-palette-text-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+
+.tilework-lb-log-detail-table code {
+  display: block;
+  font: inherit;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 
 /* Application shell */
 .tilework-appbar {

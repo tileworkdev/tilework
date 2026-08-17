@@ -44,38 +44,106 @@
         }
         else
         {
-            <div class="tilework-lb-log-table" role="log" aria-label="@Title">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <th>Action</th>
-                            <th>Source</th>
-                            <th>Request</th>
-                            <th>Status</th>
-                            <th class="tilework-lb-log-number">Total time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var entry in _entries)
-                        {
-                            <tr>
-                                <td class="tilework-lb-log-timestamp">@FormatTimestamp(entry.Timestamp)</td>
-                                <td><span class="tilework-lb-log-action">@FormatAction(entry)</span></td>
-                                <td><code>@entry.SourceAddress</code></td>
-                                <td class="tilework-lb-log-request">
-                                    <div class="tilework-lb-log-request-content">
-                                        <span class="tilework-lb-log-method">@entry.Method.Method</span>
-                                        <code class="tilework-lb-log-path" title="@entry.Path">@entry.Path</code>
-                                    </div>
-                                </td>
-                                <td><span class="@GetStatusClass(entry.StatusCode)">@((int)entry.StatusCode)</span></td>
-                                <td class="tilework-lb-log-number">@entry.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <MudTable T="LoadBalancerLogEntry" Items="@_entries" Dense="true" Hover="true"
+                      Outlined="true" FixedHeader="true" Height="32rem"
+                      HorizontalScrollbar="true" Breakpoint="Breakpoint.Sm"
+                      Class="tilework-lb-log-table" aria-label="@Title">
+                <ColGroup>
+                    <col style="width: 3rem" />
+                    <col style="width: 15rem" />
+                    <col />
+                    <col style="width: 10rem" />
+                    <col style="width: 12rem" />
+                    <col />
+                    <col style="width: 6rem" />
+                    <col style="width: 8rem" />
+                </ColGroup>
+                <HeaderContent>
+                    <MudTh />
+                    <MudTh>Timestamp</MudTh>
+                    <MudTh>Action</MudTh>
+                    <MudTh>Source</MudTh>
+                    <MudTh>Host</MudTh>
+                    <MudTh>Request</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Class="tilework-lb-log-number">Total time</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudIconButton Icon="@(IsExpanded(context) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                       Size="Size.Small"
+                                       OnClick="@(() => ToggleDetails(context))"
+                                       title="@(IsExpanded(context) ? "Hide request details" : "Show request details")" />
+                    </MudTd>
+                    <MudTd DataLabel="Timestamp" Class="tilework-lb-log-timestamp">@FormatTimestamp(context.Timestamp)</MudTd>
+                    <MudTd DataLabel="Action"><strong>@FormatAction(context)</strong></MudTd>
+                    <MudTd DataLabel="Source"><code>@context.SourceAddress</code></MudTd>
+                    <MudTd DataLabel="Host"><code>@(context.HostHeader ?? "—")</code></MudTd>
+                    <MudTd DataLabel="Request" Class="tilework-lb-log-request">
+                        <div class="tilework-lb-log-request-content">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.Method.Method</MudChip>
+                            <code class="tilework-lb-log-path" title="@context.Path">@context.Path</code>
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetStatusColor(context.StatusCode)">
+                            @((int)context.StatusCode)
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Total time" Class="tilework-lb-log-number">@context.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</MudTd>
+                </RowTemplate>
+                <ChildRowContent>
+                    @if (IsExpanded(context))
+                    {
+                        <MudTr>
+                            <td colspan="8" class="pa-0">
+                                <MudCard Elevation="0" Square="true" Class="tilework-lb-log-details ma-0 pa-0">
+                                    <MudCardContent Class="pa-0">
+                                        <MudSimpleTable Dense="true" Elevation="0" Square="true" Class="tilework-lb-log-detail-table ma-0">
+                                            <colgroup>
+                                                <col style="width: 10rem" />
+                                                <col />
+                                                <col style="width: 10rem" />
+                                                <col />
+                                            </colgroup>
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row">Timestamp</th>
+                                                    <td><code>@FormatTimestamp(context.Timestamp)</code></td>
+                                                    <th scope="row">Action</th>
+                                                    <td><code>@FormatAction(context)</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Source</th>
+                                                    <td><code>@context.SourceAddress</code></td>
+                                                    <th scope="row">Host</th>
+                                                    <td><code>@(context.HostHeader ?? "—")</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Request</th>
+                                                    <td><code>@context.Method.Method @context.Path</code></td>
+                                                    <th scope="row">Status</th>
+                                                    <td><code>@((int)context.StatusCode)</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Total time</th>
+                                                    <td><code>@context.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</code></td>
+                                                    <th scope="row">X-Forwarded-For</th>
+                                                    <td><code>@(context.XForwardedFor ?? "—")</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">User agent</th>
+                                                    <td colspan="3"><code>@(context.UserAgent ?? "—")</code></td>
+                                                </tr>
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </MudCardContent>
+                                </MudCard>
+                            </td>
+                        </MudTr>
+                    }
+                </ChildRowContent>
+            </MudTable>
         }
     </MudCardContent>
 </MudCard>
@@ -92,6 +160,7 @@
 
     private string _selectedRange = "1h";
     private List<LoadBalancerLogEntry> _entries = new();
+    private LoadBalancerLogEntry? _expandedEntry;
     private bool _loading;
     private bool _initialized;
     private string? _error;
@@ -118,6 +187,7 @@
             if (requestVersion == _requestVersion)
             {
                 _entries = entries;
+                _expandedEntry = null;
                 _browserTimeZone = browserTimeZone;
             }
         }
@@ -126,6 +196,7 @@
             if (requestVersion == _requestVersion)
             {
                 _entries = new();
+                _expandedEntry = null;
                 _error = $"Failed to load logs: {exception.Message}";
             }
         }
@@ -154,6 +225,16 @@
         return RefreshAsync();
     }
 
+    private bool IsExpanded(LoadBalancerLogEntry entry)
+    {
+        return ReferenceEquals(_expandedEntry, entry);
+    }
+
+    private void ToggleDetails(LoadBalancerLogEntry entry)
+    {
+        _expandedEntry = IsExpanded(entry) ? null : entry;
+    }
+
     private string FormatTimestamp(DateTimeOffset timestamp)
     {
         var localized = _browserTimeZone == null
@@ -173,15 +254,15 @@
         };
     }
 
-    private static string GetStatusClass(HttpStatusCode statusCode)
+    private static Color GetStatusColor(HttpStatusCode statusCode)
     {
         var numericStatus = (int)statusCode;
         if (numericStatus < 300)
-            return "tilework-lb-log-status tilework-lb-log-status-success";
+            return Color.Success;
         if (numericStatus < 400)
-            return "tilework-lb-log-status tilework-lb-log-status-redirect";
+            return Color.Warning;
 
-        return "tilework-lb-log-status tilework-lb-log-status-error";
+        return Color.Error;
     }
 
     private static DateTimeOffset GetRangeStart(string range, DateTimeOffset to)

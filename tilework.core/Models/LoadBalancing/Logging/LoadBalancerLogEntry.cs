@@ -14,5 +14,8 @@ public record class LoadBalancerLogEntry
     public HttpStatusCode StatusCode { get; init; }
     public HttpMethod Method { get; init; } = HttpMethod.Get;
     public string Path { get; init; } = string.Empty;
+    public string? HostHeader { get; init; }
+    public string? UserAgent { get; init; }
+    public string? XForwardedFor { get; init; }
     public long TotalTimeMilliseconds { get; init; }
 }
