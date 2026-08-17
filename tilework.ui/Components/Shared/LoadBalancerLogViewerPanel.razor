@@ -76,7 +76,17 @@
                                        title="@(IsExpanded(context) ? "Hide request details" : "Show request details")" />
                     </MudTd>
                     <MudTd DataLabel="Timestamp" Class="tilework-lb-log-timestamp">@FormatTimestamp(context.Timestamp)</MudTd>
-                    <MudTd DataLabel="Action"><strong>@FormatAction(context)</strong></MudTd>
+                    <MudTd DataLabel="Action">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" title="@FormatAction(context)">
+                            <MudIcon Icon="@GetActionIcon(context.Action)"
+                                     Color="@(context.Action == LoadBalancerLogAction.ForwardingFailed ? Color.Error : Color.Default)"
+                                     Size="Size.Small" />
+                            @if (!string.IsNullOrWhiteSpace(context.Backend))
+                            {
+                                <span>@context.Backend</span>
+                            }
+                        </MudStack>
+                    </MudTd>
                     <MudTd DataLabel="Source"><code>@context.SourceAddress</code></MudTd>
                     <MudTd DataLabel="Host"><code>@(context.HostHeader ?? "—")</code></MudTd>
                     <MudTd DataLabel="Request" Class="tilework-lb-log-request">
@@ -248,9 +258,19 @@
     {
         return entry.Action switch
         {
-            LoadBalancerLogAction.Forwarded => $"Forwarded · {entry.Backend}",
-            LoadBalancerLogAction.ForwardingFailed => $"Failed · {entry.Backend}",
-            _ => "LB response"
+            LoadBalancerLogAction.Forwarded => $"Forwarded - {entry.Backend}",
+            LoadBalancerLogAction.ForwardingFailed => $"Failed - {entry.Backend}",
+            _ => "Fixed response"
+        };
+    }
+
+    private static string GetActionIcon(LoadBalancerLogAction action)
+    {
+        return action switch
+        {
+            LoadBalancerLogAction.Forwarded => Icons.Material.Outlined.AltRoute,
+            LoadBalancerLogAction.ForwardingFailed => Icons.Material.Filled.ErrorOutline,
+            _ => Icons.Material.Outlined.Dns
         };
     }
 
