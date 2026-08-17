@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using AutoMapper;
 using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
+using InfluxDB.Client.Core.Exceptions;
 
 using Tilework.Core.Interfaces;
 using Tilework.Core.Models;
@@ -151,7 +152,7 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
         var container = await GetContainer(_defaultName);
         var token = await _tokenService.GetToken(GetFullName(_defaultName));
 
-        if(token != null)
+        if(!string.IsNullOrWhiteSpace(token))
             return token;
 
         var initialized = await IsInitialized();
@@ -167,8 +168,35 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
         else
         {
             token = await TryRecoverAdminToken();
-            await _tokenService.SetToken(GetFullName(_defaultName), token);
+            if (string.IsNullOrWhiteSpace(token))
+                throw new InvalidOperationException("InfluxDB is initialized, but its admin token could not be recovered");
+
             return token;
+        }
+    }
+
+    private async Task<T> WithTokenRecovery<T>(Func<string, Task<T>> operation)
+    {
+        var token = await GetAdminToken();
+
+        try
+        {
+            return await operation(token);
+        }
+        catch (UnauthorizedException ex)
+        {
+            _logger.LogWarning("InfluxDB rejected the stored admin token; attempting token recovery");
+            await _tokenService.DeleteToken(GetFullName(_defaultName));
+
+            var recoveredToken = await TryRecoverAdminToken();
+            if (string.IsNullOrWhiteSpace(recoveredToken))
+            {
+                throw new InvalidOperationException(
+                    "InfluxDB rejected the stored admin token and no token could be recovered",
+                    ex);
+            }
+
+            return await operation(recoveredToken);
         }
     }
 
@@ -214,33 +242,39 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
 
     private async Task CheckCreateBucket(string orgName, string bucketName)
     {
-        using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
-        var api = client.GetBucketsApi();
-
-        var buckets = await api.FindBucketsByOrgNameAsync(orgName);
+        var buckets = await WithTokenRecovery(async token =>
+        {
+            using var client = new InfluxDBClient(await GetHost(), token: token);
+            return await client.GetBucketsApi().FindBucketsByOrgNameAsync(orgName);
+        });
         var bucket = buckets.FirstOrDefault(b => b.Name == bucketName);
 
         if (bucket == null)
         {
             var orgId = await GetOrgId(orgName);
 
-            await api.CreateBucketAsync(
+            await WithTokenRecovery(async token =>
+            {
+                using var client = new InfluxDBClient(await GetHost(), token: token);
+                await client.GetBucketsApi().CreateBucketAsync(
                     name: bucketName,
                     orgId: orgId,
                     bucketRetentionRules: new BucketRetentionRules(
                         type: BucketRetentionRules.TypeEnum.Expire,
                         everySeconds: 30 * 24 * 3600
-                    )
-            );
+                    ));
+                return true;
+            });
         }
     }
 
     private async Task<string> GetOrgId(string orgName)
     {
-        using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
-
-        var orgsApi = client.GetOrganizationsApi();
-        var org = await orgsApi.FindOrganizationsAsync(org:orgName);
+        var org = await WithTokenRecovery(async token =>
+        {
+            using var client = new InfluxDBClient(await GetHost(), token: token);
+            return await client.GetOrganizationsApi().FindOrganizationsAsync(org: orgName);
+        });
         if(org.Count() == 0)
             throw new ArgumentException("Invalid organisation name");
 
@@ -249,10 +283,6 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
 
     public async Task<List <T>> GetData<T>(string module, Dictionary<string, string> filters, TimeSpan? interval, DateTimeOffset start, DateTimeOffset end) where T : BaseMonitorData, new()
     {
-        using var client = new InfluxDBClient(await GetHost(), token: await GetAdminToken());
-
-        var queryApi = client.GetQueryApi();
-
         var startStr = start.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
         var stopStr = end.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
 
@@ -291,7 +321,11 @@ public class Influxdb2Configurator : BaseContainerProvider, IMonitoringDataPersi
 
 
 
-        var fluxTables = await queryApi.QueryAsync(query, _orgName);
+        var fluxTables = await WithTokenRecovery(async token =>
+        {
+            using var client = new InfluxDBClient(await GetHost(), token: token);
+            return await client.GetQueryApi().QueryAsync(query, _orgName);
+        });
 
         if (fluxTables is null || fluxTables.Count == 0)
             return new List<T>();
