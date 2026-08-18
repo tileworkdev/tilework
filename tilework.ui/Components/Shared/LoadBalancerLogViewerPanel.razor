@@ -61,7 +61,15 @@
                 </ColGroup>
                 <HeaderContent>
                     <MudTh />
-                    <MudTh>Timestamp</MudTh>
+                    <MudTh>
+                        Timestamp
+                        @if (_browserTimeZone is not null)
+                        {
+                            <MudText Inline="true" Typo="Typo.caption" Color="Color.Secondary">
+                                @($"(UTC{TimestampUtcOffset})")
+                            </MudText>
+                        }
+                    </MudTh>
                     <MudTh>Action</MudTh>
                     <MudTh>Source</MudTh>
                     <MudTh>Host</MudTh>
@@ -252,8 +260,12 @@
             ? timestamp.ToLocalTime()
             : TimeZoneInfo.ConvertTime(timestamp, _browserTimeZone);
 
-        return localized.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+        return localized.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
     }
+
+    private string TimestampUtcOffset =>
+        TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, _browserTimeZone!)
+            .ToString("zzz", CultureInfo.InvariantCulture);
 
     private static string FormatAction(LoadBalancerLogEntry entry)
     {
