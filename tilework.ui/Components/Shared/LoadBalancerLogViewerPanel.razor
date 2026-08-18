@@ -28,10 +28,10 @@
             </div>
         </CardHeaderActions>
     </MudCardHeader>
-    <MudCardContent>
+    <MudCardContent Class="pa-0">
         @if (!string.IsNullOrWhiteSpace(_error))
         {
-            <MudAlert Severity="Severity.Error" Class="mb-3">@_error</MudAlert>
+            <MudAlert Severity="Severity.Error" Class="ma-4">@_error</MudAlert>
         }
 
         @if (_loading)
@@ -45,8 +45,8 @@
         else
         {
             <MudTable T="LoadBalancerLogEntry" Items="@_entries" Dense="true" Hover="true"
-                      Outlined="true" FixedHeader="true" Virtualize="true"
-                      Height="calc(100dvh - 28rem)" ItemSize="40"
+                      Outlined="false" Elevation="0" Square="true" FixedHeader="true" Virtualize="true"
+                      Height="calc(100dvh - 26rem)" ItemSize="40"
                       HorizontalScrollbar="true" Breakpoint="Breakpoint.Sm"
                       Class="tilework-lb-log-table" aria-label="@Title">
                 <ColGroup>
