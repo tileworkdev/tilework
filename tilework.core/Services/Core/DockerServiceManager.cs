@@ -359,7 +359,10 @@ public class DockerServiceManager : IContainerManager
         try
         {
             using (var tarStream = File.Create(tempTarPath))
-            using (var tarWriter = WriterFactory.Open(tarStream, ArchiveType.Tar, CompressionType.None))
+            using (var tarWriter = WriterFactory.OpenWriter(
+                tarStream,
+                ArchiveType.Tar,
+                new WriterOptions(CompressionType.None)))
             {
                 tarWriter.Write(
                     containerPath.TrimStart('/'),
