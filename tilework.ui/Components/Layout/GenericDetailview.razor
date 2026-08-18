@@ -35,7 +35,7 @@
 </MudCard>
 @if(TabContent != null)
 {
-    <MudTabs @ref="_tabs" Outlined="true" Class="mb-4" ActivePanelIndex="@_activeTabIndex" ActivePanelIndexChanged="TabChanged">
+    <MudTabs @ref="_tabs" Outlined="true" ActivePanelIndex="@_activeTabIndex" ActivePanelIndexChanged="TabChanged">
         @TabContent
     </MudTabs>
 }

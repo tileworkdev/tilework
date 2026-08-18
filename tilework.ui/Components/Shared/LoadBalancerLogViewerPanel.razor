@@ -45,7 +45,8 @@
         else
         {
             <MudTable T="LoadBalancerLogEntry" Items="@_entries" Dense="true" Hover="true"
-                      Outlined="true" FixedHeader="true" Height="32rem"
+                      Outlined="true" FixedHeader="true"
+                      ContainerStyle="max-height: calc(100dvh - 28rem);"
                       HorizontalScrollbar="true" Breakpoint="Breakpoint.Sm"
                       Class="tilework-lb-log-table" aria-label="@Title">
                 <ColGroup>
