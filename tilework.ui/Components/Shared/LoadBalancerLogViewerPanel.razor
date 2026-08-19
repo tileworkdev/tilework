@@ -46,9 +46,9 @@
         {
             <MudTable T="LoadBalancerLogEntry" Items="@_entries" Dense="true" Hover="true"
                       Outlined="false" Elevation="0" Square="true" FixedHeader="true" Virtualize="true"
-                      Height="calc(100dvh - 26rem)" ItemSize="40"
-                      HorizontalScrollbar="true" Breakpoint="Breakpoint.Sm"
-                      Class="tilework-lb-log-table" aria-label="@Title">
+                      Height="auto" ItemSize="24"
+                      Breakpoint="Breakpoint.Sm"
+                      Class="tilework-lb-log-table" ContainerClass="overflow-visible" CellClass="py-0" aria-label="@Title">
                 <ColGroup>
                     <col style="width: 3rem" />
                     <col style="width: 15rem" />
@@ -84,7 +84,7 @@
                                        OnClick="@(() => ToggleDetails(context))"
                                        title="@(IsExpanded(context) ? "Hide request details" : "Show request details")" />
                     </MudTd>
-                    <MudTd DataLabel="Timestamp" Class="tilework-lb-log-timestamp">@FormatTimestamp(context.Timestamp)</MudTd>
+                    <MudTd DataLabel="Timestamp" Class="tilework-lb-log-timestamp"><code>@FormatTimestamp(context.Timestamp)</code></MudTd>
                     <MudTd DataLabel="Action">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" title="@FormatAction(context)">
                             <MudIcon Icon="@GetActionIcon(context.Action)"
@@ -92,7 +92,7 @@
                                      Size="Size.Small" />
                             @if (!string.IsNullOrWhiteSpace(context.Backend))
                             {
-                                <span>@context.Backend</span>
+                                <code>@context.Backend</code>
                             }
                         </MudStack>
                     </MudTd>
@@ -100,16 +100,16 @@
                     <MudTd DataLabel="Host"><code>@(context.HostHeader ?? "—")</code></MudTd>
                     <MudTd DataLabel="Request" Class="tilework-lb-log-request">
                         <div class="tilework-lb-log-request-content">
-                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.Method.Method</MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary"><code>@context.Method.Method</code></MudChip>
                             <code class="tilework-lb-log-path" title="@context.Path">@context.Path</code>
                         </div>
                     </MudTd>
                     <MudTd DataLabel="Status">
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetStatusColor(context.StatusCode)">
-                            @((int)context.StatusCode)
+                            <code>@((int)context.StatusCode)</code>
                         </MudChip>
                     </MudTd>
-                    <MudTd DataLabel="Total time" Class="tilework-lb-log-number">@context.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</MudTd>
+                    <MudTd DataLabel="Total time" Class="tilework-lb-log-number"><code>@context.TotalTimeMilliseconds.ToString("N0", CultureInfo.InvariantCulture) ms</code></MudTd>
                 </RowTemplate>
                 <ChildRowContent>
                     @if (IsExpanded(context))
